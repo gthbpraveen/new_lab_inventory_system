@@ -380,6 +380,7 @@ def alloted_machines():
 
      return render_template("alloted_machines.html", records=allotted_records)
 
+from models import Equipment, Workstation, EquipmentHistory
 
 # @app.route("/register", methods=["GET", "POST"])
 # def register():
@@ -798,37 +799,85 @@ def equipment_list():
                            search_query=search_query,
                            status_filter=status_filter)
 
-@app.route("/assign_equipment/<int:equipment_id>", methods=["GET", "POST"])
+from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask_login import login_required, current_user
+from models import Equipment, Workstation, db
+from datetime import datetime
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from datetime import datetime
+from models import Equipment, Workstation  # Update this line as per your actual import
+
+
+
+
+
+@app.route('/assign_equipment/<int:equipment_id>', methods=['GET', 'POST'])
 @login_required
 def assign_equipment(equipment_id):
     equipment = Equipment.query.get_or_404(equipment_id)
-    students = Workstation.query.all()
 
-    if request.method == "POST":
-        selected_roll = request.form.get("assigned_to_roll")
+    if equipment.status.lower() in ['scrap', 'repaired']:
+        flash(f"Cannot assign equipment with status '{equipment.status}'.", "warning")
+        return redirect(url_for('equipment_list'))
 
-        if selected_roll:
-            student = Workstation.query.filter_by(roll=selected_roll).first()
-            if not student:
-                flash("Invalid student selected.", "danger")
-                return redirect(url_for("assign_equipment", equipment_id=equipment_id))
+    if request.method == 'POST':
+        assigned_to_roll = request.form.get('assigned_to_roll')
+        now = datetime.utcnow()
 
-            # Direct assignment or reassignment
-            equipment.assigned_to_roll = selected_roll
-            equipment.status = "Issued"
-            db.session.commit()
-            flash(f"Equipment '{equipment.name}' assigned to {student.name} ({student.roll})", "success")
+        if assigned_to_roll:
+            student = Workstation.query.filter_by(roll=assigned_to_roll).first()
+            if student:
+                equipment.assigned_to_roll = student.roll
+                equipment.assigned_by = current_user.email
+                equipment.assigned_date = now
+                equipment.status = 'Issued'
+
+                history = EquipmentHistory(
+                    equipment_id=equipment.id,
+                    assigned_to_roll=student.roll,
+                    assigned_by=current_user.email,
+                    assigned_date=now,
+                    unassigned_date=None,
+                    status_snapshot='Issued'
+                )
+                db.session.add(history)
+
+                flash(f"Assigned to {student.name} ({student.roll})", "success")
+            else:
+                flash("Invalid student selected", "danger")
         else:
             # Unassignment
+            history = EquipmentHistory(
+                equipment_id=equipment.id,
+                assigned_to_roll=equipment.assigned_to_roll,
+                assigned_by=current_user.email,
+                assigned_date=equipment.assigned_date,
+                unassigned_date=now,
+                status_snapshot='Available'
+            )
+            db.session.add(history)
+
             equipment.assigned_to_roll = None
-            equipment.status = "Available"
-            db.session.commit()
-            flash(f"Equipment '{equipment.name}' is now unassigned.", "info")
+            equipment.assigned_by = None
+            equipment.assigned_date = None
+            equipment.status = 'Available'
 
-        return redirect(url_for("equipment_list"))
+            flash("Equipment unassigned", "info")
 
-    return render_template("assign_equipment.html", equipment=equipment, students=students)
+        db.session.commit()
+        return redirect(url_for('equipment_list'))
 
+    courses = [c[0] for c in db.session.query(Workstation.course).distinct().all()]
+    years = [y[0] for y in db.session.query(Workstation.year).distinct().all()]
+    return render_template("assign_equipment.html", equipment=equipment, courses=courses, years=years)
+
+@app.route('/equipment_history/<int:equipment_id>')
+@login_required
+def equipment_history(equipment_id):
+    equipment = Equipment.query.get_or_404(equipment_id)
+    history = EquipmentHistory.query.filter_by(equipment_id=equipment_id).order_by(EquipmentHistory.timestamp.desc()).all()
+    return render_template("equipment_history.html", equipment=equipment, history=history)
 
 
 from flask import make_response
@@ -1320,7 +1369,6 @@ from google_calendar import create_event  # ✅ make sure this points to your wo
 @login_required
 def book_lab():
     if request.method == "POST":
-<<<<<<< HEAD
         room = request.form.get("room")
         start = request.form.get("start")
         end = request.form.get("end")
@@ -1336,7 +1384,6 @@ def book_lab():
                              description=reason,
                              start=start_iso,
                              end=end_iso)
-=======
         try:
             lab = request.form["lab"]
             user = request.form["user"]
@@ -1368,7 +1415,6 @@ def book_lab():
             print("🚨 Booking Error:", e)
             flash("❌ Internal error while booking the lab.", "danger")
             return redirect("/book_lab")
->>>>>>> 614187a4ff5c77ff9041ceec961822c014c3ba82
 
         flash("✅ Lab booked and synced with Google Calendar.", "success")
         return redirect("/login_home")
@@ -1391,6 +1437,16 @@ def lab_calender(lab):
 
     events = get_upcoming_events(calendar_ids[lab])
     return render_template("lab_schedule.html", lab=lab, calendar_ids=calendar_ids)
+
+@app.route('/get_students_by_course_year', methods=['GET'])
+@login_required
+def get_students_by_course_year():
+    course = request.args.get('course')
+    year = request.args.get('year')
+    students = Workstation.query.filter_by(course=course, year=year).all()
+    data = [{'roll': s.roll, 'name': s.name, 'email': s.email} for s in students]
+    return jsonify(data)
+
 
 
 

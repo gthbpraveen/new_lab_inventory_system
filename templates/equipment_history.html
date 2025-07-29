@@ -1,0 +1,42 @@
+{% extends "login_home.html" %}
+{% block title %}Equipment History{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto py-10 px-6">
+  <h2 class="text-2xl font-semibold text-indigo-700 mb-4">Assignment History</h2>
+
+  <p class="mb-4"><strong>Equipment:</strong> {{ equipment.name }} ({{ equipment.serial_number }})</p>
+  <p class="mb-4"><strong>Current Status:</strong> {{ equipment.status }}</p>
+
+  {% if history %}
+    <table class="min-w-full bg-white border border-gray-300 shadow rounded">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 border">Action</th>
+          <th class="px-4 py-2 border">Roll Number</th>
+          <th class="px-4 py-2 border">Assigned By</th>
+          <th class="px-4 py-2 border">Issue Date</th>
+          <th class="px-4 py-2 border">Unassign Date</th>
+          <th class="px-4 py-2 border">Status Snapshot</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in history %}
+        <tr>
+          <td class="px-4 py-2 border">{{ entry.action or (entry.unassigned_date and "Unassigned") or "Assigned" }}</td>
+          <td class="px-4 py-2 border">{{ entry.assigned_to_roll or '—' }}</td>
+          <td class="px-4 py-2 border">{{ entry.assigned_by or '—' }}</td>
+          <td class="px-4 py-2 border">{{ entry.assigned_date.strftime('%Y-%m-%d %H:%M') if entry.assigned_date else '—' }}</td>
+          <td class="px-4 py-2 border">{{ entry.unassigned_date.strftime('%Y-%m-%d %H:%M') if entry.unassigned_date else '—' }}</td>
+          <td class="px-4 py-2 border">{{ entry.status_snapshot or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No assignment history available.</p>
+  {% endif %}
+
+  <a href="{{ url_for('equipment_list') }}" class="text-indigo-600 mt-6 inline-block hover:underline">← Back to Equipment List</a>
+</section>
+{% endblock %}

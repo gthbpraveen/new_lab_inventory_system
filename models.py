@@ -116,3 +116,16 @@ class ProvisioningRequest(db.Model):
     os_image = db.Column(db.String(64), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+# models.py
+
+class EquipmentHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    equipment_id = db.Column(db.Integer, db.ForeignKey('equipment.id'), nullable=False)
+    assigned_to_roll = db.Column(db.String(20), nullable=True)
+    assigned_by = db.Column(db.String(120), nullable=True)
+    assigned_date = db.Column(db.DateTime, nullable=True)
+    unassigned_date = db.Column(db.DateTime, nullable=True)
+    status_snapshot = db.Column(db.String(50))  # Equipment status at the time
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    equipment = db.relationship('Equipment', backref='history_entries')
