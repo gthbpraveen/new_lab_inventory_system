@@ -1314,33 +1314,30 @@ from google_calendar import create_event
 from datetime import datetime, timedelta
 
 @app.route("/book_lab", methods=["GET", "POST"])
+@login_required
 def book_lab():
     if request.method == "POST":
-        lab = request.form["lab"]
-        user = request.form["user"]
-        purpose = request.form["purpose"]
-        start_time = request.form["start_time"]
-        end_time = request.form["end_time"]
+        room = request.form.get("room")
+        start = request.form.get("start")
+        end = request.form.get("end")
+        reason = request.form.get("reason")
 
-        start_dt = datetime.strptime(start_time, "%Y-%m-%dT%H:%M")
-        end_dt = datetime.strptime(end_time, "%Y-%m-%dT%H:%M")
+        # Format as RFC3339
+        from datetime import datetime
+        start_iso = datetime.fromisoformat(start).isoformat()
+        end_iso = datetime.fromisoformat(end).isoformat()
 
-        event_link = create_event(
-            lab=lab,
-            summary=f"Lab Booking: {lab} by {user}",
-            description=purpose,
-            start_time=start_dt,
-            end_time=end_dt
-        )
+        # Use service function to create the event
+        event = create_event(summary=f"{room} Reserved by {current_user.email}",
+                             description=reason,
+                             start=start_iso,
+                             end=end_iso)
 
-        if event_link:
-            flash("✅ Lab booked successfully!")
-            return redirect(event_link)
-        else:
-            flash("❌ Failed to book the lab.")
-            return redirect("/book_lab")
-
+        flash("✅ Lab booked and synced with Google Calendar.", "success")
+        return redirect("/login_home")
+    
     return render_template("book_lab.html")
+
 
 
 if __name__ == "__main__":
