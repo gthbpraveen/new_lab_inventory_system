@@ -1,36 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>CSE Lab Workstation Form</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Tailwind CSS -->
-     <style>
-    .required-field::after {
-      content: " *";
-      color: red;
-      font-weight: normal;
-    }
-  </style>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-10">
-    <div class="max-w-6.5xl mx-auto px-9 py-6 text-center">
-        <header class="text-center bg-yellow-100 py-6 px-4 rounded-lg shadow mb-0 flex items-center justify-between">
-    <!-- Logo and Title -->
-    <div class="flex items-center space-x-10 text-center">
-        <img src="https://iith.ac.in/assets/images/logo.png" alt="CSE Logo" class="h-19 w-60">
-    
-        <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-blue-600 text-center" style="text-shadow: 3px 3px 4px rgba(3, 34, 7, 0.3);">  CSE - LAB WORKSTATIONS - INVENTORY</h1>
-            <p class="text-indigo-700 text-sm md:text-base ">Please fill out the following details carefully</p>
-        </div>
-        <!-- <img src="https://drive.google.com/uc?export=view&id=1vr3xNpiPNqJrgGX-VkOvOhvXRZvkr3QY" alt="cse Logo" class="h-12 w-auto"> -->
-     <img src="{{ url_for('static', filename='images/cse iith logos.png') }}" alt="CSE Logo" class="h-32 max-h-32 w-auto object-contain">
-        <!-- <img src="file:///home/datacenterops/Downloads/lab-form-flask/static/images/cse%20iith%20logos.png" alt="CSE Logo" class="h-12 w-auto"> -->
-</div>
+{% extends "login_home.html" %}
+{% block title %}Machine Allotment{% endblock %}
+
+{% block content %}
+
+   <div class="max-w-8xl mx-auto px-4 py-4">
+  <header class="bg-pink-100 rounded-md shadow-sm p-4 text-center">
+    <div class="flex flex-col items-center justify-center space-y-2">
+      <!-- Title -->
+      <h1 class="text-xl sm:text-2xl font-semibold text-blue-700" style="text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);">
+        Student Machine Allocation
+      </h1>
+
+      <!-- Subtitle -->
+      <p class="text-indigo-700 text-sm sm:text-base">
+        Please fill out the following details carefully
+      </p>
     </div>
-</header>
+  </header>
+</div>
+
 
 
 
@@ -56,7 +44,7 @@
       <strong>Warning:</strong> {{ error }}
     </div>
   {% endif %} -->
-{% if error %}
+<!-- {% if error %}
   <div class="flex justify-center">
     <div id="errorAlert" class="relative bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded mb-1 max-w-xl w-full">
       <strong>Warning:</strong> {{ error }}
@@ -66,10 +54,20 @@
       </button>
     </div>
   </div>
+{% endif %} -->
+{% if error %}
+  <div id="errorAlert" class="relative bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <strong>Warning:</strong> {{ error }}
+    <button type="button" onclick="document.getElementById('errorAlert').style.display='none'"
+            class="absolute top-0 right-0 mt-1 mr-2 text-2xl leading-none text-red-700 hover:text-red-900 focus:outline-none">
+      &times;
+    </button>
+  </div>
 {% endif %}
 
 
-        <form id="hardware-form" method="POST" action="/" class="bg-white rounded-b-lg shadow-lg p-6 mb-8">
+
+        <form id="hardware-form" method="POST" action="/index" class="bg-white rounded-b-lg shadow-lg p-6 mb-8">
             <!-- Student Information Section -->
             <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
                 
@@ -808,5 +806,4 @@ document.getElementById('download-excel').addEventListener('click', function() {
         
         </script>
     </div>
-</body>
-</html>
+{% endblock %}

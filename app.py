@@ -1309,6 +1309,38 @@ def generate_equipment_pdf(student_id):
     response.headers['Content-Disposition'] = f'inline; filename=Student_{student.roll}_Details.pdf'
     return response
 
+from flask import request, render_template, redirect, flash
+from google_calendar import create_event
+from datetime import datetime, timedelta
+
+@app.route("/book_lab", methods=["GET", "POST"])
+def book_lab():
+    if request.method == "POST":
+        lab = request.form["lab"]
+        user = request.form["user"]
+        purpose = request.form["purpose"]
+        start_time = request.form["start_time"]
+        end_time = request.form["end_time"]
+
+        start_dt = datetime.strptime(start_time, "%Y-%m-%dT%H:%M")
+        end_dt = datetime.strptime(end_time, "%Y-%m-%dT%H:%M")
+
+        event_link = create_event(
+            lab=lab,
+            summary=f"Lab Booking: {lab} by {user}",
+            description=purpose,
+            start_time=start_dt,
+            end_time=end_dt
+        )
+
+        if event_link:
+            flash("✅ Lab booked successfully!")
+            return redirect(event_link)
+        else:
+            flash("❌ Failed to book the lab.")
+            return redirect("/book_lab")
+
+    return render_template("book_lab.html")
 
 
 if __name__ == "__main__":
