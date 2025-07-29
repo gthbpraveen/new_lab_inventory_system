@@ -1359,8 +1359,8 @@ from google_calendar import get_upcoming_events
 @login_required
 def lab_calender(lab):
     calendar_ids = {
-        "CS-109": "31b285e2a089b57ecbfbfc2f879c16406d7a4f3d26d0eb5703cd94a86b4805ff@group.calendar.google.com",
-        "CS-209": "31b285e2a089b57ecbfbfc2f879c16406d7a4f3d26d0eb5703cd94a86b4805ff@group.calendar.google.com"
+        # "CS-109": "31b285e2a089b57ecbfbfc2f879c16406d7a4f3d26d0eb5703cd94a86b4805ff@group.calendar.google.com",
+        # "CS-209": "31b285e2a089b57ecbfbfc2f879c16406d7a4f3d26d0eb5703cd94a86b4805ff@group.calendar.google.com"
     }
 
     if lab not in calendar_ids:
