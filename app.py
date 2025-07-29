@@ -1312,11 +1312,15 @@ def generate_equipment_pdf(student_id):
 from flask import request, render_template, redirect, flash
 from google_calendar import create_event
 from datetime import datetime, timedelta
+from flask import render_template, request, redirect, flash
+from datetime import datetime
+from google_calendar import create_event  # ✅ make sure this points to your working module
 
 @app.route("/book_lab", methods=["GET", "POST"])
 @login_required
 def book_lab():
     if request.method == "POST":
+<<<<<<< HEAD
         room = request.form.get("room")
         start = request.form.get("start")
         end = request.form.get("end")
@@ -1332,11 +1336,61 @@ def book_lab():
                              description=reason,
                              start=start_iso,
                              end=end_iso)
+=======
+        try:
+            lab = request.form["lab"]
+            user = request.form["user"]
+            purpose = request.form["purpose"]
+            start_time = request.form["start_time"]
+            end_time = request.form["end_time"]
+
+            # Parse datetime inputs
+            start_dt = datetime.strptime(start_time, "%Y-%m-%dT%H:%M")
+            end_dt = datetime.strptime(end_time, "%Y-%m-%dT%H:%M")
+
+            # Create the calendar event
+            event_link = create_event(
+                lab=lab,
+                summary=f"Lab Booking: {lab} by {user}",
+                description=purpose,
+                start_time=start_dt,
+                end_time=end_dt
+            )
+
+            if event_link:
+                flash("✅ Lab booked successfully!", "success")
+                return redirect(event_link)
+            else:
+                flash("❌ Failed to book the lab. Please check calendar configuration.", "danger")
+                return redirect("/book_lab")
+
+        except Exception as e:
+            print("🚨 Booking Error:", e)
+            flash("❌ Internal error while booking the lab.", "danger")
+            return redirect("/book_lab")
+>>>>>>> 614187a4ff5c77ff9041ceec961822c014c3ba82
 
         flash("✅ Lab booked and synced with Google Calendar.", "success")
         return redirect("/login_home")
     
     return render_template("book_lab.html")
+
+from google_calendar import get_upcoming_events
+
+@app.route("/lab_schedule/<lab>")
+@login_required
+def lab_calender(lab):
+    calendar_ids = {
+        # "CS-109": "31b285e2a089b57ecbfbfc2f879c16406d7a4f3d26d0eb5703cd94a86b4805ff@group.calendar.google.com",
+        # "CS-209": "31b285e2a089b57ecbfbfc2f879c16406d7a4f3d26d0eb5703cd94a86b4805ff@group.calendar.google.com"
+    }
+
+    if lab not in calendar_ids:
+        flash("❌ Invalid lab selected.")
+        return redirect("/login_home")
+
+    events = get_upcoming_events(calendar_ids[lab])
+    return render_template("lab_schedule.html", lab=lab, calendar_ids=calendar_ids)
 
 
 
