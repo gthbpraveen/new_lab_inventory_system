@@ -1,34 +1,50 @@
-import datetime
-import os
+# google_calendar.py
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+import os
 
-# Load the service account key JSON file
-SERVICE_ACCOUNT_FILE = 'path/to/service_account.json'
+# 🔐 Path to your service account JSON key (download from Google Developer Console)
+SERVICE_ACCOUNT_FILE = 'credentials.json'
 
-# Calendar IDs for 109 and 209
-CALENDAR_ID_MAP = {
-    "CS-109": "your_calendar_id_109@group.calendar.google.com",
-    "CS-209": "your_calendar_id_209@group.calendar.google.com"
-}
+# 📅 Replace this with your Google Calendar ID (found in calendar settings)
+CALENDAR_ID = 'c_4eb3878e5aa632ed423aa849e18abe7ddda57e21bf79bd239301afd9a83af2cc@group.calendar.google.com'  # or 'your_calendar_id@group.calendar.google.com'
 
+# Required scopes
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-def create_event(lab, summary, description, start_time, end_time):
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES
-    )
-    service = build('calendar', 'v3', credentials=credentials)
+
+def create_event(summary, description, start, end, timezone='Asia/Kolkata'):
+    """
+    Creates an event on the configured Google Calendar.
+
+    Parameters:
+    - summary (str): Title of the event
+    - description (str): Additional notes
+    - start (str): ISO format start time (e.g. '2025-07-30T10:00:00')
+    - end (str): ISO format end time (e.g. '2025-07-30T12:00:00')
+    - timezone (str): Time zone of the event
+    """
+
+    # Load credentials
+    creds = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+
+    # Build Google Calendar service
+    service = build('calendar', 'v3', credentials=creds)
 
     event = {
         'summary': summary,
         'description': description,
-        'start': {'dateTime': start_time.isoformat(), 'timeZone': 'Asia/Kolkata'},
-        'end': {'dateTime': end_time.isoformat(), 'timeZone': 'Asia/Kolkata'},
+        'start': {
+            'dateTime': start,
+            'timeZone': timezone,
+        },
+        'end': {
+            'dateTime': end,
+            'timeZone': timezone,
+        },
     }
 
-    calendar_id = CALENDAR_ID_MAP.get(lab)
-    if calendar_id:
-        event_result = service.events().insert(calendarId=calendar_id, body=event).execute()
-        return event_result.get('htmlLink')
-    return None
+    created_event = service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
+    print(f"📅 Event created: {created_event.get('htmlLink')}")
+    return created_event

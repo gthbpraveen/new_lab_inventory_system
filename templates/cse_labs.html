@@ -73,6 +73,10 @@
       {% endfor %}
     </div>
   {% endfor %}
+  {% if current_user.is_authenticated %}
+  <a href="/lab_schedule/CS-109" class="...">🗓️ CS-109 Schedule</a>
+  <a href="/lab_schedule/CS-209" class="...">🗓️ CS-209 Schedule</a>
+{% endif %}
 </div>
 
 {% endblock %}
