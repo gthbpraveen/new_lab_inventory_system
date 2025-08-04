@@ -1447,6 +1447,44 @@ def get_students_by_course_year():
     data = [{'roll': s.roll, 'name': s.name, 'email': s.email} for s in students]
     return jsonify(data)
 
+from flask import render_template, request
+from models import Workstation, db
+@app.route("/allocate_space", methods=["GET", "POST"])
+def allocate_space():
+    error = None
+    form_data = {}
+
+    if request.method == "POST":
+        form_data = request.form.to_dict()
+        roll = form_data.get("roll", "").strip()
+        room = form_data.get("room_lab_name", "").strip()
+        cubicle = form_data.get("cubicle_no", "").strip()
+
+        if Workstation.query.filter_by(roll=roll).first():
+            error = f"⚠️ Roll number {roll} already exists in the database."
+            return render_template("allocate_space.html", error=error, form_data=form_data)
+
+        if Workstation.query.filter_by(room_lab_name=room, cubicle_no=cubicle).first():
+            error = f"⚠️ Cubicle {cubicle} in {room} has already been allotted."
+            return render_template("allocate_space.html", error=error, form_data=form_data)
+
+        workstation = Workstation(
+            name=form_data.get("name"),
+            roll=roll,
+            course=form_data.get("course"),
+            year=form_data.get("year"),
+            faculty=form_data.get("faculty"),
+            staff_incharge=form_data.get("staff_incharge"),
+            email=form_data.get("email"),
+            phone=form_data.get("phone"),
+            room_lab_name=room,
+            cubicle_no=cubicle
+        )
+        db.session.add(workstation)
+        db.session.commit()
+        return render_template("allocate_space.html", success=True, form_data={})
+
+    return render_template("allocate_space.html", form_data={})
 
 
 
