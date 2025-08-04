@@ -1426,17 +1426,20 @@ from google_calendar import get_upcoming_events
 @app.route("/lab_schedule/<lab>")
 @login_required
 def lab_calender(lab):
-    calendar_ids = {
-        # "CS-109": "31b285e2a089b57ecbfbfc2f879c16406d7a4f3d26d0eb5703cd94a86b4805ff@group.calendar.google.com",
-        # "CS-209": "31b285e2a089b57ecbfbfc2f879c16406d7a4f3d26d0eb5703cd94a86b4805ff@group.calendar.google.com"
+    calendar_embed_urls = {
+        "CS-109": "https://calendar.google.com/calendar/embed?src=31b285e2a089b57ecbfbfc2f879c16406d7a4f3d26d0eb5703cd94a86b4805ff%40group.calendar.google.com&ctz=Asia%2FKolkata",
+        "CS-209": "https://calendar.google.com/calendar/embed?src=31b285e2a089b57ecbfbfc2f879c16406d7a4f3d26d0eb5703cd94a86b4805ff%40group.calendar.google.com&ctz=Asia%2FKolkata"
     }
 
-    if lab not in calendar_ids:
+    if lab not in calendar_embed_urls:
         flash("❌ Invalid lab selected.")
         return redirect("/login_home")
 
-    events = get_upcoming_events(calendar_ids[lab])
-    return render_template("lab_schedule.html", lab=lab, calendar_ids=calendar_ids)
+    calendar_url = calendar_embed_urls[lab]
+    return render_template("lab_schedule.html", lab=lab, calendar_url=calendar_url)
+
+
+
 
 @app.route('/get_students_by_course_year', methods=['GET'])
 @login_required
@@ -1486,6 +1489,82 @@ def allocate_space():
 
     return render_template("allocate_space.html", form_data={})
 
+from flask import render_template, request, redirect, url_for, flash
+from models import Workstation # adjust import path as per your project
+from app import db # or your SQLAlchemy instance
+@app.route('/edit_workstation/<int:id>', methods=['GET', 'POST'])
+def edit_workstation(id):
+    workstation = Workstation.query.get_or_404(id)
+
+    if request.method == 'POST':
+        # All assignments...
+        workstation.name = request.form['name']
+        workstation.roll = request.form['roll']
+        workstation.course = request.form['course']
+        workstation.year = request.form['year']
+        workstation.faculty = request.form['faculty']
+        workstation.staff_incharge = request.form['staff_incharge']
+        workstation.email = request.form['email']
+        workstation.phone = request.form['phone']
+        workstation.room_lab_name = request.form['room_lab_name']
+        workstation.cubicle_no = request.form['cubicle_no']
+
+        workstation.manufacturer = request.form['manufacturer']
+        workstation.otherManufacturer = request.form['otherManufacturer']
+        workstation.model = request.form['model']
+        workstation.serial = request.form['serial']
+        workstation.os = request.form['os']
+        workstation.otherOs = request.form['otherOs']
+        workstation.processor = request.form['processor']
+        workstation.cores = request.form['cores']
+        workstation.ram = request.form['ram']
+        workstation.otherRam = request.form['otherRam']
+
+        workstation.storage_type1 = request.form['storage_type1']
+        workstation.storage_capacity1 = request.form['storage_capacity1']
+        workstation.storage_type2 = request.form['storage_type2']
+        workstation.storage_capacity2 = request.form['storage_capacity2']
+
+        workstation.gpu = request.form['gpu']
+        workstation.vram = request.form['vram']
+
+        workstation.issue_date = request.form['issue_date']
+        workstation.system_required_till = request.form['system_required_till']
+        workstation.po_date = request.form['po_date']
+        workstation.source_of_fund = request.form['source_of_fund']
+
+        workstation.keyboard_provided = request.form['keyboard_provided']
+        workstation.keyboard_details = request.form['keyboard_details']
+        workstation.mouse_provided = request.form['mouse_provided']
+        workstation.mouse_details = request.form['mouse_details']
+        workstation.monitor_provided = request.form['monitor_provided']
+        workstation.monitor_details = request.form['monitor_details']
+        workstation.monitor_size = request.form['monitor_size']
+        workstation.monitor_serial = request.form['monitor_serial']
+
+        try:
+            db.session.commit()
+            flash('Workstation updated successfully!', 'success')
+            return redirect(url_for('alloted_machines'))  # Replace with actual route
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating workstation: {e}', 'danger')
+
+
+    return render_template('edit_workstation.html', workstation=workstation)
+
+
+@app.route('/delete_workstation/<int:id>', methods=['POST', 'GET'])
+def delete_workstation(id):
+    workstation = Workstation.query.get_or_404(id)
+    try:
+        db.session.delete(workstation)
+        db.session.commit()
+        flash('Workstation deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting workstation: {e}', 'danger')
+    return redirect(url_for('alloted_machines'))
 
 
 if __name__ == "__main__":

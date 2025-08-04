@@ -85,8 +85,8 @@ table.three-cols .label-cell {
 table.three-cols .value-cell {
   width: 50%;
 }
-table.four-cols th,
-table.four-cols td {
+table.five-cols th,
+table.five-cols td {
   width: 25%;
 }
 
@@ -158,10 +158,11 @@ table.four-cols td {
   </table>
 
   <h3>Assigned Equipment</h3>
-  <table class="four-cols">
+  <table class="five-cols">
     <thead>
       <tr>
         <th>Name</th>
+        <th>Category</th>
         <th>Serial No</th>
         <th>Assigned On</th>
         <th>Assigned By</th>
@@ -171,6 +172,7 @@ table.four-cols td {
       {% for eq in assigned_equipment %}
       <tr>
         <td>{{ eq.name }}</td>
+        <td>{{ eq.category }}</td>
         <td>{{ eq.serial_number }}</td>
         <td>{{ eq.assigned_date.strftime('%d-%b-%Y %H:%M') if eq.assigned_date else '—' }}</td>
         <td>{{ eq.assigned_by or '—' }}</td>

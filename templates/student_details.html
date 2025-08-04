@@ -2,196 +2,112 @@
 {% block title %}Student Details - {{ student.name }}{% endblock %}
 
 {% block content %}
-<section class="bg-gray-100 py-10">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="bg-white shadow-md rounded-xl p-8 border border-gray-300">
+<section class="bg-white py-10">
+  <div class="max-w-4xl mx-auto px-6 ">
+    <div class="border border-gray-300 rounded-xl p-8 shadow bg-yellow-50">
 
-      <h2 class="text-3xl font-bold text-indigo-800 mb-6 border-b pb-2 text-center">Student & Workstation Details</h2>
+      <h2 class="text-2xl font-bold text-blue-800 mb-6 border-b pb-2 text-center">Student & Workstation Details</h2>
 
-      <!-- Grid layout: Photo + Profile -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-        <div class="md:col-span-1 flex justify-center items-start">
+      <!-- Profile Photo and Basic Info -->
+      <div class="flex flex-col md:flex-row items-center md:items-start mb-6">
+        <div class="md:w-1/3 w-full flex justify-center mb-4 md:mb-0">
           <img src="{{ student.photo_url or '/static/images/passport.png' }}"
                alt="Student Photo"
-               class="w-48 h-48 object-cover rounded-lg border shadow">
+               class="w-40 h-57 object-cover rounded-lg border border-gray-300 shadow">
         </div>
-
-        <div class="md:col-span-2">
-          <h3 class="text-xl font-semibold text-indigo-700 mb-3">👤 Profile Details</h3>
-          <div class="flex justify-center">
-            <table class="w-full max-w-4xl border border-gray-400 rounded-lg shadow text-sm text-center">
-              <tbody class="divide-y divide-gray-200">
-                <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Name</td><td class="border border-gray-300 px-4 py-2">{{ student.name }}</td></tr>
-                <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Roll Number</td><td class="border border-gray-300 px-4 py-2">{{ student.roll }}</td></tr>
-                <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Course</td><td class="border border-gray-300 px-4 py-2">{{ student.course }}</td></tr>
-                <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Year</td><td class="border border-gray-300 px-4 py-2">{{ student.year }}</td></tr>
-                <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Email</td><td class="border border-gray-300 px-4 py-2">{{ student.email }}</td></tr>
-                <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Phone</td><td class="border border-gray-300 px-4 py-2">{{ student.phone }}</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Lab Info -->
-      <h3 class="text-xl font-semibold text-indigo-700 mt-8 mb-3">🏫 Lab Details</h3>
-      <div class="flex justify-center mb-12">
-        <table class="w-full max-w-4xl border border-gray-400 rounded-lg shadow text-sm text-center">
-          <tbody class="divide-y divide-gray-200">
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Lab</td><td class="border border-gray-300 px-4 py-2">{{ student.room_lab_name }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Seat (Cubicle No)</td><td class="border border-gray-300 px-4 py-2">{{ student.cubicle_no }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Faculty In-Charge</td><td class="border border-gray-300 px-4 py-2">{{ student.faculty }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Staff In-Charge</td><td class="border border-gray-300 px-4 py-2">{{ student.staff_incharge }}</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- System Info -->
-      <h3 class="text-xl font-semibold text-indigo-700 mb-3">💻 System Configuration</h3>
-      <div class="flex justify-center mb-12">
-        <table class="w-full max-w-4xl border border-gray-400 rounded-lg shadow text-sm text-center">
-          <tbody class="divide-y divide-gray-200">
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Manufacturer</td><td class="border border-gray-300 px-4 py-2">{{ student.manufacturer or student.otherManufacturer }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Model</td><td class="border border-gray-300 px-4 py-2">{{ student.model }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Serial No</td><td class="border border-gray-300 px-4 py-2">{{ student.serial }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">OS</td><td class="border border-gray-300 px-4 py-2">{{ student.os or student.otherOs }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Processor</td><td class="border border-gray-300 px-4 py-2">{{ student.processor }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Cores</td><td class="border border-gray-300 px-4 py-2">{{ student.cores }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">RAM</td><td class="border border-gray-300 px-4 py-2">{{ student.ram or student.otherRam }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">GPU</td><td class="border border-gray-300 px-4 py-2">{{ student.gpu }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">VRAM</td><td class="border border-gray-300 px-4 py-2">{{ student.vram }}</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Storage -->
-      <h3 class="text-xl font-semibold text-indigo-700 mb-3">🗄️ Storage</h3>
-      <div class="flex justify-center mb-12">
-        <table class="w-full max-w-4xl border border-gray-400 rounded-lg shadow text-sm text-center">
-          <tbody class="divide-y divide-gray-200">
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Storage 1</td><td class="border border-gray-300 px-4 py-2">{{ student.storage_type1 }} - {{ student.storage_capacity1 }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Storage 2</td><td class="border border-gray-300 px-4 py-2">{{ student.storage_type2 }} - {{ student.storage_capacity2 }}</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Peripherals -->
-      <h3 class="text-xl font-semibold text-indigo-700 mb-3">🖥️ Peripherals</h3>
-      <div class="flex justify-center mb-12">
-        <table class="w-full max-w-4xl border border-gray-400 rounded-lg shadow text-sm text-center">
-          <tbody class="divide-y divide-gray-200">
-            <tr class="hover:bg-indigo-50">
-              <td class="border border-gray-300 px-4 py-2">Monitor Provided</td>
-              <td class="border border-gray-300 px-4 py-2">
-                {% if student.monitor_provided == 'yes' %}
-                  yes ({{ student.monitor_details or 'Not specified' }}, {{ student.monitor_size or 'Size unknown' }})
-                {% else %}
-                  Not applicable
-                {% endif %}
-              </td>
-            </tr>
-            <tr class="hover:bg-indigo-50">
-              <td class="border border-gray-300 px-4 py-2">Monitor Serial</td>
-              <td class="border border-gray-300 px-4 py-2">{{ student.monitor_serial or 'Not applicable' }}</td>
-            </tr>
-            <tr class="hover:bg-indigo-50">
-              <td class="border border-gray-300 px-4 py-2">Keyboard Provided</td>
-              <td class="border border-gray-300 px-4 py-2">
-                {% if student.keyboard_provided == 'yes' %}
-                  yes ({{ student.keyboard_details or 'Not specified' }})
-                {% else %}
-                  Not applicable
-                {% endif %}
-              </td>
-            </tr>
-            <tr class="hover:bg-indigo-50">
-              <td class="border border-gray-300 px-4 py-2">Mouse Provided</td>
-              <td class="border border-gray-300 px-4 py-2">
-                {% if student.mouse_provided == 'yes' %}
-                  yes ({{ student.mouse_details or 'Not specified' }})
-                {% else %}
-                  Not applicable
-                {% endif %}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Purchase Details -->
-      <h3 class="text-xl font-semibold text-indigo-700 mb-3">📅 Purchase & Usage Info</h3>
-      <div class="flex justify-center mb-12">
-        <table class="w-full max-w-4xl border border-gray-400 rounded-lg shadow text-sm text-center">
-          <tbody class="divide-y divide-gray-200">
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Issue Date</td><td class="border border-gray-300 px-4 py-2">{{ student.issue_date }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Required Till</td><td class="border border-gray-300 px-4 py-2">{{ student.system_required_till }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">PO Date</td><td class="border border-gray-300 px-4 py-2">{{ student.po_date }}</td></tr>
-            <tr class="hover:bg-indigo-50"><td class="border border-gray-300 px-4 py-2">Funding Source</td><td class="border border-gray-300 px-4 py-2">{{ student.source_of_fund }}</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Assigned Equipment Section -->
-      <section class="bg-white shadow-md rounded-xl p-6 border border-gray-300 max-w-5xl mx-auto mt-12">
-        <h3 class="text-2xl font-bold text-indigo-800 mb-6 text-center">📦 Assigned Additional Equipment</h3>
-
-        <div class="overflow-x-auto">
-          <table class="min-w-full border border-gray-400 rounded-lg shadow text-sm text-center">
-            <thead class="bg-indigo-100 text-indigo-900 font-semibold">
-              <tr>
-                <th class="border border-gray-300 px-4 py-2">Name</th>
-                <th class="border border-gray-300 px-4 py-2">Serial No</th>
-                <th class="border border-gray-300 px-4 py-2">Assigned On</th>
-                <th class="border border-gray-300 px-4 py-2">Assigned By</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-              {% for eq in assigned_equipment %}
-              <tr class="hover:bg-indigo-50">
-                <td class="border border-gray-300 px-4 py-2">{{ eq.name }}</td>
-                <td class="border border-gray-300 px-4 py-2">{{ eq.serial_number }}</td>
-                <td class="border border-gray-300 px-4 py-2">
-                  {{ eq.assigned_date.strftime('%d-%b-%Y %H:%M') if eq.assigned_date else '—' }}
-                </td>
-                <td class="border border-gray-300 px-4 py-2">{{ eq.assigned_by or '—' }}</td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="4" class="px-4 py-3 text-gray-500 border border-gray-300 text-center">No equipment assigned.</td>
-              </tr>
-              {% endfor %}
+        <div class="md:w-2/3 w-full md:pl-6">
+          <table class="w-full table-fixed border border-green-700 text-sm">
+            <tbody>
+              <tr><td class="w-1/2 border px-4 py-2 bg-gray-100">Name</td><td class="border px-4 py-2">{{ student.name }}</td></tr>
+              <tr><td class="border px-4 py-2 bg-gray-100">Roll Number</td><td class="border px-4 py-2">{{ student.roll }}</td></tr>
+              <tr><td class="border px-4 py-2 bg-gray-100">Course</td><td class="border px-4 py-2">{{ student.course }}</td></tr>
+              <tr><td class="border px-4 py-2 bg-gray-100">Year</td><td class="border px-4 py-2">{{ student.year }}</td></tr>
+              <tr><td class="border px-4 py-2 bg-gray-100">Email</td><td class="border px-4 py-2">{{ student.email }}</td></tr>
+              <tr><td class="border px-4 py-2 bg-gray-100">Phone</td><td class="border px-4 py-2">{{ student.phone }}</td></tr>
             </tbody>
           </table>
         </div>
+      </div>
 
-        <!-- Download PDF Button -->
-        <div class="text-center mt-6">
-          <a href="{{ url_for('generate_equipment_pdf', student_id=student.id) }}" target="_blank">
-   <button style="
-    background-color: #e53e3e;
-    color: white;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s ease;
-  " onmouseover="this.style.backgroundColor='#c53030'" onmouseout="this.style.backgroundColor='#e53e3e'">
-    Download PDF
-  </button>
-</a>
+      <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Lab & System Details</h2>
+      <table class="w-full table-fixed border border-gray-300 text-sm mb-6">
+        <tbody>
+          <tr><td class="w-1/2 border px-4 py-2 bg-gray-100">Lab</td><td class="border px-4 py-2">{{ student.room_lab_name }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Cubicle No</td><td class="border px-4 py-2">{{ student.cubicle_no }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Faculty In-Charge</td><td class="border px-4 py-2">{{ student.faculty }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Staff In-Charge</td><td class="border px-4 py-2">{{ student.staff_incharge }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Manufacturer</td><td class="border px-4 py-2">{{ student.manufacturer or student.otherManufacturer }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Model</td><td class="border px-4 py-2">{{ student.model }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Serial No</td><td class="border px-4 py-2">{{ student.serial }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">OS</td><td class="border px-4 py-2">{{ student.os or student.otherOs }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Processor</td><td class="border px-4 py-2">{{ student.processor }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Cores</td><td class="border px-4 py-2">{{ student.cores }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">RAM</td><td class="border px-4 py-2">{{ student.ram or student.otherRam }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">GPU</td><td class="border px-4 py-2">{{ student.gpu }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">VRAM</td><td class="border px-4 py-2">{{ student.vram }}</td></tr>
+        </tbody>
+      </table>
 
-        </div>
-      </section>
+      <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Storage</h2>
+      <table class="w-full table-fixed border border-gray-300 text-sm mb-6">
+        <tbody>
+          <tr><td class="w-1/2 border px-4 py-2 bg-gray-100">Storage 1</td><td class="border px-4 py-2">{{ student.storage_type1 }} - {{ student.storage_capacity1 }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Storage 2</td><td class="border px-4 py-2">{{ student.storage_type2 }} - {{ student.storage_capacity2 }}</td></tr>
+        </tbody>
+      </table>
 
-      <!-- Back Button -->
-      <div class="text-center mt-10">
-        <a href="/lab_details/{{ student.room_lab_name }}"
-           class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition">
-          ← Back to Lab
-        </a>
+      <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Peripherals</h2>
+      <table class="w-full table-fixed border border-gray-300 text-sm mb-6">
+        <tbody>
+          <tr><td class="w-1/2 border px-4 py-2 bg-gray-100">Monitor Provided</td><td class="border px-4 py-2">{{ student.monitor_provided }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Monitor Serial</td><td class="border px-4 py-2">{{ student.monitor_serial }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Keyboard Provided</td><td class="border px-4 py-2">{{ student.keyboard_provided }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Mouse Provided</td><td class="border px-4 py-2">{{ student.mouse_provided }}</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Purchase & Usage Info</h2>
+      <table class="w-full table-fixed border border-gray-300 text-sm mb-6">
+        <tbody>
+          <tr><td class="w-1/2 border px-4 py-2 bg-gray-100">Issue Date</td><td class="border px-4 py-2">{{ student.issue_date }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Required Till</td><td class="border px-4 py-2">{{ student.system_required_till }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">PO Date</td><td class="border px-4 py-2">{{ student.po_date }}</td></tr>
+          <tr><td class="border px-4 py-2 bg-gray-100">Funding Source</td><td class="border px-4 py-2">{{ student.source_of_fund }}</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2 text-center">Assigned Equipment</h2>
+      <table class="w-full text-sm border border-gray-300 mb-6">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="border px-4 py-2">Name</th>
+            <th class="border px-4 py-2">Category</th>
+             <th class="border px-4 py-2">Serial No</th>
+            <th class="border px-4 py-2">Assigned On</th>
+            <th class="border px-4 py-2">Assigned By</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for eq in assigned_equipment %}
+          <tr>
+            <td class="border px-4 py-2">{{ eq.name }}</td>
+            <td class="border px-4 py-2">{{ eq.category }}</td>
+            <td class="border px-4 py-2">{{ eq.serial_number }}</td>
+            <td class="border px-4 py-2">{{ eq.assigned_date.strftime('%d-%b-%Y %H:%M') if eq.assigned_date else '—' }}</td>
+            <td class="border px-4 py-2">{{ eq.assigned_by or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="border px-4 py-3 text-center text-gray-500">No equipment assigned.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Back and PDF Buttons -->
+      <div class="flex justify-between items-center mt-8">
+        <a href="/lab_details/{{ student.room_lab_name }}" class="text-sm text-indigo-700 hover:underline">← Back to Lab</a>
+        <a href="{{ url_for('generate_equipment_pdf', student_id=student.id) }}" target="_blank" class="text-sm text-red-600 hover:underline">Download PDF</a>
       </div>
 
     </div>

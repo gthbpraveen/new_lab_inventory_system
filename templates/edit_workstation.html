@@ -1,0 +1,156 @@
+{% extends "login_home.html" %}
+{% block title %}Edit Workstation{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-10">
+  <div class="bg-white shadow-2xl rounded-2xl p-8 border border-gray-200">
+    <h1 class="text-3xl font-bold text-sky-700 mb-6 flex items-center gap-2">
+      🛠️ Edit Student Workstation
+    </h1>
+
+    <form action="{{ url_for('edit_workstation', id=workstation.id) }}" method="POST" class="space-y-10">
+      <!-- Student and Lab Info -->
+      <section>
+        <h2 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">👨‍🎓 Student & Lab Info</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><label>Name</label><input type="text" name="name" value="{{ workstation.name }}" class="input" required></div>
+          <div><label>Roll</label><input type="text" name="roll" value="{{ workstation.roll }}" class="input"></div>
+          <div>
+            <label>Course</label>
+            <select name="course" class="input">
+              {% for opt in ['B.Tech', 'M.Tech TA', 'M.Tech RA', 'Ph.D.', 'Intern'] %}
+              <option value="{{ opt }}" {% if workstation.course == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Year</label>
+            <select name="year" class="input">
+              {% for opt in ['I', 'II', 'III', 'IV', 'V'] %}
+              <option value="{{ opt }}" {% if workstation.year == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Faculty</label>
+            <select name="faculty" class="input">
+              {% set faculty_options = ['Prof. Antony Franklin', 'Dr. Ashish Mishra', 'Prof. Bheemarjuna Reddy Tamma', 'Prof. C. Krishna Mohan', 'Dr. J. Saketha Nath', 'Dr. Jyothi Vedurada', 'Dr. Kotaro Kataoka', 'Prof. M. V. Panduranga Rao', 'Dr. Manish Singh', 'Dr. Maria Francis', 'Prof. Maunendra Sankar Desarkar', 'Dr. N. R. Aravind', 'Dr. Nitin Saurabh', 'Dr. Praveen Tammana', 'Dr. Rajesh Kedia', 'Dr. Rakesh Venkat', 'Dr. Ramakrishna Upadrasta', 'Dr. Rameshwar Pratap', 'Dr. Rogers Mathew', 'Prof. Sathya Peri', 'Dr. Saurabh Kumar', 'Dr. Shirshendu Das', 'Dr. Sobhan Babu', 'Dr. Srijith P. K.', 'Prof. Subrahmanyam Kalyanasundaram', 'Prof. Vineeth N. Balasubramanian'] %}
+              {% for opt in faculty_options %}
+              <option value="{{ opt }}" {% if workstation.faculty == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Staff In-Charge</label>
+            <select name="staff_incharge" class="input">
+              {% for opt in ['N. Syamala Rao', 'T. Vijayachakravarthi', 'Nikith Reddy Peddasheri', 'Sunitha Maloth', 'G Praveen Kumar', 'Shiva Kumar Reddy', 'Kiran Kumar Kavali'] %}
+              <option value="{{ opt }}" {% if workstation.staff_incharge == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div><label>Email</label><input type="email" name="email" value="{{ workstation.email }}" class="input"></div>
+          <div><label>Phone</label><input type="text" name="phone" value="{{ workstation.phone }}" class="input"></div>
+          <div>
+            <label>Room/Lab Name</label>
+            <select name="room_lab_name" class="input">
+              {% for room in ['CS-107','CS-108','CS-109','CS-207','CS-208','CS-209','CS-317','CS-318','CS-319','CS-320','CS-411','CS-412'] %}
+              <option value="{{ room }}" {% if workstation.room_lab_name == room %}selected{% endif %}>{{ room }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div><label>Cubicle No</label><input type="text" name="cubicle_no" value="{{ workstation.cubicle_no }}" class="input"></div>
+        </div>
+      </section>
+
+      <!-- System Info -->
+      <section>
+        <h2 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">💻 System Details</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><label>Manufacturer</label><input type="text" name="manufacturer" value="{{ workstation.manufacturer }}" class="input"></div>
+          <div><label>Other Manufacturer</label><input type="text" name="otherManufacturer" value="{{ workstation.otherManufacturer }}" class="input"></div>
+          <div><label>Model</label><input type="text" name="model" value="{{ workstation.model }}" class="input"></div>
+          <div><label>Serial</label><input type="text" name="serial" value="{{ workstation.serial }}" class="input"></div>
+          <div><label>OS</label><input type="text" name="os" value="{{ workstation.os }}" class="input"></div>
+          <div><label>Other OS</label><input type="text" name="otherOs" value="{{ workstation.otherOs }}" class="input"></div>
+          <div><label>Processor</label><input type="text" name="processor" value="{{ workstation.processor }}" class="input"></div>
+          <div><label>Cores</label><input type="text" name="cores" value="{{ workstation.cores }}" class="input"></div>
+          <div><label>RAM</label><input type="text" name="ram" value="{{ workstation.ram }}" class="input"></div>
+          <div><label>Other RAM</label><input type="text" name="otherRam" value="{{ workstation.otherRam }}" class="input"></div>
+        </div>
+      </section>
+
+      <!-- Storage -->
+      <section>
+        <h2 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">📀 Storage</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label>Storage Type 1</label><input type="text" name="storage_type1" value="{{ workstation.storage_type1 }}" class="input"></div>
+          <div><label>Storage Capacity 1</label><input type="text" name="storage_capacity1" value="{{ workstation.storage_capacity1 }}" class="input"></div>
+          <div><label>Storage Type 2</label><input type="text" name="storage_type2" value="{{ workstation.storage_type2 }}" class="input"></div>
+          <div><label>Storage Capacity 2</label><input type="text" name="storage_capacity2" value="{{ workstation.storage_capacity2 }}" class="input"></div>
+        </div>
+      </section>
+
+      <!-- GPU -->
+      <section>
+        <h2 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">🎮 GPU</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label>GPU</label><input type="text" name="gpu" value="{{ workstation.gpu }}" class="input"></div>
+          <div><label>VRAM</label><input type="text" name="vram" value="{{ workstation.vram }}" class="input"></div>
+        </div>
+      </section>
+
+      <!-- Dates & Funding -->
+      <section>
+        <h2 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">🗓️ Dates & Fund Info</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div><label>Issue Date</label><input type="text" name="issue_date" value="{{ workstation.issue_date }}" class="input"></div>
+          <div><label>System Required Till</label><input type="text" name="system_required_till" value="{{ workstation.system_required_till }}" class="input"></div>
+          <div><label>PO Date</label><input type="text" name="po_date" value="{{ workstation.po_date }}" class="input"></div>
+          <div><label>Source of Fund</label><input type="text" name="source_of_fund" value="{{ workstation.source_of_fund }}" class="input"></div>
+        </div>
+      </section>
+
+      <!-- Peripherals -->
+      <section>
+        <h2 class="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">⌨️ Peripherals</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label>Keyboard Provided</label><input type="text" name="keyboard_provided" value="{{ workstation.keyboard_provided }}" class="input"></div>
+          <div><label>Keyboard Details</label><input type="text" name="keyboard_details" value="{{ workstation.keyboard_details }}" class="input"></div>
+          <div><label>Mouse Provided</label><input type="text" name="mouse_provided" value="{{ workstation.mouse_provided }}" class="input"></div>
+          <div><label>Mouse Details</label><input type="text" name="mouse_details" value="{{ workstation.mouse_details }}" class="input"></div>
+          <div><label>Monitor Provided</label><input type="text" name="monitor_provided" value="{{ workstation.monitor_provided }}" class="input"></div>
+          <div><label>Monitor Details</label><input type="text" name="monitor_details" value="{{ workstation.monitor_details }}" class="input"></div>
+          <div><label>Monitor Size</label><input type="text" name="monitor_size" value="{{ workstation.monitor_size }}" class="input"></div>
+          <div><label>Monitor Serial</label><input type="text" name="monitor_serial" value="{{ workstation.monitor_serial }}" class="input"></div>
+        </div>
+      </section>
+
+      <!-- Submit -->
+      <div class="text-center mt-8">
+        <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded-lg shadow-md transition">
+          ✅ Update Workstation
+        </button>
+        <a href="{{ url_for('alloted_machines') }}" class="ml-4 text-gray-600 hover:text-sky-700 text-sm">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  background-color: #fff;
+  color: #1a202c;
+}
+.input:focus {
+  outline: none;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.5);
+}
+</style>
+
+{% endblock %}
