@@ -117,7 +117,7 @@
     <!-- Page content -->
     <main class="flex-grow container mx-auto px-4 py-6">
       {% block content %}
-      <div class="py-12 bg-gradient-to-r from-sky-700 via-white-600 to-sky-700 text-white py-16 min-h-[calc(100vh-200px)]">
+      <div class="py-12 bg-gradient-to-r from-purple-800 via-white-600 to-green-600 text-white py-16 min-h-[calc(100vh-200px)]">
         <div class="max-w-6xl mx-auto px-4">
           <h2 class="text-2xl font-bold text-center text-white mb-10">
             Dear {{ current_user.email.split('@')[0] | capitalize }}, Welcome to CSE Lab Portal
@@ -128,10 +128,11 @@
               {"name": "CSE Labs", "icon": "💻💻", "url": "/cse_labs"},
               {"name": "Inventory", "icon": "📦", "url": "/inventory"},
               {"name": "Search", "icon": "🔍", "url": "/search"},
+              {"name": "Students-Directory", "icon": "🔍", "url": "/students_directory"}, 
               {"name": "Lab Utilization", "icon": "📊", "url": "/utilization"},
               {"name": "Software Utility", "icon": "💻", "url": "/os_related"},
               {"name": "Slurm Facility", "icon": "⚙️", "url": "/slurm/check"},
-              {"name": "Students-Directory", "icon": "🔍", "url": "/students_directory"},
+             
             ] %}
             {% if current_user.is_authenticated and current_user.email == 'admin@cse.iith.ac.in' %}
               {% set tools = tools + [

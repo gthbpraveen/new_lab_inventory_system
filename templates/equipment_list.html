@@ -31,6 +31,7 @@
         <table class="w-full text-sm text-left border border-gray-300 min-w-[1200px]">
           <thead class="bg-gray-100 text-gray-700">
             <tr>
+              <th class="p-3 border">Dept Code</th>
               <th class="p-3 border">Name</th>
               <th class="p-3 border">Category</th>
               <th class="p-3 border">Manufacturer</th>
@@ -45,76 +46,84 @@
               <th class="p-3 border">PO Date</th>
               <th class="p-3 border">Intender</th>
               <th class="p-3 border">Qty</th>
-              <th class="p-3 border">Dept Code</th>
+              
               <th class="p-3 border">Assigned To</th>
               <th class="p-3 border">Assign / Change</th>
               <th class="p-3 border">Edit / Delete</th>
               <th class="p-3 border">view history</th>
             </tr>
           </thead>
-          <tbody>
-            {% for eq in equipment %}
-            <tr class="border-b hover:bg-gray-50">
-              <td class="p-3">{{ eq.name }}</td>
-              <td class="p-3">{{ eq.category }}</td>
-              <td class="p-3">{{ eq.manufacturer }}</td>
-              <td class="p-3">{{ eq.model }}</td>
-              <td class="p-3">{{ eq.serial_number }}</td>
-              <td class="p-3">{{ eq.invoice_number or '-' }}</td>
-              <td class="p-3">{{ eq.cost_per_unit or '-' }}</td>
-              <td class="p-3">{{ eq.warranty_expiry or '-' }}</td>
-              <td class="p-3">{{ eq.location }}</td>
-              <td class="p-3">{{ eq.purchase_date }}</td>
-              <td class="p-3">{{ eq.status }}</td>
-              <td class="p-3">{{ eq.po_date }}</td>
-              <td class="p-3">{{ eq.intender_name }}</td>
-              <td class="p-3">{{ eq.quantity }}</td>
-              <td class="p-3">{{ eq.department_code }}</td>
+   <tbody>
+  {% if grouped_equipment %}
+    {% for category, items in grouped_equipment.items() %}
+      <tr class="bg-indigo-100">
+        <td colspan="19" class="p-3 font-semibold text-indigo-700 uppercase">{{ category }}</td>
+      </tr>
+      {% for eq in items %}
+      <tr class="border-b hover:bg-gray-50">
+        <td class="p-3">{{ eq.department_code }}</td>
+        <td class="p-3">{{ eq.name }}</td>
+        <td class="p-3">{{ eq.category }}</td>
+        <td class="p-3">{{ eq.manufacturer }}</td>
+        <td class="p-3">{{ eq.model }}</td>
+        <td class="p-3">{{ eq.serial_number }}</td>
+        <td class="p-3">{{ eq.invoice_number or '-' }}</td>
+        <td class="p-3">{{ eq.cost_per_unit or '-' }}</td>
+        <td class="p-3">{{ eq.warranty_expiry or '-' }}</td>
+        <td class="p-3">{{ eq.location }}</td>
+        <td class="p-3">{{ eq.purchase_date }}</td>
+        <td class="p-3">{{ eq.status }}</td>
+        <td class="p-3">{{ eq.po_date }}</td>
+        <td class="p-3">{{ eq.intender_name }}</td>
+        <td class="p-3">{{ eq.quantity }}</td>
+        <!-- <td class="p-3">{{ eq.department_code }}</td> -->
+        <td class="p-3">
+          {% if eq.student %}
+            {{ eq.student.name }} ({{ eq.student.roll }})
+          {% else %}
+            <span class="text-gray-500">Unassigned</span>
+          {% endif %}
+        </td>
+        <td class="p-3">
+          {% if eq.status.lower() in ['available', 'issued'] %}
+            <a href="{{ url_for('assign_equipment', equipment_id=eq.id) }}"
+               class="text-indigo-600 hover:underline text-sm">Assign / Change</a>
+          {% elif eq.status.lower() == 'repaired' %}
+            <span class="text-gray-500 text-sm">Repaired</span>
+          {% elif eq.status.lower() == 'scrap' %}
+            <span class="text-gray-500 text-sm">Scrap</span>
+          {% else %}
+            <span class="text-gray-500 text-sm">{{ eq.status }}</span>
+          {% endif %}
+        </td>
+        <td class="p-3">
+          <div class="flex items-center gap-2 text-sm">
+            <a href="{{ url_for('edit_equipment', id=eq.id) }}"
+               class="text-blue-600 hover:underline">Edit</a>
+            <form method="POST" action="{{ url_for('delete_equipment', id=eq.id) }}"
+                  onsubmit="return confirm('Are you sure you want to delete this equipment?');"
+                  class="inline">
+              <button type="submit" class="text-red-600 hover:underline bg-transparent border-none">
+                Delete
+              </button>
+            </form>
+          </div>
+        </td>
+        <td class="p-3">
+          <a href="{{ url_for('equipment_history', equipment_id=eq.id) }}"
+             class="text-green-600 hover:underline">View History</a>
+        </td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  {% else %}
+    <tr>
+      <td colspan="19" class="p-3 text-center text-gray-500">No equipment found.</td>
+    </tr>
+  {% endif %}
+</tbody>
 
-              <td class="p-3">
-                {% if eq.student %}
-                  {{ eq.student.name }} ({{ eq.student.roll }})
-                {% else %}
-                  <span class="text-gray-500">Unassigned</span>
-                {% endif %}
-              </td>
 
-              <td class="p-3">
-                {% if eq.status.lower() in ['available', 'issued'] %}
-                  <a href="{{ url_for('assign_equipment', equipment_id=eq.id) }}"
-                     class="text-indigo-600 hover:underline text-sm">Assign / Change</a>
-                {% elif eq.status.lower() == 'repaired' %}
-                  <span class="text-gray-500 text-sm">Repaired</span>
-                {% elif eq.status.lower() == 'scrap' %}
-                  <span class="text-gray-500 text-sm">Scrap</span>
-                {% else %}
-                  <span class="text-gray-500 text-sm">{{ eq.status }}</span>
-                {% endif %}
-              </td>
-              
-              <td class="p-3">
-                <div class="flex items-center gap-2 text-sm">
-                  <a href="{{ url_for('edit_equipment', id=eq.id) }}"
-                     class="text-blue-600 hover:underline">Edit</a>
-                  <form method="POST" action="{{ url_for('delete_equipment', id=eq.id) }}"
-                        onsubmit="return confirm('Are you sure you want to delete this equipment?');"
-                        class="inline">
-                    <button type="submit" class="text-red-600 hover:underline bg-transparent border-none">
-                      Delete
-                    </button>
-                  </form>
-                </div>
-              </td>
-              <td class="p-3">
-                <a href="{{ url_for('equipment_history', equipment_id=eq.id) }}"
-                   class="text-green-600 hover:underline">View History</a>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="18" class="p-3 text-center text-gray-500">No equipment found.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
         </table>
       </div>
 

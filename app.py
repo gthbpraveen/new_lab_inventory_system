@@ -762,6 +762,45 @@ from flask import request, render_template
 from sqlalchemy import or_
 
 
+# @app.route("/equipment_list", methods=["GET"])
+# def equipment_list():
+#     search_query = request.args.get('search', '').strip()
+#     status_filter = request.args.get('status_filter', '').strip()
+#     page = request.args.get('page', 1, type=int)
+#     per_page = 10  # Adjust as needed
+
+#     query = Equipment.query
+
+#     if search_query:
+#         query = query.filter(
+#             or_(
+#                 Equipment.name.ilike(f"%{search_query}%"),
+#                 Equipment.category.ilike(f"%{search_query}%"),
+#                 Equipment.status.ilike(f"%{search_query}%"),
+#                 Equipment.department_code.ilike(f"%{search_query}%"),
+#                 Equipment.intender_name.ilike(f"%{search_query}%"),
+#                 Equipment.model.ilike(f"%{search_query}%"),
+#                 Equipment.location.ilike(f"%{search_query}%"),
+#                 Equipment.manufacturer.ilike(f"%{search_query}%"),
+#                 Equipment.serial_number.ilike(f"%{search_query}%"),
+#                 Equipment.po_date.ilike(f"%{search_query}%"),
+#                 Equipment.purchase_date.ilike(f"%{search_query}%")
+#             )
+#         )
+
+#     if status_filter:
+#         query = query.filter(Equipment.status == status_filter)
+
+#     pagination = query.order_by(Equipment.id.desc()).paginate(page=page, per_page=per_page)
+    
+#     return render_template("equipment_list.html",
+#                            equipment=pagination.items,
+#                            pagination=pagination,
+#                            search_query=search_query,
+#                            status_filter=status_filter)
+from collections import defaultdict
+from sqlalchemy import or_
+
 @app.route("/equipment_list", methods=["GET"])
 def equipment_list():
     search_query = request.args.get('search', '').strip()
@@ -791,13 +830,19 @@ def equipment_list():
     if status_filter:
         query = query.filter(Equipment.status == status_filter)
 
-    pagination = query.order_by(Equipment.id.desc()).paginate(page=page, per_page=per_page)
-    
+    pagination = query.order_by(Equipment.category, Equipment.name).paginate(page=page, per_page=per_page)
+
+    # Group the paginated items by category
+    grouped_equipment = defaultdict(list)
+    for eq in pagination.items:
+        grouped_equipment[eq.category].append(eq)
+
     return render_template("equipment_list.html",
-                           equipment=pagination.items,
+                           grouped_equipment=grouped_equipment,
                            pagination=pagination,
                            search_query=search_query,
                            status_filter=status_filter)
+
 
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
