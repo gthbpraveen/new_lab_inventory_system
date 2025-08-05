@@ -136,7 +136,7 @@
             ] %}
             {% if current_user.is_authenticated and current_user.email == 'admin@cse.iith.ac.in' %}
               {% set tools = tools + [
-                {"name": "Approve Users", "icon": "🧑‍⚖️", "url": "/admin/approve"},
+               { "name": "Approve Users", "icon": "👤✔️", "url": "/admin/approve" },
                 {"name": "Registered Users", "icon": "👥", "url": "/registered_users"}
               ] %}
             {% endif %}
