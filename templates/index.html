@@ -3,15 +3,12 @@
 
 {% block content %}
 
-   <div class="max-w-8xl mx-auto px-4 py-4">
+<div class="max-w-8xl mx-auto px-4 py-4">
   <header class="bg-pink-100 rounded-md shadow-sm p-4 text-center">
     <div class="flex flex-col items-center justify-center space-y-2">
-      <!-- Title -->
       <h1 class="text-xl sm:text-2xl font-semibold text-blue-700" style="text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);">
         Student Machine Allocation
       </h1>
-
-      <!-- Subtitle -->
       <p class="text-indigo-700 text-sm sm:text-base">
         Please fill out the following details carefully
       </p>
@@ -19,97 +16,65 @@
   </header>
 </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-        <!-- Your full form and script goes here -->
-        <!-- Paste your entire HTML + script here (already provided above) -->
-        <!-- I will not repeat it in full again to avoid unnecessary length -->
-
-        <!-- Success message, footer, form, and JavaScript already provided by you -->
-        <!-- Just don't forget to paste it here -->
-
-        <!-- Main Form -->
-        <!-- {% if error %}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      <strong>Warning:</strong> {{ error }}
-    </div>
-  {% endif %} -->
-<!-- {% if error %}
-  <div class="flex justify-center">
-    <div id="errorAlert" class="relative bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded mb-1 max-w-xl w-full">
-      <strong>Warning:</strong> {{ error }}
-      <button type="button" onclick="document.getElementById('errorAlert').style.display='none'"
-              class="absolute top-0 right-0 mt-1 mr-2 text-2xl leading-none text-red-700 hover:text-red-900 focus:outline-none">
-        &times;
-      </button>
-    </div>
-  </div>
-{% endif %} -->
 {% if error %}
-  <div id="errorAlert" class="relative bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-    <strong>Warning:</strong> {{ error }}
-    <button type="button" onclick="document.getElementById('errorAlert').style.display='none'"
-            class="absolute top-0 right-0 mt-1 mr-2 text-2xl leading-none text-red-700 hover:text-red-900 focus:outline-none">
-      &times;
-    </button>
-  </div>
+<div id="errorAlert" class="relative bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+  <strong>Warning:</strong> {{ error }}
+  <button type="button" onclick="document.getElementById('errorAlert').style.display='none'"
+          class="absolute top-0 right-0 mt-1 mr-2 text-2xl leading-none text-red-700 hover:text-red-900 focus:outline-none">
+    &times;
+  </button>
+</div>
 {% endif %}
 
-
-
-        <form id="hardware-form" method="POST" action="/index" class="bg-white rounded-b-lg shadow-lg p-6 mb-8">
-            <!-- Student Information Section -->
-            <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
-                
-                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Student Information</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="name" class="block text-gray-700 font-medium mb-2 required-field">Full Name</label>
-                        <input type="text" id="name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="roll" class="block text-gray-700 font-medium mb-2 required-field">Roll Number</label>
-                        <input type="text" id="roll" name="roll" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="course" class="block text-gray-700 font-medium mb-2 required-field">Course</label>
-                        <select id="course" name="course" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Select Course</option>
-                            <option value="B.Tech">B.Tech</option>
-                            <option value="M.Tech TA">M.Tech TA</option>
-                            <option value="M.Tech RA">M.Tech RA</option>
-                            <option value="Ph.D.">Ph.D.</option>
-                            <option value="Intern">Intern</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="year" class="block text-gray-700 font-medium mb-2 required-field">Year of Study</label>
-                        <select id="year" name="year" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Select Year</option>
-                            <option value="I">I</option>
-                            <option value="II">II</option>
-                            <option value="III">III</option>
-                            <option value="IV">IV</option>
-                            <option value="V">V</option>
-                        </select>
-                    </div>
-                    <!-- <div>
-                        <label for="faculty" class="block text-gray-700 font-medium mb-2 required-field">Faculty In-charge</label>
-                        <input type="text" id="faculty" name="faculty" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div> -->
-                    <div>
-  <label for="faculty" class="block text-gray-700 font-medium mb-2 required-field">Faculty In-charge</label>
-  <select id="faculty" name="faculty" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+<form id="hardware-form" method="POST" action="/index" class="bg-white rounded-b-lg shadow-lg p-6 mb-8">
+  <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
+    <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Student Information</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label for="roll" class="block text-gray-700 font-medium mb-2 required-field">Roll Number</label>
+        <input type="text" id="roll" name="roll" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label for="name" class="block text-gray-700 font-medium mb-2 required-field">Full Name</label>
+        <input type="text" id="name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label for="course" class="block text-gray-700 font-medium mb-2 required-field">Course</label>
+        <select id="course" name="course" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">Select Course</option>
+          <option value="B.Tech">B.Tech</option>
+          <option value="M.Tech TA">M.Tech TA</option>
+          <option value="M.Tech RA">M.Tech RA</option>
+          <option value="Ph.D.">Ph.D.</option>
+          <option value="Intern">Intern</option>
+        </select>
+      </div>
+      <div>
+        <label for="year" class="block text-gray-700 font-medium mb-2 required-field">Year of Study</label>
+        <select id="year" name="year" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">Select Year</option>
+          <option value="I">I</option>
+          <option value="II">II</option>
+          <option value="III">III</option>
+          <option value="IV">IV</option>
+          <option value="V">V</option>
+        </select>
+      </div>
+      <div>
+        <label for="joining_year" class="block text-gray-700 font-medium mb-2 required-field">Joining Year</label>
+        <input type="text" id="joining_year" name="joining_year" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label for="email" class="block text-gray-700 font-medium mb-2 required-field">Email Address</label>
+        <input type="email" id="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label for="phone" class="block text-gray-700 font-medium mb-2 required-field">Phone Number</label>
+        <input type="tel" id="phone" name="phone" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label for="faculty" class="block text-gray-700 font-medium mb-2 required-field">Faculty In-charge</label>
+        <select id="faculty" name="faculty" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
     <option value="">Select Faculty In‑charge</option>
     <!-- Regular Faculty -->
     <option value="Prof. Antony Franklin">Prof. Antony Franklin</option>
@@ -145,69 +110,58 @@
     <option value="Dr. Kenzo Fujisue">Dr. Kenzo Fujisue</option>
     <option value="Dr. Naveen Sivadasan">Dr. Naveen Sivadasan</option>
   </select>
-</div>
+      </div>
+    </div>
+  </div>
 
-                    <!-- <div>
-                        <label for="staff-incharge" class="block text-gray-700 font-medium mb-2 required-field">Staff In-charge</label>
-                        <input type="text" id="staff-incharge" name="staff-incharge" required placeholder="e.g., Mr. Ramesh Kumar" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div> -->
-                    <div>
-  <label for="staff_incharge" class="block text-gray-700 font-medium mb-2 required-field">
-    Staff In-charge
-  </label>
-  <select id="staff_incharge" name="staff_incharge" required
-    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-    <option value="">Select Staff In‑charge</option>
-    <option value="N. Syamala Rao">Mr. N. Syamala Rao</option>
-    <option value="T. Vijayachakravarthi">Mr. T. Vijayachakravarthi</option>
-    <option value="Nikith Reddy Peddasheri">Mr. Nikith Reddy Peddasheri</option>
-    <option value="Sunitha Maloth">Ms. Sunitha Maloth</option>
-    <option value="G Praveen Kumar">Mr. G Praveen Kumar</option>
-    <option value="Shiva Kumar Reddy">Mr. Shiva Kumar Reddy</option>
-    <option value="Kiran Kumar Kavali">Mr. Kiran Kumar Kavali</option>
-  </select>
-</div>
+  <div class="mt-6">
+    <label class="font-medium text-gray-700">Requirement Type</label>
+    <select name="requirement_type" id="requirement_type" onchange="toggleSections()" class="input">
+      <option value="">-- Select --</option>
+      <option value="cubicle_only">Cubicle Only</option>
+      <option value="workstation">Workstation Allocation</option>
+      <option value="it_equipment">Assign IT Equipment</option>
+    </select>
+  </div>
 
-                    <div>
-                        <label for="email" class="block text-gray-700 font-medium mb-2 required-field">Email Address</label>
-                        <input type="email" id="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="phone" class="block text-gray-700 font-medium mb-2 required-field">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    
-                     <div>
-                        <label for="Room/Lab-name" class="block text-gray-700 font-medium mb-2 required-field">Room/Lab-name</label>
-                        <!-- <input type="text" id="Room/Lab-name" name="Room/Lab-name" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"> -->
-                        <select id="room_lab_name" name="room_lab_name" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-  <option value="">Select Room/Lab-Name</option>
-  <option value="CS-107">CS-107</option>
-  <option value="CS-108">CS-108</option>
-  <option value="CS-109">CS-109</option>
-  <option value="CS-207">CS-207</option>
-  <option value="CS-208">CS-208</option>
-  <option value="CS-209">CS-209</option>
-  <option value="CS-317">CS-317</option>
-  <option value="CS-318">CS-318</option>
-  <option value="CS-319">CS-319</option>
-  <option value="CS-320">CS-320</option>
-  <option value="CS-411">CS-411</option>
-  <option value="CS-412">CS-412</option>
-</select>
-
-
-                    </div>
-                     <div>
-                        <!-- <label for="Cubible-No" class="block text-gray-700 font-medium mb-2 required-field">Cubicle-No</label>
-                        <input type="number" id="Cubible-No" name="Cubible-No" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"> -->
-                         <label for="cubicle-no" class="block text-gray-700 font-medium mb-2 required-field">Cubicle Number</label>
-
-<select id="cubicle_no" name="cubicle_no" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-  <option value="">-- Select Cubicle --</option>
-</select>
-
-                    </div>
+  <div id="cubicle-section" class="mt-4 hidden">
+    <h2 class="text-lg font-semibold text-indigo-600">Cubicle Details</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="room_lab_name" class="block text-gray-700 font-medium mb-2 required-field">Room/Lab-name</label>
+        <select id="room_lab_name" name="room_lab_name" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="populateCubicles()">
+          <option value="">Select Room/Lab-Name</option>
+          {% for room in room_lab_names %}
+          <option value="{{ room }}">{{ room }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="cubicle_no" class="block text-gray-700 font-medium mb-2 required-field">Cubicle Number</label>
+        <select id="cubicle_no" name="cubicle_no" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">-- Select Cubicle --</option>
+        </select>
+      </div>
+       <div id="workstation-section" class="mt-4 hidden">
+    <h2 class="text-lg font-semibold text-indigo-600">Workstation Details</h2>
+  
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="room_lab_name" class="block text-gray-700 font-medium mb-2 required-field">Room/Lab-name</label>
+        <select id="room_lab_name" name="room_lab_name" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="populateCubicles()">
+          <option value="">Select Room/Lab-Name</option>
+          {% for room in room_lab_names %}
+          <option value="{{ room }}">{{ room }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="cubicle_no" class="block text-gray-700 font-medium mb-2 required-field">Cubicle Number</label>
+        <select id="cubicle_no" name="cubicle_no" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">-- Select Cubicle --</option>
+        </select>
+      </div>
+    </div>
                 </div>
             </div>
             
@@ -315,18 +269,303 @@
                         <label for="otherRam" class="block text-gray-700 font-medium mb-2">Specify Other RAM Size (GB)</label>
                         <input type="number" id="otherRam" name="otherRam" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
-                     <!-- <div>
-                        <label for="ram-type" class="block text-gray-700 font-medium mb-2">RAM Type</label>
-                        <select id="ram-type" name="ram-type" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Select RAM Type</option>
-                            <option value="DDR3">DDR3</option>
-                            <option value="DDR4">DDR4</option>
-                            <option value="DDR5">DDR5</option>
-                            <option value="LPDDR4">LPDDR4</option>
-                            <option value="LPDDR5">LPDDR5</option>
+                
+                </div>
+            </div>
+            
+            <!-- Storage & Graphics Section -->
+            <div class="form-section bg-indigo-50 rounded-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Storage & Graphics</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="storage-type1" class="block text-gray-700 font-medium mb-2 required-field">Primary Storage Type 1</label>
+                        <select id="storage_type1" name="storage_type1" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select Storage Type</option>
+                            <option value="HDD">HDD (Hard Disk Drive)</option>
+                            <option value="SSD">SSD (Solid State Drive)</option>
+                            <option value="NVMe">NVMe SSD</option>
                             <option value="Other">Other</option>
                         </select>
+                    </div>
+                    <div>
+                        <label for="storage-capacity1" class="block text-gray-700 font-medium mb-2 required-field">Storage Capacity (GB)</label>
+                        <input type="number" id="storage_capacity1" name="storage_capacity1" required min="1" placeholder="e.g., 512 GB" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <!-- <div>
+                        <label for="secondary-storage" class="block text-gray-700 font-medium mb-2">Secondary Storage (if any)</label>
+                        <input type="text" id="secondary-storage" name="secondary-storage" placeholder="e.g., 1TB HDD" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div> -->
+                     <div>
+                        <label for="storage-type2" class="block text-gray-700 font-medium mb-2 ">Primary Storage Type 2 (if any)</label>
+                        <select id="storage_type2" name="storage_type2" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select Storage Type2</option>
+                            <option value="HDD">HDD (Hard Disk Drive)</option>
+                            <option value="SSD">SSD (Solid State Drive)</option>
+                            <option value="NVMe">NVMe SSD</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="storage-capacity2" class="block text-gray-700 font-medium mb-2">Storage Capacity (GB)</label>
+                        <input type="number" id="storage_capacity2" name="storage_capacity2" min="1" placeholder="e.g., 512 GB" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="gpu" class="block text-gray-700 font-medium mb-2 ">Graphics Card (GPU) (If any,Mention it's name,Else Mention N/A) </label>
+                        <input type="text" id="gpu" name="gpu"  placeholder="e.g., NVIDIA GeForce RTX 3060, Intel Iris Xe" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="vram" class="block text-gray-700 font-medium mb-2">GPU Memory (VRAM) in GB</label>
+                        <input type="number" id="vram" name="vram" min="0" step="0.5" placeholder="e.g., 6" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+               <!-- Fund and Allotment details -->
+            <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Fund and Allotment details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                        <label for="issue-date" class="block text-gray-700 font-medium mb-2 required-field">System Issue Date</label>
+                        <input type="date" id="issue_date" name="issue_date" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="system-required-till" class="block text-gray-700 font-medium mb-2 required-field">System Required- Till Date</label>
+                        <input type="date" id="system_required_till" name="system_required_till" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="po-date" class="block text-gray-700 font-medium mb-2">PO Date</label>
+                        <input type="date" id="po_date" name="po_date" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                   
+                    <div>
+                        <label for="source-of-fund" class="block text-gray-700 font-medium mb-2">Source of Fund</label>
+                        <input type="text" id="source_of_fund" name="source_of_fund" placeholder="e.g., Project, Institute Fund" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                            
+                </div>
+            </div>
+
+            
+            <!-- Peripherals Section -->
+            <div class="form-section bg-green-50 rounded-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Peripherals</h2>
+                
+                <!-- Keyboard Section -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-indigo-700 mb-4">Keyboard</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2 required-field">Is the keyboard provided by the institution?</label>
+                            <div class="mt-2 space-x-4">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="keyboard_provided" value="yes" class="form-radio text-indigo-600" required>
+                                    <span class="ml-2">Yes</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="keyboard_provided" value="no" class="form-radio text-indigo-600">
+                                    <span class="ml-2">No</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="keyboard-details-container" class="hidden">
+                            <label for="keyboard-details" class="block text-gray-700 font-medium mb-2 required-field">Keyboard Details</label>
+                            <input type="text" id="keyboard_details" name="keyboard_details" placeholder="e.g., Dell KB216, Mechanical Keyboard" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mouse Section -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-indigo-700 mb-4">Mouse</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2 required-field">Is the mouse provided by the institution?</label>
+                            <div class="mt-2 space-x-4">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="mouse_provided" value="yes" class="form-radio text-indigo-600" required>
+                                    <span class="ml-2">Yes</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="mouse_provided" value="no" class="form-radio text-indigo-600">
+                                    <span class="ml-2">No</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="mouse-details-container" class="hidden">
+                            <label for="mouse-details" class="block text-gray-700 font-medium mb-2 required-field">Mouse Details</label>
+                            <input type="text" id="mouse_details" name="mouse_details" placeholder="e.g., Dell MS116, Logitech M185" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Monitor Section -->
+                <div>
+                    <h3 class="text-lg font-medium text-indigo-700 mb-4">Monitor</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2 required-field">Is the monitor provided by the institution?</label>
+                            <div class="mt-2 space-x-4">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="monitor_provided" value="yes" class="form-radio text-indigo-600" required>
+                                    <span class="ml-2">Yes</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="monitor_provided" value="no" class="form-radio text-indigo-600">
+                                    <span class="ml-2">No</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="monitor_provided" value="laptop" class="form-radio text-indigo-600">
+                                    <span class="ml-2">Using Laptop Screen</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="monitor-details-container" class="hidden">
+                            <label for="monitor-details" class="block text-gray-700 font-medium mb-2 ">Monitor Details</label>
+                            <input type="text" id="monitor_details" name="monitor_details" placeholder="e.g., Dell P2419H, HP 24mh" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div id="monitor-size-container" class="hidden">
+                            <label for="monitor-size" class="block text-gray-700 font-medium mb-2 ">Screen Size (inches)</label>
+                            <input type="number" id="monitor_size" name="monitor_size" min="10" max="100" step="0.1" placeholder="e.g., 24"  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div id="monitor-serial-container" class="hidden">
+                            <label for="monitor-serial" class="block text-gray-700 font-medium mb-2 ">Serial Number</label>
+                            <input type="text" id="monitor_serial" name="monitor_serial" placeholder="e.g., CN123456789" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+  </div>
+
+  <div id="workstation-section" class="mt-4 hidden">
+    <h2 class="text-lg font-semibold text-indigo-600">Workstation Details</h2>
+  
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="room_lab_name" class="block text-gray-700 font-medium mb-2 required-field">Room/Lab-name</label>
+        <select id="room_lab_name" name="room_lab_name" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="populateCubicles()">
+          <option value="">Select Room/Lab-Name</option>
+          {% for room in room_lab_names %}
+          <option value="{{ room }}">{{ room }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="cubicle_no" class="block text-gray-700 font-medium mb-2 required-field">Cubicle Number</label>
+        <select id="cubicle_no" name="cubicle_no" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">-- Select Cubicle --</option>
+        </select>
+      </div>
+    </div>
+                </div>
+            </div>
+            
+            <!-- System Hardware Details Section -->
+            <div class="form-section bg-indigo-50 rounded-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">System Hardware Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- <div>
+                        <label for="manufacturer" class="block text-gray-700 font-medium mb-2 required-field">CPU Manufacturer</label>
+                        <input type="text" id="manufacturer" name="manufacturer" required placeholder="e.g., Dell, HP, Lenovo" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div> -->
+                        <div>
+  <label for="manufacturer" class="block text-gray-700 font-medium mb-2 required-field">CPU Manufacturer</label>
+  <select id="manufacturer" name="manufacturer" required
+    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    onchange="toggleOtherManufacturer()">
+    <option value="">Select CPU/Laptop Manufacturer</option>
+    <option value="Dell">Dell</option>
+    <option value="HP">HP</option>
+    <option value="Lenovo">Lenovo</option>
+    <option value="Apple">Apple</option>
+    <option value="Acer">Acer</option>
+    <option value="ASUS">ASUS</option>
+    <option value="MSI">MSI</option>
+    <option value="Samsung">Samsung</option>
+    <option value="Sony">Sony</option>
+    <option value="Toshiba">Toshiba</option>
+    <option value="Fujitsu">Fujitsu</option>
+    <option value="Panasonic">Panasonic</option>
+    <option value="HCL">HCL</option>
+    <option value="Wipro">Wipro</option>
+    <option value="Supermicro">Supermicro</option>
+    <option value="Gigabyte">Gigabyte</option>
+    <option value="Intel">Intel</option>
+    <option value="AMD">AMD</option>
+    <option value="Asrock">Asrock</option>
+    <option value="Apogean">Apogee</option>
+    <option value="Tyron">Tyron</option>
+    <option value="Zebronics">Zebronics</option>
+    <option value="Others">Others</option>
+  </select>
+</div>
+
+<div id="otherManufacturerContainer" class="hidden mt-2">
+  <label for="otherManufacturer" class="block text-gray-700 font-medium mb-2">Specify Other Manufacturer</label>
+  <input type="text" id="otherManufacturer" name="otherManufacturer"
+    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+</div>
+
+
+                    <div>
+                        <label for="model" class="block text-gray-700 font-medium mb-2 required-field">Model Name</label>
+                        <input type="text" id="model" name="model" required placeholder="e.g., XPS 15, ThinkPad T480" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label for="serial" class="block text-gray-700 font-medium mb-2 required-field">Serial Number</label>
+                        <input type="text" id="serial" name="serial" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="os" class="block text-gray-700 font-medium mb-2 required-field">Operating System</label>
+                        <select id="os" name="os" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select OS</option>
+                            <option value="Windows 11">Windows</option>
+                            <option value="macOS">macOS</option>
+                            <option value="Ubuntu">Ubuntu</option> 
+                            <option value="Ubuntu">Dual Boot</option>                    
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div id="otherOsContainer" class="hidden">
+                        <label for="otherOs" class="block text-gray-700 font-medium mb-2">Specify Other OS</label>
+                        <input type="text" id="otherOs" name="otherOs" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Processor & Memory Section -->
+            <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Processor & Memory</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="processor" class="block text-gray-700 font-medium mb-2 required-field">Processor (CPU)</label>
+                        <input type="text" id="processor" name="processor" required placeholder="e.g., Intel Core i7-10700K, AMD Ryzen 7 5800X" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="cores" class="block text-gray-700 font-medium mb-2">Number of Cores</label>
+                        <input type="number" id="cores" name="cores" min="1" max="128" placeholder="e.g., 8" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="ram" class="block text-gray-700 font-medium mb-2 required-field">RAM (GB)</label>
+                        <select id="ram" name="ram" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Select RAM Size</option>
+                            <option value="2">2 GB</option>
+                            <option value="4">4 GB</option>
+                            <option value="8">8 GB</option>
+                            <option value="16">16 GB</option>
+                            <option value="32">32 GB</option>
+                            <option value="64">64 GB</option>
+                            <option value="128">128 GB</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div id="otherRamContainer" class="hidden">
+                        <label for="otherRam" class="block text-gray-700 font-medium mb-2">Specify Other RAM Size (GB)</label>
+                        <input type="number" id="otherRam" name="otherRam" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                
                 </div>
             </div>
             
@@ -493,317 +732,115 @@
                 </div>
             </div>
             
-            <!-- Form Actions -->
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="text-sm text-gray-600">
-                    <span class="text-red-500">*</span> Required fields
-                </div>
-                <div class="flex flex-wrap gap-4">
-                    <button type="reset" class="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors">
-                        Reset Form
-                    </button>
-                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
-                        Submit Details
-                    </button>
-                </div>
-            </div>
-        </form>
-        
-        <!-- Success Message (Hidden by default) -->
-        <div id="success-message" class="hidden bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-8 rounded-md">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm">Your system hardware details have been submitted successfully!</p>
-                    <div class="mt-2">
-                        <button id="download-excel" class="px-4 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors">
-                            Download Excel Sheet
-                        </button>
-                        <p class="mt-2 text-xs text-gray-600">Note: Data is stored locally. For Google Sheets integration, please contact your administrator.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <footer class="text-center text-gray-600 text-sm py-4">
-            <p>&copy; 2025 CSE Department. All rights reserved.</p>
-            <p class="mt-1">For technical support, please contact: <a href="mailto:cse-support@example.edu" class="text-indigo-600 hover:underline">office@cse.iith.c.in</a></p>
-        </footer>
-    </div>
+
 </div>
+  <!-- Include your previous Workstation and IT Equipment code here -->
+
+  <div class="mt-6 text-center">
+    <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">Submit</button>
+  </div>
+</form>
 
 <script>
-    
-  const cubicleOptions = {
-    "CS-107": 43,
-    "CS-108": 21,
-    "CS-109": 114,
-    "CS-207": 30,
-    "CS-208": 25,
-    "CS-209": 142,
-    "CS-317": 25,
-    "CS-318": 25,
-    "CS-319": 32,
-    "CS-320": 27,
-    "CS-411": 25,
-    "CS-412": 33
+  
+  const cubicleMap = {
+    "CS-107": 43, "CS-108": 21, "CS-109": 114,
+    "CS-207": 30, "CS-208": 25, "CS-209": 142,
+    "CS-317": 25, "CS-318": 25, "CS-319": 32,
+    "CS-320": 27, "CS-411": 25, "CS-412": 33
   };
 
-  const roomSelect = document.getElementById("room_lab_name");
-  const cubicleSelect = document.getElementById("cubicle_no");
-
-  roomSelect.addEventListener("change", () => {
-    const selectedLab = roomSelect.value;
-    const capacity = cubicleOptions[selectedLab] || 0;
-
-    cubicleSelect.innerHTML = '<option value="">-- Select Cubicle --</option>';
-
-    for (let i = 1; i <= capacity; i++) {
-      const option = document.createElement("option");
-      option.value = i;
-      option.textContent = i;
-      cubicleSelect.appendChild(option);
+  function populateCubicles() {
+    const room = document.getElementById("room_lab_name").value;
+    const cubicle = document.getElementById("cubicle_no");
+    cubicle.innerHTML = '<option value="">-- Select Cubicle --</option>';
+    if (cubicleMap[room]) {
+      for (let i = 1; i <= cubicleMap[room]; i++) {
+        let opt = document.createElement("option");
+        opt.value = i;
+        opt.text = `Cubicle ${i}`;
+        cubicle.appendChild(opt);
+      }
     }
-  });
-
-  window.addEventListener("DOMContentLoaded", () => {
-    if (roomSelect.value) {
-      roomSelect.dispatchEvent(new Event("change"));
-    }
-  });
-
-
-    function toggleOtherManufacturer() {
-  const select = document.getElementById('manufacturer');
-  const otherContainer = document.getElementById('otherManufacturerContainer');
-  if (select.value === 'Others') {
-    otherContainer.classList.remove('hidden');
-  } else {
-    otherContainer.classList.add('hidden');
   }
-}
 
-    // Store all form submissions
-    let allSubmissions = [];
-    
-    // Show "Other OS" field when "Other" is selected
-    document.getElementById('os').addEventListener('change', function() {
-        const otherOsContainer = document.getElementById('otherOsContainer');
-        if (this.value === 'Other') {
-            otherOsContainer.classList.remove('hidden');
-            document.getElementById('otherOs').setAttribute('required', '');
-        } else {
-            otherOsContainer.classList.add('hidden');
-            document.getElementById('otherOs').removeAttribute('required');
-        }
-    });
-    
-    // Show "Other RAM" field when "Other" is selected
-    document.getElementById('ram').addEventListener('change', function() {
-        const otherRamContainer = document.getElementById('otherRamContainer');
-        if (this.value === 'other') {
-            otherRamContainer.classList.remove('hidden');
-            document.getElementById('otherRam').setAttribute('required', '');
-        } else {
-            otherRamContainer.classList.add('hidden');
-            document.getElementById('otherRam').removeAttribute('required');
-        }
-    });
-    
-    // Handle keyboard provided radio buttons
-    document.querySelectorAll('input[name="keyboard_provided"]').forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            const detailsContainer = document.getElementById('keyboard-details-container');
-            if (this.value === 'yes') {
-                detailsContainer.classList.remove('hidden');
-                document.getElementById('keyboard_details').setAttribute('required', '');
-            } else {
-                detailsContainer.classList.add('hidden');
-                document.getElementById('keyboard_details').removeAttribute('required');
-            }
-        });
-    });
-    
-    // Handle mouse provided radio buttons
-    document.querySelectorAll('input[name="mouse_provided"]').forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            const detailsContainer = document.getElementById('mouse-details-container');
-            if (this.value === 'yes') {
-                detailsContainer.classList.remove('hidden');
-                document.getElementById('mouse_details').setAttribute('required', '');
-            } else {
-                detailsContainer.classList.add('hidden');
-                document.getElementById('mouse_details').removeAttribute('required');
-            }
-        });
-    });
-    
-    // Handle monitor provided radio buttons
-    document.querySelectorAll('input[name="monitor_provided"]').forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            const detailsContainer = document.getElementById('monitor-details-container');
-            const sizeContainer = document.getElementById('monitor-size-container');
-            const serialContainer = document.getElementById('monitor-serial-container');
-            if (this.value === 'yes') {
-                detailsContainer.classList.remove('hidden');
-                sizeContainer.classList.remove('hidden');
-                serialContainer.classList.remove('hidden');
-                document.getElementById('monitor_details').setAttribute('required', '');
-            } else {
-                detailsContainer.classList.add('hidden');
-                sizeContainer.classList.add('hidden');
-                serialContainer.classList.add('hidden');
-                document.getElementById('monitor_details').removeAttribute('required');
-            }
-        });
-    });
-    
-    // Function to convert form data to Excel and download
-    function exportToExcel(data, filename = 'CSE_Lab_Workstations.xlsx') {
-        try {
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Hardware Details");
-            XLSX.writeFile(wb, filename);
-            return true;
-        } catch (error) {
-            console.error("Excel export error:", error);
-            alert("There was an error generating the Excel file. Please try again.");
-            return false;
-        }
+  function toggleSections() {
+    const selected = document.getElementById("requirement_type").value;
+    document.getElementById("cubicle-section").classList.add("hidden");
+    document.getElementById("workstation-section").classList.add("hidden");
+
+    if (selected === "cubicle_only") {
+      document.getElementById("cubicle-section").classList.remove("hidden");
+    } else if (selected === "workstation") {
+      document.getElementById("workstation-section").classList.remove("hidden");
     }
-    
-    // Form submission handler
-    document.getElementById('hardware-form').addEventListener('submit', function(e) {
-        
-        
-        // Collect form data
-        const formData = new FormData(this);
-        const formDataObj = {};
-        
-        // Process form data into a structured object
-        formData.forEach((value, key) => {
-            formDataObj[key] = value;
-        });
-        
-        // Add timestamp
-        formDataObj['submission_date'] = new Date().toISOString().split('T')[0];
-        
-        // Format data for Excel
-        const excelData = {
-            "Full Name": formDataObj.name || "",
-            "Roll Number": formDataObj.roll || "",
-            "Course": formDataObj.course || "",
-            "Year of Study": formDataObj.year || "",
-            "Faculty In-charge": formDataObj.faculty || "",
-            "Staff In-charge": formDataObj['staff-incharge'] || "",
-            "Email Address": formDataObj.email || "",
-            "Phone Number": formDataObj.phone || "",
-            "System Required Till Date": formDataObj['system-required-till'] || "",
-            "System Manufacturer": formDataObj.manufacturer || "",
-            "Model Name": formDataObj.model || "",
-            "PO Date": formDataObj['po-date'] || "",
-            "Issue Date": formDataObj['issue-date'] || "",
-            "Source of Fund": formDataObj['source-of-fund'] || "",
-            "Serial Number": formDataObj.serial || "",
-            "Operating System": formDataObj.os === "Other" ? formDataObj.otherOs : formDataObj.os || "",
-            "Processor (CPU)": formDataObj.processor || "",
-            "Number of Cores": formDataObj.cores || "",
-            "RAM (GB)": formDataObj.ram === "other" ? formDataObj.otherRam : formDataObj.ram || "",
-            "RAM Type": formDataObj['ram-type'] || "",
-            "Primary Storage Type": formDataObj['storage-type'] || "",
-            "Storage Capacity (GB)": formDataObj['storage-capacity'] || "",
-            "Secondary Storage": formDataObj['secondary-storage'] || "",
-            "Graphics Card (GPU)": formDataObj.gpu || "",
-            "GPU Memory (VRAM) in GB": formDataObj.vram || "",
-            "Keyboard Provided by Institution": formDataObj['keyboard-provided'] || "",
-            "Keyboard Details": formDataObj['keyboard-details'] || "",
-            "Mouse Provided by Institution": formDataObj['mouse-provided'] || "",
-            "Mouse Details": formDataObj['mouse-details'] || "",
-            "Monitor Provided by Institution": formDataObj['monitor-provided'] || "",
-            "Monitor Details": formDataObj['monitor-details'] || "",
-            "Screen Size (inches)": formDataObj['monitor-size'] || "",
-            "Monitor Serial Number": formDataObj['monitor-serial'] || "",
-            "Submission Date": formDataObj.submission_date || ""
-        };
-        
-        // Add to all submissions
-        allSubmissions.push(excelData);
-        
-        // Store in localStorage for persistence
-        localStorage.setItem('cseLabWorkstations', JSON.stringify(allSubmissions));
-        fetch("https://script.google.com/macros/s/AKfycbwQiFsBus3K7wJkSqLtHeeeMvZFr2TObboA0v85D3BfhP4xUKYY8Qi7CFpGv04tYz_n/exec", {
-    method: "POST",
-    mode: "no-cors",
-    headers: {
-        "Content-Type": "application/json"
-    },
-    body: JSON.stringify(excelData)
-})
-.then(response => response.text())
-.then(result => {
-    console.log("✅ Google Sheet updated:", result);
-})
-.catch(error => {
-    console.error("❌ Error submitting to Google Sheet:", error);
-});
+  }
 
+  function toggleOtherManufacturer() {
+    const value = document.getElementById("manufacturer").value;
+    const container = document.getElementById("otherManufacturerContainer");
+    container.classList.toggle("hidden", value !== "Others");
+  }
 
-        // Show success message
-        document.getElementById('success-message').classList.remove('hidden');
-        
-        // Scroll to success message
-        document.getElementById('success-message').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById("os").addEventListener("change", function () {
+    const os = this.value;
+    document.getElementById("otherOsContainer").classList.toggle("hidden", os !== "Other");
+  });
+
+  document.getElementById("ram").addEventListener("change", function () {
+    const ram = this.value;
+    document.getElementById("otherRamContainer").classList.toggle("hidden", ram !== "other");
+  });
+
+  // Keyboard toggle
+  document.getElementsByName("keyboard_provided").forEach((radio) => {
+    radio.addEventListener("change", () => {
+      const container = document.getElementById("keyboard-details-container");
+      container.classList.toggle("hidden", document.querySelector('input[name="keyboard_provided"]:checked').value !== "yes");
     });
-    
-    // Download current submission as Excel
-document.getElementById('download-excel').addEventListener('click', function() {
-    const savedData = localStorage.getItem('cseLabWorkstations');
-    if (savedData) {
-        try {
-            const allData = JSON.parse(savedData);
-            if (allData.length > 0) {
-                exportToExcel(allData, 'CSE_Lab_Workstations_All.xlsx');
-            } else {
-                alert('No data to export.');
-            }
-        } catch (e) {
-            console.error('Error parsing saved data:', e);
-            alert('Failed to load submission data.');
-        }
-    } else {
-        alert('No submission data available. Please submit the form first.');
-    }
-});    
-    // Load any existing submissions from localStorage
-    document.addEventListener('DOMContentLoaded', function() {
-        const savedData = localStorage.getItem('cseLabWorkstations');
-        if (savedData) {
-            try {
-                allSubmissions = JSON.parse(savedData);
-            } catch (e) {
-                console.error('Error loading saved data:', e);
-                allSubmissions = [];
-            }
-        }
+  });
+
+  // Mouse toggle
+  document.getElementsByName("mouse_provided").forEach((radio) => {
+    radio.addEventListener("change", () => {
+      const container = document.getElementById("mouse-details-container");
+      container.classList.toggle("hidden", document.querySelector('input[name="mouse_provided"]:checked').value !== "yes");
     });
-</script>       
- <!-- SheetJS for Excel export -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  });
 
-        <!-- Your existing <script> block should be pasted here (already done above) -->
+  // Monitor toggle
+  document.getElementsByName("monitor_provided").forEach((radio) => {
+    radio.addEventListener("change", () => {
+      const value = document.querySelector('input[name="monitor_provided"]:checked').value;
+      const detailsContainer = document.getElementById("monitor-details-container");
+      const sizeContainer = document.getElementById("monitor-size-container");
+      const serialContainer = document.getElementById("monitor-serial-container");
 
-        <!-- Optional: Hide success message on reset -->
-        <script>
-            document.querySelector('form').addEventListener('reset', () => {
-                document.getElementById('success-message').classList.add('hidden');
-            });
-        
-        </script>
-    </div>
+      const show = (value === "yes");
+      detailsContainer.classList.toggle("hidden", !show);
+      sizeContainer.classList.toggle("hidden", !show);
+      serialContainer.classList.toggle("hidden", !show);
+    });
+  });
+
+  // On page load, if values are pre-filled (edit case), call toggles
+  window.addEventListener("DOMContentLoaded", () => {
+    toggleOtherManufacturer();
+    document.getElementById("os").dispatchEvent(new Event("change"));
+    document.getElementById("ram").dispatchEvent(new Event("change"));
+
+    const keyboardSelected = document.querySelector('input[name="keyboard_provided"]:checked');
+    if (keyboardSelected) keyboardSelected.dispatchEvent(new Event("change"));
+
+    const mouseSelected = document.querySelector('input[name="mouse_provided"]:checked');
+    if (mouseSelected) mouseSelected.dispatchEvent(new Event("change"));
+
+    const monitorSelected = document.querySelector('input[name="monitor_provided"]:checked');
+    if (monitorSelected) monitorSelected.dispatchEvent(new Event("change"));
+
+    toggleSections();
+  });
+</script>
+
+
 {% endblock %}

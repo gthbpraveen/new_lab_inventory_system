@@ -68,29 +68,6 @@ def send_to_google_sheet(data):
     except Exception as e:
         print("❌ Error sending to Google Sheet:", e)
 
-#@app.route("/", methods=["GET", "POST"])
-#def index():
-#    if request.method == "POST":
-#        form_data = request.form.to_dict()
-#        room = form_data.get("room_lab_name")
-#        cubicle = form_data.get("cubicle_no")
-
-        # ✅ Check for existing assignment of same room + cubicle
- #       existing = Workstation.query.filter_by(room_lab_name=room, cubicle_no=cubicle).first()
-  #      if existing:
-   #         error_msg = f"⚠️ Cubicle {cubicle} in {room} has already been assigned."
-    #        return render_template("index.html", error=error_msg, form_data=form_data)
-#
-        # ✅ No conflict — proceed to save
- #       workstation = Workstation(**form_data)
-  #      db.session.add(workstation)
-   #     db.session.commit()
-
-    #    send_to_google_sheet(form_data)
-     #   return "✅ Submitted Successfully"
-
- #   return render_template("index.html")
-#
 
 @app.route("/")
 def home():
@@ -102,39 +79,136 @@ def login_home():
     return render_template("login_home.html")
 
 
+from flask import render_template, request, redirect, url_for
+
+from models import Student, Workstation, Equipment, EquipmentHistory, RoomLab, Cubicle
+from datetime import datetime
+
 @app.route("/index", methods=["GET", "POST"])
-def index():
+def index_student_form():
     error = None
-    form_data = {}
+    success = None
+    room_lab_names = [room.name for room in RoomLab.query.all()]
+    all_equipment = Equipment.query.all()
 
     if request.method == "POST":
-        form_data = request.form.to_dict()
-        room = form_data.get("room_lab_name")
-        cubicle = form_data.get("cubicle_no")
-        roll = form_data.get("roll")
+        form = request.form.to_dict()
+        roll = form.get("roll")
+        requirement_type = form.get("requirement_type")
 
-        # ✅ Check if roll number already exists
-        existing_roll = Workstation.query.filter_by(roll=roll).first()
-        if existing_roll:
-            error = f"⚠️ Roll number {roll} has already been allotted a machine."
-            return render_template("index.html", error=error, form_data=form_data)
+        # Create or fetch student
+        student = Student.query.filter_by(roll=roll).first()
+        if not student:
+            student = Student(
+                name=form.get("name"),
+                roll=roll,
+                course=form.get("course"),
+                year=form.get("year"),
+                joining_year=form.get("joining_year"),
+                faculty=form.get("faculty"),
+                email=form.get("email"),
+                phone=form.get("phone")
+            )
+            db.session.add(student)
+            db.session.flush()
 
-        # ✅ Check if cubicle in lab is already assigned
-        existing_cubicle = Workstation.query.filter_by(room_lab_name=room, cubicle_no=cubicle).first()
-        if existing_cubicle:
-            error = f"⚠️ Cubicle {cubicle} in {room} has already been assigned."
-            return render_template("index.html", error=error, form_data=form_data)
+        # Option 1: Cubicle only
+        if requirement_type == "cubicle_only":
+            room = form.get("room_lab_name")
+            cubicle = form.get("cubicle_no")
+            exists = Workstation.query.filter_by(room_lab_name=room, cubicle_no=cubicle).first()
+            if exists:
+                error = f"⚠️ Cubicle {cubicle} in {room} is already assigned."
+            else:
+                ws = Workstation(roll=roll, room_lab_name=room, cubicle_no=cubicle)
+                db.session.add(ws)
+                success = "Cubicle assigned successfully."
 
-        # ✅ Save the new entry
-        workstation = Workstation(**form_data)
-        db.session.add(workstation)
+        # Option 2: Workstation allocation
+        elif requirement_type == "workstation":
+            room = form.get("room_lab_name")
+            cubicle = form.get("cubicle_no")
+            exists = Workstation.query.filter_by(room_lab_name=room, cubicle_no=cubicle).first()
+            if exists:
+                error = f"⚠️ Cubicle {cubicle} in {room} is already assigned."
+            else:
+                ws = Workstation(
+                    roll=roll,
+                    room_lab_name=room,
+                    cubicle_no=cubicle,
+                    manufacturer=form.get("manufacturer"),
+                    otherManufacturer=form.get("otherManufacturer"),
+                    model=form.get("model"),
+                    serial=form.get("serial"),
+                    os=form.get("os"),
+                    otherOs=form.get("otherOs"),
+                    processor=form.get("processor"),
+                    cores=form.get("cores"),
+                    ram=form.get("ram"),
+                    otherRam=form.get("otherRam"),
+                    storage_type1=form.get("storage_type1"),
+                    storage_capacity1=form.get("storage_capacity1"),
+                    storage_type2=form.get("storage_type2"),
+                    storage_capacity2=form.get("storage_capacity2"),
+                    gpu=form.get("gpu"),
+                    vram=form.get("vram"),
+                    issue_date=form.get("issue_date"),
+                    system_required_till=form.get("system_required_till"),
+                    po_date=form.get("po_date"),
+                    source_of_fund=form.get("source_of_fund"),
+                    keyboard_provided=form.get("keyboard_provided"),
+                    keyboard_details=form.get("keyboard_details"),
+                    mouse_provided=form.get("mouse_provided"),
+                    mouse_details=form.get("mouse_details"),
+                    monitor_provided=form.get("monitor_provided"),
+                    monitor_details=form.get("monitor_details"),
+                    monitor_size=form.get("monitor_size"),
+                    monitor_serial=form.get("monitor_serial")
+                )
+                db.session.add(ws)
+                success = "Workstation details saved."
+
+        # Option 3: Assign IT Equipment
+        elif requirement_type == "it_equipment":
+            selected_items = [key for key in form if key.startswith("equipment_")]
+            for item_key in selected_items:
+                eq_id = form.get(item_key)
+                if eq_id:
+                    eq = Equipment.query.get(int(eq_id))
+                    if eq and eq.status == "Available":
+                        eq.assigned_to_roll = roll
+                        eq.assigned_by = "System"
+                        eq.assigned_date = datetime.now()
+                        eq.status = "Assigned"
+
+                        # Log to history
+                        history = EquipmentHistory(
+                            equipment_id=eq.id,
+                            assigned_to_roll=roll,
+                            assigned_by="System",
+                            assigned_date=datetime.now(),
+                            status_snapshot="Assigned"
+                        )
+                        db.session.add(history)
+            success = "Equipment assigned successfully."
+
         db.session.commit()
+        return render_template(
+            "index.html",
+            room_lab_names=room_lab_names,
+            equipment_list=all_equipment,
+            error=error,
+            success=success
+        )
 
-        send_to_google_sheet(form_data)
+    return render_template(
+        "index.html",
+        room_lab_names=room_lab_names,
+        equipment_list=all_equipment,
+        error=error,
+        success=success
+    )
 
-        return render_template("index.html", success=True)
-
-    return render_template("index.html")
 
 
 @app.route("/records")
@@ -201,96 +275,12 @@ def search():
     return render_template("search.html", result=result, message=message, layout="login_home.html")
 
 
-# @app.route("/utilization")
-# def utilization():
-#     all_records = Workstation.query.all()
 
-#     lab_capacities = {
-#         "CS-107": 43,
-#         "CS-108": 21,
-#         "CS-109": 114,
-#         "CS-207": 30,
-#         "CS-208": 25,
-#         "CS-209": 142,
-#         "CS-317": 25,
-#         "CS-318": 25,
-#         "CS-319": 32,
-#         "CS-320": 27,
-#         "CS-411": 25,
-#         "CS-412": 33
-#     }
-
-#     from collections import defaultdict
-#     lab_counts = defaultdict(int)
-#     for r in all_records:
-#         lab_counts[r.room_lab_name] += 1
-
-#     lab_stats = {}
-#     for lab, total in lab_capacities.items():
-#         used = lab_counts.get(lab, 0)
-#         available = total - used
-#         lab_stats[lab] = {
-#             "total": total,
-#             "used": used,
-#             "available": available
-#         }
-
-#     return render_template("utilization.html", lab_stats=lab_stats)
 from flask import render_template
 from collections import defaultdict
 from models import Workstation  # Adjust this import to match your structure
 
-# @app.route("/utilization")
-# def utilization():
-#     all_records = Workstation.query.all()
 
-#     lab_capacities = {
-#         "CS-107": 43,
-#         "CS-108": 21,
-#         "CS-109": 114,
-#         "CS-207": 30,
-#         "CS-208": 25,
-#         "CS-209": 142,
-#         "CS-317": 25,
-#         "CS-318": 25,
-#         "CS-319": 32,
-#         "CS-320": 27,
-#         "CS-411": 25,
-#         "CS-412": 33
-#     }
-
-#     lab_counts = defaultdict(int)
-#     used_seats_map = defaultdict(list)
-
-#     for r in all_records:
-#         lab_counts[r.room_lab_name] += 1
-#         try:
-#             seat_no = int(r.cubicle_no)
-#             hover_name = "Occupied"
-#             if r.name and r.roll:
-#                 hover_name = f"{r.name} ({r.roll})"
-#             elif r.name:
-#                 hover_name = r.name
-#             elif r.roll:
-#                 hover_name = r.roll
-
-#             used_seats_map[r.room_lab_name].append((seat_no, hover_name))
-#         except (ValueError, TypeError):
-#             pass  # Invalid seat number; skip
-
-#     lab_stats = {}
-#     for lab, total in lab_capacities.items():
-#         used = lab_counts.get(lab, 0)
-#         available = total - used
-#         used_seats = dict(used_seats_map.get(lab, []))  # {seat_no: hover_text}
-#         lab_stats[lab] = {
-#             "total": total,
-#             "used": used,
-#             "available": available,
-#             "used_seats": used_seats
-#         }
-
-#     return render_template("utilization.html", lab_stats=lab_stats)
 
 from flask import render_template
 from collections import defaultdict
@@ -382,31 +372,6 @@ def alloted_machines():
 
 from models import Equipment, Workstation, EquipmentHistory
 
-# @app.route("/register", methods=["GET", "POST"])
-# def register():
-#     if request.method == "POST":
-#         email = request.form["email"]
-#         password = request.form["password"]
-
-#         # Check if user already exists
-#         existing_user = User.query.filter_by(email=email).first()
-#         if existing_user:
-#             flash("⚠️ Email already registered. Please login.", "warning")
-#             return redirect("/login")
-
-#         hashed_pw = generate_password_hash(password)
-
-#         # ✅ Auto-approve if email is admin
-#         is_admin = email.lower() == "admin@cse.iith.ac.in"
-
-#         user = User(email=email, password=hashed_pw, is_approved=is_admin)
-#         db.session.add(user)
-#         db.session.commit()
-
-#         flash("✅ Registered!" + (" You're auto-approved as Admin." if is_admin else " Please wait for admin approval."))
-#         return redirect("/login")
-
-#     return render_template("register.html")
 from datetime import datetime
 from flask import render_template, request, redirect, flash
 from werkzeug.security import generate_password_hash
@@ -505,12 +470,7 @@ def about_us():
     return render_template('about_us.html') 
 
 
-# @app.route("/logout")
-# @login_required
-# def logout():
-#     logout_user()
-#     #flash("You have been logged out.")
-#     return redirect(url_for("login"))
+
 
 from flask import session
 
@@ -735,69 +695,13 @@ from models import Equipment
 from flask import request, render_template
 from sqlalchemy import or_
 
-# @app.route("/equipment_list", methods=["GET"])
-# def equipment_list():
-#     search_query = request.args.get('search', '').strip()
-#     if search_query:
-#         equipment = Equipment.query.filter(
-#             or_(
-#                 Equipment.name.ilike(f"%{search_query}%"),
-#                 Equipment.category.ilike(f"%{search_query}%"),
-#                 Equipment.status.ilike(f"%{search_query}%"),
-#                 Equipment.department_code.ilike(f"%{search_query}%"),
-#                 Equipment.intender_name.ilike(f"%{search_query}%"),
-#                 Equipment.model.ilike(f"%{search_query}%"),
-#                 Equipment.location.ilike(f"%{search_query}%"),
-#                 Equipment.manufacturer.ilike(f"%{search_query}%"),
-#                 Equipment.serial_number.ilike(f"%{search_query}%"),
-#                 Equipment.po_date.ilike(f"%{search_query}%"),
-#                 Equipment.purchase_date.ilike(f"%{search_query}%")
-#             )
-#         ).all()
-#     else:
-#         equipment = Equipment.query.all()
-#     return render_template("equipment_list.html", equipment=equipment)
+
 
 from flask import request, render_template
 from sqlalchemy import or_
 
 
-# @app.route("/equipment_list", methods=["GET"])
-# def equipment_list():
-#     search_query = request.args.get('search', '').strip()
-#     status_filter = request.args.get('status_filter', '').strip()
-#     page = request.args.get('page', 1, type=int)
-#     per_page = 10  # Adjust as needed
 
-#     query = Equipment.query
-
-#     if search_query:
-#         query = query.filter(
-#             or_(
-#                 Equipment.name.ilike(f"%{search_query}%"),
-#                 Equipment.category.ilike(f"%{search_query}%"),
-#                 Equipment.status.ilike(f"%{search_query}%"),
-#                 Equipment.department_code.ilike(f"%{search_query}%"),
-#                 Equipment.intender_name.ilike(f"%{search_query}%"),
-#                 Equipment.model.ilike(f"%{search_query}%"),
-#                 Equipment.location.ilike(f"%{search_query}%"),
-#                 Equipment.manufacturer.ilike(f"%{search_query}%"),
-#                 Equipment.serial_number.ilike(f"%{search_query}%"),
-#                 Equipment.po_date.ilike(f"%{search_query}%"),
-#                 Equipment.purchase_date.ilike(f"%{search_query}%")
-#             )
-#         )
-
-#     if status_filter:
-#         query = query.filter(Equipment.status == status_filter)
-
-#     pagination = query.order_by(Equipment.id.desc()).paginate(page=page, per_page=per_page)
-    
-#     return render_template("equipment_list.html",
-#                            equipment=pagination.items,
-#                            pagination=pagination,
-#                            search_query=search_query,
-#                            status_filter=status_filter)
 from collections import defaultdict
 from sqlalchemy import or_
 
@@ -982,57 +886,7 @@ lab_meta = {
 }
 
 
-# @app.route('/lab_details/<lab_code>')
-# @login_required
-# def lab_details(lab_code):
-#     from models import Workstation  # Ensure Workstation model is imported
 
-#     total_capacity = {
-#         "CS-107": 43,
-#         "CS-108": 21,
-#         "CS-109": 114,
-#         "CS-207": 30,
-#         "CS-208": 25,
-#         "CS-209": 142,
-#         "CS-317": 25,
-#         "CS-318": 25,
-#         "CS-319": 32,
-#         "CS-320": 27,
-#         "CS-411": 25,
-#         "CS-412": 33
-#     }
-
-#     lab_meta = {
-#         "CS-107": {"faculty": "Dr. Aravind", "meeting_rooms": 1},
-#         "CS-108": {"faculty": "Dr. Shravan", "meeting_rooms": 1},
-#         "CS-109": {"faculty": "Dr. Geetha", "meeting_rooms": 2},
-#         "CS-207": {"faculty": "Dr. Rajeev", "meeting_rooms": 1},
-#         "CS-208": {"faculty": "Dr. Sneha", "meeting_rooms": 1},
-#         "CS-209": {"faculty": "Dr. Ramesh", "meeting_rooms": 3},
-#         "CS-317": {"faculty": "Dr. Anjali", "meeting_rooms": 1},
-#         "CS-318": {"faculty": "Dr. Vinay", "meeting_rooms": 1},
-#         "CS-319": {"faculty": "Dr. Divya", "meeting_rooms": 1},
-#         "CS-320": {"faculty": "Dr. Manoj", "meeting_rooms": 1},
-#         "CS-411": {"faculty": "Dr. Isha", "meeting_rooms": 2},
-#         "CS-412": {"faculty": "Dr. Aditya", "meeting_rooms": 2}
-#     }
-
-#     lab_name = lab_code.upper()
-
-#     used = Workstation.query.filter_by(room_lab_name=lab_name).count()
-#     available = total_capacity.get(lab_name, 0) - used
-#     faculty = lab_meta.get(lab_name, {}).get("faculty", "Not Assigned")
-#     meetings = lab_meta.get(lab_name, {}).get("meeting_rooms", 0)
-
-#     return render_template(
-#         "lab_details.html",
-#         lab_code=lab_name,
-#         capacity=total_capacity.get(lab_name, 0),
-#         used_seating=used,
-#         available_seating=available,
-#         faculty=faculty,
-#         meeting_rooms=meetings
-#     )
 
 @app.route('/lab_details/<lab_code>')
 @login_required
@@ -1613,4 +1467,4 @@ def delete_workstation(id):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",debug=True, port=5006)
+    app.run(host="0.0.0.0",debug=True, port=5009)
