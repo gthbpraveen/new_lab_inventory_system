@@ -84,8 +84,135 @@ from flask import render_template, request, redirect, url_for
 from models import Student, Workstation, Equipment, EquipmentHistory, RoomLab, Cubicle
 from datetime import datetime
 
+# @app.route("/index", methods=["GET", "POST"])
+# def index_student_form():
+#     error = None
+#     success = None
+#     room_lab_names = [room.name for room in RoomLab.query.all()]
+#     all_equipment = Equipment.query.all()
+
+#     if request.method == "POST":
+#         form = request.form.to_dict()
+#         roll = form.get("roll")
+#         requirement_type = form.get("requirement_type")
+
+#         # Create or fetch student
+#         student = Student.query.filter_by(roll=roll).first()
+#         if not student:
+#             student = Student(
+#                 name=form.get("name"),
+#                 roll=roll,
+#                 course=form.get("course"),
+#                 year=form.get("year"),
+#                 joining_year=form.get("joining_year"),
+#                 faculty=form.get("faculty"),
+#                 email=form.get("email"),
+#                 phone=form.get("phone")
+#             )
+#             db.session.add(student)
+#             db.session.flush()
+
+#         # Option 1: Cubicle only
+#         if requirement_type == "cubicle_only":
+#             room = form.get("room_lab_name")
+#             cubicle = form.get("cubicle_no")
+#             exists = Workstation.query.filter_by(room_lab_name=room, cubicle_no=cubicle).first()
+#             if exists:
+#                 error = f"⚠️ Cubicle {cubicle} in {room} is already assigned."
+#             else:
+#                 ws = Workstation(roll=roll, room_lab_name=room, cubicle_no=cubicle)
+#                 db.session.add(ws)
+#                 success = "Cubicle assigned successfully."
+
+#         # Option 2: Workstation allocation
+#         elif requirement_type == "workstation":
+#             room = form.get("room_lab_name")
+#             cubicle = form.get("cubicle_no")
+#             exists = Workstation.query.filter_by(room_lab_name=room, cubicle_no=cubicle).first()
+#             if exists:
+#                 error = f"⚠️ Cubicle {cubicle} in {room} is already assigned."
+#             else:
+#                 ws = Workstation(
+#                     roll=roll,
+#                     room_lab_name=room,
+#                     cubicle_no=cubicle,
+#                     manufacturer=form.get("manufacturer"),
+#                     otherManufacturer=form.get("otherManufacturer"),
+#                     model=form.get("model"),
+#                     serial=form.get("serial"),
+#                     os=form.get("os"),
+#                     otherOs=form.get("otherOs"),
+#                     processor=form.get("processor"),
+#                     cores=form.get("cores"),
+#                     ram=form.get("ram"),
+#                     otherRam=form.get("otherRam"),
+#                     storage_type1=form.get("storage_type1"),
+#                     storage_capacity1=form.get("storage_capacity1"),
+#                     storage_type2=form.get("storage_type2"),
+#                     storage_capacity2=form.get("storage_capacity2"),
+#                     gpu=form.get("gpu"),
+#                     vram=form.get("vram"),
+#                     issue_date=form.get("issue_date"),
+#                     system_required_till=form.get("system_required_till"),
+#                     po_date=form.get("po_date"),
+#                     source_of_fund=form.get("source_of_fund"),
+#                     keyboard_provided=form.get("keyboard_provided"),
+#                     keyboard_details=form.get("keyboard_details"),
+#                     mouse_provided=form.get("mouse_provided"),
+#                     mouse_details=form.get("mouse_details"),
+#                     monitor_provided=form.get("monitor_provided"),
+#                     monitor_details=form.get("monitor_details"),
+#                     monitor_size=form.get("monitor_size"),
+#                     monitor_serial=form.get("monitor_serial")
+#                 )
+#                 db.session.add(ws)
+#                 success = "Workstation details saved."
+
+#         # Option 3: Assign IT Equipment
+#         elif requirement_type == "it_equipment":
+#             selected_items = [key for key in form if key.startswith("equipment_")]
+#             for item_key in selected_items:
+#                 eq_id = form.get(item_key)
+#                 if eq_id:
+#                     eq = Equipment.query.get(int(eq_id))
+#                     if eq and eq.status == "Available":
+#                         eq.assigned_to_roll = roll
+#                         eq.assigned_by = "System"
+#                         eq.assigned_date = datetime.now()
+#                         eq.status = "Assigned"
+
+#                         # Log to history
+#                         history = EquipmentHistory(
+#                             equipment_id=eq.id,
+#                             assigned_to_roll=roll,
+#                             assigned_by="System",
+#                             assigned_date=datetime.now(),
+#                             status_snapshot="Assigned"
+#                         )
+#                         db.session.add(history)
+#             success = "Equipment assigned successfully."
+
+#         db.session.commit()
+#         return render_template(
+#             "index.html",
+#             room_lab_names=room_lab_names,
+#             equipment_list=all_equipment,
+#             error=error,
+#             success=success
+#         )
+
+#     return render_template(
+#         "index.html",
+#         room_lab_names=room_lab_names,
+#         equipment_list=all_equipment,
+#         error=error,
+#         success=success
+#     )
+
+
+
 @app.route("/index", methods=["GET", "POST"])
-def index_student_form():
+def index():
     error = None
     success = None
     room_lab_names = [room.name for room in RoomLab.query.all()]
@@ -124,49 +251,51 @@ def index_student_form():
                 db.session.add(ws)
                 success = "Cubicle assigned successfully."
 
-        # Option 2: Workstation allocation
+        # Option 2: Workstation allocation or upgrade
         elif requirement_type == "workstation":
             room = form.get("room_lab_name")
             cubicle = form.get("cubicle_no")
-            exists = Workstation.query.filter_by(room_lab_name=room, cubicle_no=cubicle).first()
-            if exists:
-                error = f"⚠️ Cubicle {cubicle} in {room} is already assigned."
+
+            ws = Workstation.query.filter_by(roll=roll).first()
+            if ws:
+                # Upgrade existing cubicle-only to full workstation
+                ws.room_lab_name = room
+                ws.cubicle_no = cubicle
             else:
-                ws = Workstation(
-                    roll=roll,
-                    room_lab_name=room,
-                    cubicle_no=cubicle,
-                    manufacturer=form.get("manufacturer"),
-                    otherManufacturer=form.get("otherManufacturer"),
-                    model=form.get("model"),
-                    serial=form.get("serial"),
-                    os=form.get("os"),
-                    otherOs=form.get("otherOs"),
-                    processor=form.get("processor"),
-                    cores=form.get("cores"),
-                    ram=form.get("ram"),
-                    otherRam=form.get("otherRam"),
-                    storage_type1=form.get("storage_type1"),
-                    storage_capacity1=form.get("storage_capacity1"),
-                    storage_type2=form.get("storage_type2"),
-                    storage_capacity2=form.get("storage_capacity2"),
-                    gpu=form.get("gpu"),
-                    vram=form.get("vram"),
-                    issue_date=form.get("issue_date"),
-                    system_required_till=form.get("system_required_till"),
-                    po_date=form.get("po_date"),
-                    source_of_fund=form.get("source_of_fund"),
-                    keyboard_provided=form.get("keyboard_provided"),
-                    keyboard_details=form.get("keyboard_details"),
-                    mouse_provided=form.get("mouse_provided"),
-                    mouse_details=form.get("mouse_details"),
-                    monitor_provided=form.get("monitor_provided"),
-                    monitor_details=form.get("monitor_details"),
-                    monitor_size=form.get("monitor_size"),
-                    monitor_serial=form.get("monitor_serial")
-                )
+                ws = Workstation(roll=roll, room_lab_name=room, cubicle_no=cubicle)
                 db.session.add(ws)
-                success = "Workstation details saved."
+
+            # Update full workstation fields
+            ws.manufacturer = form.get("manufacturer")
+            ws.otherManufacturer = form.get("otherManufacturer")
+            ws.model = form.get("model")
+            ws.serial = form.get("serial")
+            ws.os = form.get("os")
+            ws.otherOs = form.get("otherOs")
+            ws.processor = form.get("processor")
+            ws.cores = form.get("cores")
+            ws.ram = form.get("ram")
+            ws.otherRam = form.get("otherRam")
+            ws.storage_type1 = form.get("storage_type1")
+            ws.storage_capacity1 = form.get("storage_capacity1")
+            ws.storage_type2 = form.get("storage_type2")
+            ws.storage_capacity2 = form.get("storage_capacity2")
+            ws.gpu = form.get("gpu")
+            ws.vram = form.get("vram")
+            ws.issue_date = form.get("issue_date")
+            ws.system_required_till = form.get("system_required_till")
+            ws.po_date = form.get("po_date")
+            ws.source_of_fund = form.get("source_of_fund")
+            ws.keyboard_provided = form.get("keyboard_provided")
+            ws.keyboard_details = form.get("keyboard_details")
+            ws.mouse_provided = form.get("mouse_provided")
+            ws.mouse_details = form.get("mouse_details")
+            ws.monitor_provided = form.get("monitor_provided")
+            ws.monitor_details = form.get("monitor_details")
+            ws.monitor_size = form.get("monitor_size")
+            ws.monitor_serial = form.get("monitor_serial")
+
+            success = "Workstation details saved or updated."
 
         # Option 3: Assign IT Equipment
         elif requirement_type == "it_equipment":
@@ -181,7 +310,6 @@ def index_student_form():
                         eq.assigned_date = datetime.now()
                         eq.status = "Assigned"
 
-                        # Log to history
                         history = EquipmentHistory(
                             equipment_id=eq.id,
                             assigned_to_roll=roll,
@@ -208,9 +336,6 @@ def index_student_form():
         error=error,
         success=success
     )
-
-
-
 @app.route("/records")
 def view_records():
     all_records = Workstation.query.all()

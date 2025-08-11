@@ -1,3 +1,6 @@
+
+
+
 {% extends "login_home.html" %}
 {% block title %}Machine Allotment{% endblock %}
 
@@ -10,7 +13,7 @@
         Student Machine Allocation
       </h1>
       <p class="text-indigo-700 text-sm sm:text-base">
-        Please fill out the following details carefully
+        Please fill out the following details carefully.
       </p>
     </div>
   </header>
@@ -74,7 +77,7 @@
       </div>
       <div>
         <label for="faculty" class="block text-gray-700 font-medium mb-2 required-field">Faculty In-charge</label>
-        <select id="faculty" name="faculty" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+         <select id="faculty" name="faculty" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
     <option value="">Select Faculty In‑charge</option>
     <!-- Regular Faculty -->
     <option value="Prof. Antony Franklin">Prof. Antony Franklin</option>
@@ -115,8 +118,8 @@
   </div>
 
   <div class="mt-6">
-    <label class="font-medium text-gray-700">Requirement Type</label>
-    <select name="requirement_type" id="requirement_type" onchange="toggleSections()" class="input">
+    <label for="requirement_type" class="font-medium text-gray-700">Requirement Type</label>
+    <select name="requirement_type" id="requirement_type" onchange="toggleSections()" class="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
       <option value="">-- Select --</option>
       <option value="cubicle_only">Cubicle Only</option>
       <option value="workstation">Workstation Allocation</option>
@@ -124,15 +127,17 @@
     </select>
   </div>
 
-  <div id="cubicle-section" class="mt-4 hidden">
-    <h2 class="text-lg font-semibold text-indigo-600">Cubicle Details</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div id="cubicle-section" class="mt-6 hidden">
+ 
+    <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2 text-center">Cubicle Details </h2>
+    <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
-        <label for="room_lab_name" class="block text-gray-700 font-medium mb-2 required-field">Room/Lab-name</label>
+        <label for="room_lab_name" class="block text-gray-700 font-medium mb-2 required-field">Room/Lab Name</label>
         <select id="room_lab_name" name="room_lab_name" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="populateCubicles()">
-          <option value="">Select Room/Lab-Name</option>
+          <option value="">Select Room/Lab Name</option>
           {% for room in room_lab_names %}
-          <option value="{{ room }}">{{ room }}</option>
+            <option value="{{ room }}">{{ room }}</option>
           {% endfor %}
         </select>
       </div>
@@ -142,334 +147,42 @@
           <option value="">-- Select Cubicle --</option>
         </select>
       </div>
-       <div id="workstation-section" class="mt-4 hidden">
-    <h2 class="text-lg font-semibold text-indigo-600">Workstation Details</h2>
-  
-                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label for="room_lab_name" class="block text-gray-700 font-medium mb-2 required-field">Room/Lab-name</label>
-        <select id="room_lab_name" name="room_lab_name" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="populateCubicles()">
-          <option value="">Select Room/Lab-Name</option>
-          {% for room in room_lab_names %}
-          <option value="{{ room }}">{{ room }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="cubicle_no" class="block text-gray-700 font-medium mb-2 required-field">Cubicle Number</label>
-        <select id="cubicle_no" name="cubicle_no" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="">-- Select Cubicle --</option>
-        </select>
-      </div>
-    </div>
-                </div>
-            </div>
-            
-            <!-- System Hardware Details Section -->
-            <div class="form-section bg-indigo-50 rounded-lg p-6 mb-8">
-                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">System Hardware Details</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- <div>
-                        <label for="manufacturer" class="block text-gray-700 font-medium mb-2 required-field">CPU Manufacturer</label>
-                        <input type="text" id="manufacturer" name="manufacturer" required placeholder="e.g., Dell, HP, Lenovo" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div> -->
-                        <div>
-  <label for="manufacturer" class="block text-gray-700 font-medium mb-2 required-field">CPU Manufacturer</label>
-  <select id="manufacturer" name="manufacturer" required
-    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-    onchange="toggleOtherManufacturer()">
-    <option value="">Select CPU/Laptop Manufacturer</option>
-    <option value="Dell">Dell</option>
-    <option value="HP">HP</option>
-    <option value="Lenovo">Lenovo</option>
-    <option value="Apple">Apple</option>
-    <option value="Acer">Acer</option>
-    <option value="ASUS">ASUS</option>
-    <option value="MSI">MSI</option>
-    <option value="Samsung">Samsung</option>
-    <option value="Sony">Sony</option>
-    <option value="Toshiba">Toshiba</option>
-    <option value="Fujitsu">Fujitsu</option>
-    <option value="Panasonic">Panasonic</option>
-    <option value="HCL">HCL</option>
-    <option value="Wipro">Wipro</option>
-    <option value="Supermicro">Supermicro</option>
-    <option value="Gigabyte">Gigabyte</option>
-    <option value="Intel">Intel</option>
-    <option value="AMD">AMD</option>
-    <option value="Asrock">Asrock</option>
-    <option value="Apogean">Apogee</option>
-    <option value="Tyron">Tyron</option>
-    <option value="Zebronics">Zebronics</option>
-    <option value="Others">Others</option>
-  </select>
-</div>
-
-<div id="otherManufacturerContainer" class="hidden mt-2">
-  <label for="otherManufacturer" class="block text-gray-700 font-medium mb-2">Specify Other Manufacturer</label>
-  <input type="text" id="otherManufacturer" name="otherManufacturer"
-    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-</div>
-
-
-                    <div>
-                        <label for="model" class="block text-gray-700 font-medium mb-2 required-field">Model Name</label>
-                        <input type="text" id="model" name="model" required placeholder="e.g., XPS 15, ThinkPad T480" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    
-                    <div>
-                        <label for="serial" class="block text-gray-700 font-medium mb-2 required-field">Serial Number</label>
-                        <input type="text" id="serial" name="serial" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="os" class="block text-gray-700 font-medium mb-2 required-field">Operating System</label>
-                        <select id="os" name="os" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Select OS</option>
-                            <option value="Windows 11">Windows</option>
-                            <option value="macOS">macOS</option>
-                            <option value="Ubuntu">Ubuntu</option> 
-                            <option value="Ubuntu">Dual Boot</option>                    
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div id="otherOsContainer" class="hidden">
-                        <label for="otherOs" class="block text-gray-700 font-medium mb-2">Specify Other OS</label>
-                        <input type="text" id="otherOs" name="otherOs" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Processor & Memory Section -->
-            <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
-                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Processor & Memory</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="processor" class="block text-gray-700 font-medium mb-2 required-field">Processor (CPU)</label>
-                        <input type="text" id="processor" name="processor" required placeholder="e.g., Intel Core i7-10700K, AMD Ryzen 7 5800X" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="cores" class="block text-gray-700 font-medium mb-2">Number of Cores</label>
-                        <input type="number" id="cores" name="cores" min="1" max="128" placeholder="e.g., 8" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="ram" class="block text-gray-700 font-medium mb-2 required-field">RAM (GB)</label>
-                        <select id="ram" name="ram" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Select RAM Size</option>
-                            <option value="2">2 GB</option>
-                            <option value="4">4 GB</option>
-                            <option value="8">8 GB</option>
-                            <option value="16">16 GB</option>
-                            <option value="32">32 GB</option>
-                            <option value="64">64 GB</option>
-                            <option value="128">128 GB</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div id="otherRamContainer" class="hidden">
-                        <label for="otherRam" class="block text-gray-700 font-medium mb-2">Specify Other RAM Size (GB)</label>
-                        <input type="number" id="otherRam" name="otherRam" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                
-                </div>
-            </div>
-            
-            <!-- Storage & Graphics Section -->
-            <div class="form-section bg-indigo-50 rounded-lg p-6 mb-8">
-                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Storage & Graphics</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="storage-type1" class="block text-gray-700 font-medium mb-2 required-field">Primary Storage Type 1</label>
-                        <select id="storage_type1" name="storage_type1" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Select Storage Type</option>
-                            <option value="HDD">HDD (Hard Disk Drive)</option>
-                            <option value="SSD">SSD (Solid State Drive)</option>
-                            <option value="NVMe">NVMe SSD</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="storage-capacity1" class="block text-gray-700 font-medium mb-2 required-field">Storage Capacity (GB)</label>
-                        <input type="number" id="storage_capacity1" name="storage_capacity1" required min="1" placeholder="e.g., 512 GB" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <!-- <div>
-                        <label for="secondary-storage" class="block text-gray-700 font-medium mb-2">Secondary Storage (if any)</label>
-                        <input type="text" id="secondary-storage" name="secondary-storage" placeholder="e.g., 1TB HDD" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div> -->
-                     <div>
-                        <label for="storage-type2" class="block text-gray-700 font-medium mb-2 ">Primary Storage Type 2 (if any)</label>
-                        <select id="storage_type2" name="storage_type2" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Select Storage Type2</option>
-                            <option value="HDD">HDD (Hard Disk Drive)</option>
-                            <option value="SSD">SSD (Solid State Drive)</option>
-                            <option value="NVMe">NVMe SSD</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="storage-capacity2" class="block text-gray-700 font-medium mb-2">Storage Capacity (GB)</label>
-                        <input type="number" id="storage_capacity2" name="storage_capacity2" min="1" placeholder="e.g., 512 GB" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="gpu" class="block text-gray-700 font-medium mb-2 ">Graphics Card (GPU) (If any,Mention it's name,Else Mention N/A) </label>
-                        <input type="text" id="gpu" name="gpu"  placeholder="e.g., NVIDIA GeForce RTX 3060, Intel Iris Xe" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="vram" class="block text-gray-700 font-medium mb-2">GPU Memory (VRAM) in GB</label>
-                        <input type="number" id="vram" name="vram" min="0" step="0.5" placeholder="e.g., 6" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                </div>
-            </div>
-
-               <!-- Fund and Allotment details -->
-            <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
-                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Fund and Allotment details</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                        <label for="issue-date" class="block text-gray-700 font-medium mb-2 required-field">System Issue Date</label>
-                        <input type="date" id="issue_date" name="issue_date" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="system-required-till" class="block text-gray-700 font-medium mb-2 required-field">System Required- Till Date</label>
-                        <input type="date" id="system_required_till" name="system_required_till" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label for="po-date" class="block text-gray-700 font-medium mb-2">PO Date</label>
-                        <input type="date" id="po_date" name="po_date" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                   
-                    <div>
-                        <label for="source-of-fund" class="block text-gray-700 font-medium mb-2">Source of Fund</label>
-                        <input type="text" id="source_of_fund" name="source_of_fund" placeholder="e.g., Project, Institute Fund" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    
-                            
-                </div>
-            </div>
-
-            
-            <!-- Peripherals Section -->
-            <div class="form-section bg-green-50 rounded-lg p-6 mb-8">
-                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Peripherals</h2>
-                
-                <!-- Keyboard Section -->
-                <div class="mb-6">
-                    <h3 class="text-lg font-medium text-indigo-700 mb-4">Keyboard</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2 required-field">Is the keyboard provided by the institution?</label>
-                            <div class="mt-2 space-x-4">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="keyboard_provided" value="yes" class="form-radio text-indigo-600" required>
-                                    <span class="ml-2">Yes</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="keyboard_provided" value="no" class="form-radio text-indigo-600">
-                                    <span class="ml-2">No</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div id="keyboard-details-container" class="hidden">
-                            <label for="keyboard-details" class="block text-gray-700 font-medium mb-2 required-field">Keyboard Details</label>
-                            <input type="text" id="keyboard_details" name="keyboard_details" placeholder="e.g., Dell KB216, Mechanical Keyboard" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Mouse Section -->
-                <div class="mb-6">
-                    <h3 class="text-lg font-medium text-indigo-700 mb-4">Mouse</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2 required-field">Is the mouse provided by the institution?</label>
-                            <div class="mt-2 space-x-4">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="mouse_provided" value="yes" class="form-radio text-indigo-600" required>
-                                    <span class="ml-2">Yes</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="mouse_provided" value="no" class="form-radio text-indigo-600">
-                                    <span class="ml-2">No</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div id="mouse-details-container" class="hidden">
-                            <label for="mouse-details" class="block text-gray-700 font-medium mb-2 required-field">Mouse Details</label>
-                            <input type="text" id="mouse_details" name="mouse_details" placeholder="e.g., Dell MS116, Logitech M185" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Monitor Section -->
-                <div>
-                    <h3 class="text-lg font-medium text-indigo-700 mb-4">Monitor</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2 required-field">Is the monitor provided by the institution?</label>
-                            <div class="mt-2 space-x-4">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="monitor_provided" value="yes" class="form-radio text-indigo-600" required>
-                                    <span class="ml-2">Yes</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="monitor_provided" value="no" class="form-radio text-indigo-600">
-                                    <span class="ml-2">No</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="monitor_provided" value="laptop" class="form-radio text-indigo-600">
-                                    <span class="ml-2">Using Laptop Screen</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div id="monitor-details-container" class="hidden">
-                            <label for="monitor-details" class="block text-gray-700 font-medium mb-2 ">Monitor Details</label>
-                            <input type="text" id="monitor_details" name="monitor_details" placeholder="e.g., Dell P2419H, HP 24mh" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <div id="monitor-size-container" class="hidden">
-                            <label for="monitor-size" class="block text-gray-700 font-medium mb-2 ">Screen Size (inches)</label>
-                            <input type="number" id="monitor_size" name="monitor_size" min="10" max="100" step="0.1" placeholder="e.g., 24"  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <div id="monitor-serial-container" class="hidden">
-                            <label for="monitor-serial" class="block text-gray-700 font-medium mb-2 ">Serial Number</label>
-                            <input type="text" id="monitor_serial" name="monitor_serial" placeholder="e.g., CN123456789" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                    </div>
-                </div>
-            </div>
     </div>
   </div>
+</div>
 
-  <div id="workstation-section" class="mt-4 hidden">
-    <h2 class="text-lg font-semibold text-indigo-600">Workstation Details</h2>
-  
-                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+ <div id="workstation-section" class="mt-6 hidden">
+  <!-- <h2 class="text-lg font-semibold text-indigo-600 mb-4">Workstation Details</h2> -->
+              <!-- <div class="form-section bg-blue-50 rounded-lg p-6 mb-8"> -->
+   
+   <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">workstation Details </h2>
+    <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
+        <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Cubicle Details</h2>
       <div>
-        <label for="room_lab_name" class="block text-gray-700 font-medium mb-2 required-field">Room/Lab-name</label>
-        <select id="room_lab_name" name="room_lab_name" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="populateCubicles()">
-          <option value="">Select Room/Lab-Name</option>
-          {% for room in room_lab_names %}
-          <option value="{{ room }}">{{ room }}</option>
-          {% endfor %}
-        </select>
-      </div>
+        <label for="room_lab_name_ws" class="block text-gray-700 font-medium mb-2 required-field">Room/Lab Name</label>
+           <select id="room_lab_name_ws" name="room_lab_name" required
+    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    onchange="populateCubicles('_ws')">
+    <option value="">Select Room/Lab Name</option>
+    {% for room in room_lab_names %}
+      <option value="{{ room }}">{{ room }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<div>
+  <label for="cubicle_no_ws" class="block text-gray-700 font-medium mb-2 required-field">Cubicle Number</label>
+  <select id="cubicle_no_ws" name="cubicle_no" required
+    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <option value="">-- Select Cubicle --</option>
+  </select>
+      </div> 
+     </div> 
+     <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">CPU Details</h2>      
       <div>
-        <label for="cubicle_no" class="block text-gray-700 font-medium mb-2 required-field">Cubicle Number</label>
-        <select id="cubicle_no" name="cubicle_no" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="">-- Select Cubicle --</option>
-        </select>
-      </div>
-    </div>
-                </div>
-            </div>
-            
-            <!-- System Hardware Details Section -->
-            <div class="form-section bg-indigo-50 rounded-lg p-6 mb-8">
-                <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">System Hardware Details</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- <div>
-                        <label for="manufacturer" class="block text-gray-700 font-medium mb-2 required-field">CPU Manufacturer</label>
-                        <input type="text" id="manufacturer" name="manufacturer" required placeholder="e.g., Dell, HP, Lenovo" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div> -->
-                        <div>
   <label for="manufacturer" class="block text-gray-700 font-medium mb-2 required-field">CPU Manufacturer</label>
   <select id="manufacturer" name="manufacturer" required
     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -534,7 +247,7 @@
                     </div>
                 </div>
             </div>
-            
+             
             <!-- Processor & Memory Section -->
             <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
                 <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Processor & Memory</h2>
@@ -733,16 +446,21 @@
             </div>
             
 
-</div>
   <!-- Include your previous Workstation and IT Equipment code here -->
 
-  <div class="mt-6 text-center">
-    <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">Submit</button>
-  </div>
-</form>
+</div>
+</div>
+<div class="mt-6 flex justify-center space-x-6">
+  <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-0.5 hover:shadow-lg">
+    💾 Submit
+  </button>
+  <button type="reset" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-6 py-2 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-0.5 hover:shadow-lg">
+    ♻️ Reset
+  </button>
+</div>
 
+</form>
 <script>
-  
   const cubicleMap = {
     "CS-107": 43, "CS-108": 21, "CS-109": 114,
     "CS-207": 30, "CS-208": 25, "CS-209": 142,
@@ -750,15 +468,20 @@
     "CS-320": 27, "CS-411": 25, "CS-412": 33
   };
 
-  function populateCubicles() {
-    const room = document.getElementById("room_lab_name").value;
-    const cubicle = document.getElementById("cubicle_no");
+  function populateCubicles(suffix = '') {
+    const roomId = `room_lab_name${suffix}`;
+    const cubicleId = `cubicle_no${suffix}`;
+    const room = document.getElementById(roomId)?.value;
+    const cubicle = document.getElementById(cubicleId);
+
+    if (!cubicle || !room) return;
+
     cubicle.innerHTML = '<option value="">-- Select Cubicle --</option>';
     if (cubicleMap[room]) {
       for (let i = 1; i <= cubicleMap[room]; i++) {
         let opt = document.createElement("option");
         opt.value = i;
-        opt.text = `Cubicle ${i}`;
+        opt.text = `${i}`;
         cubicle.appendChild(opt);
       }
     }
@@ -766,81 +489,52 @@
 
   function toggleSections() {
     const selected = document.getElementById("requirement_type").value;
-    document.getElementById("cubicle-section").classList.add("hidden");
-    document.getElementById("workstation-section").classList.add("hidden");
+    const cubicleSection = document.getElementById("cubicle-section");
+    const workstationSection = document.getElementById("workstation-section");
+
+    cubicleSection.classList.add("hidden");
+    workstationSection.classList.add("hidden");
+
+    clearDynamicRequiredFields();
 
     if (selected === "cubicle_only") {
-      document.getElementById("cubicle-section").classList.remove("hidden");
+      cubicleSection.classList.remove("hidden");
+      document.getElementById("room_lab_name").setAttribute("required", true);
+      document.getElementById("cubicle_no").setAttribute("required", true);
     } else if (selected === "workstation") {
-      document.getElementById("workstation-section").classList.remove("hidden");
+      workstationSection.classList.remove("hidden");
+      document.getElementById("room_lab_name_ws").setAttribute("required", true);
+      document.getElementById("cubicle_no_ws").setAttribute("required", true);
+
+      const requiredFields = [
+        "manufacturer", "model", "serial", "os",
+        "processor", "ram", "issue_date", "system_required_till"
+      ];
+      requiredFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute("required", true);
+      });
     }
   }
 
-  function toggleOtherManufacturer() {
-    const value = document.getElementById("manufacturer").value;
-    const container = document.getElementById("otherManufacturerContainer");
-    container.classList.toggle("hidden", value !== "Others");
+  function clearDynamicRequiredFields() {
+    const ids = [
+      "room_lab_name", "cubicle_no",
+      "room_lab_name_ws", "cubicle_no_ws",
+      "manufacturer", "model", "serial", "os",
+      "processor", "ram", "issue_date", "system_required_till"
+    ];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.removeAttribute("required");
+    });
   }
 
-  document.getElementById("os").addEventListener("change", function () {
-    const os = this.value;
-    document.getElementById("otherOsContainer").classList.toggle("hidden", os !== "Other");
-  });
-
-  document.getElementById("ram").addEventListener("change", function () {
-    const ram = this.value;
-    document.getElementById("otherRamContainer").classList.toggle("hidden", ram !== "other");
-  });
-
-  // Keyboard toggle
-  document.getElementsByName("keyboard_provided").forEach((radio) => {
-    radio.addEventListener("change", () => {
-      const container = document.getElementById("keyboard-details-container");
-      container.classList.toggle("hidden", document.querySelector('input[name="keyboard_provided"]:checked').value !== "yes");
-    });
-  });
-
-  // Mouse toggle
-  document.getElementsByName("mouse_provided").forEach((radio) => {
-    radio.addEventListener("change", () => {
-      const container = document.getElementById("mouse-details-container");
-      container.classList.toggle("hidden", document.querySelector('input[name="mouse_provided"]:checked').value !== "yes");
-    });
-  });
-
-  // Monitor toggle
-  document.getElementsByName("monitor_provided").forEach((radio) => {
-    radio.addEventListener("change", () => {
-      const value = document.querySelector('input[name="monitor_provided"]:checked').value;
-      const detailsContainer = document.getElementById("monitor-details-container");
-      const sizeContainer = document.getElementById("monitor-size-container");
-      const serialContainer = document.getElementById("monitor-serial-container");
-
-      const show = (value === "yes");
-      detailsContainer.classList.toggle("hidden", !show);
-      sizeContainer.classList.toggle("hidden", !show);
-      serialContainer.classList.toggle("hidden", !show);
-    });
-  });
-
-  // On page load, if values are pre-filled (edit case), call toggles
   window.addEventListener("DOMContentLoaded", () => {
-    toggleOtherManufacturer();
-    document.getElementById("os").dispatchEvent(new Event("change"));
-    document.getElementById("ram").dispatchEvent(new Event("change"));
-
-    const keyboardSelected = document.querySelector('input[name="keyboard_provided"]:checked');
-    if (keyboardSelected) keyboardSelected.dispatchEvent(new Event("change"));
-
-    const mouseSelected = document.querySelector('input[name="mouse_provided"]:checked');
-    if (mouseSelected) mouseSelected.dispatchEvent(new Event("change"));
-
-    const monitorSelected = document.querySelector('input[name="monitor_provided"]:checked');
-    if (monitorSelected) monitorSelected.dispatchEvent(new Event("change"));
-
     toggleSections();
   });
 </script>
+
 
 
 {% endblock %}
