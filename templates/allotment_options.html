@@ -1,0 +1,36 @@
+{% extends "login_home.html" %}
+{% block title %}Allotment Options{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-6">
+  <h2 class="text-2xl font-bold mb-6 text-gray-800">Allotment Options for Roll: {{ roll }}</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Cubicle Allocation -->
+    <a href="{{ url_for('cubicle_allocation', roll=roll) }}"
+       class="block bg-blue-600 text-white p-6 rounded-lg shadow hover:bg-blue-700 transition text-center">
+      <div class="text-4xl mb-2">🪑</div>
+      <h3 class="font-semibold text-lg">Allocate Cubicle</h3>
+    </a>
+
+    <!-- Workstation Allocation -->
+    <a href="{{ url_for('workstation_allocation', roll=roll) }}"
+       class="block bg-green-600 text-white p-6 rounded-lg shadow hover:bg-green-700 transition text-center">
+      <div class="text-4xl mb-2">💻</div>
+      <h3 class="font-semibold text-lg">Allocate Workstation</h3>
+    </a>
+
+    <!-- IT Equipment Allocation -->
+    <a href="{{ url_for('it_equipment', roll=roll) }}"
+       class="block bg-purple-600 text-white p-6 rounded-lg shadow hover:bg-purple-700 transition text-center">
+      <div class="text-4xl mb-2">🖱️</div>
+      <h3 class="font-semibold text-lg">Assign IT Equipment</h3>
+    </a>
+  </div>
+
+  <div class="mt-6">
+    <a href="{{ url_for('allotment_roll_check') }}" class="text-blue-600 hover:underline">
+      ⬅ Back to Roll Check
+    </a>
+  </div>
+</div>
+{% endblock %}

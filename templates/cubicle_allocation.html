@@ -1,0 +1,109 @@
+{% extends "login_home.html" %}
+{% block title %}Cubicle Allocation{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+  <h2 class="text-2xl font-bold mb-6 text-gray-800">Allocate Cubicle</h2>
+
+  <form method="POST" id="cubicleForm" class="space-y-6">
+    <!-- Roll Number -->
+    <div>
+      <label for="roll" class="block text-gray-700 font-medium mb-1">Roll Number</label>
+      <input id="roll" name="roll" 
+             value="{{ roll_prefill if roll_prefill else '' }}"
+             placeholder="Enter Roll Number"
+             {% if roll_prefill %}readonly{% endif %}
+             required class="p-2 border rounded w-full focus:ring focus:ring-blue-300 bg-gray-100" />
+    </div>
+
+    <!-- Room Selection -->
+    <div>
+      <label for="room" class="block text-gray-700 font-medium mb-1">Select Room/Lab</label>
+      <select id="room" name="room_id"
+              class="p-2 border rounded w-full focus:ring focus:ring-blue-300" required>
+        <option value="">-- Select Room --</option>
+        {% for room in rooms %}
+          <option value="{{ room.id }}">
+            {{ room.name }} — Capacity: {{ room.capacity }} — Staff: {{ room.staff_incharge }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Legend -->
+    <div class="flex items-center space-x-6 mt-4">
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-blue-200 border border-blue-500 rounded mr-2"></div>
+        <span class="text-sm text-gray-700">Available</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-gray-200 border border-gray-400 rounded mr-2"></div>
+        <span class="text-sm text-gray-700">Allocated</span>
+      </div>
+    </div>
+
+    <!-- Cubicle Cards -->
+    <div id="cubicleContainer" class="hidden mt-4">
+      <label class="block text-gray-700 font-medium mb-3">Select Cubicle</label>
+      <div id="cubicleCards" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+        {% for room in rooms %}
+          {% for cubicle in room.cubicles %}
+            {% if cubicle.student_roll %}
+              <!-- Allocated -->
+              <div class="p-4 border rounded-lg shadow-sm text-center bg-gray-200 text-gray-600 cursor-not-allowed"
+                   data-room="{{ room.id }}">
+                <span class="text-lg font-semibold">{{ cubicle.number }}</span>
+                <div class="text-xs mt-1">({{ cubicle.student_roll }})</div>
+              </div>
+            {% else %}
+              <!-- Available -->
+              <div class="cubicle-card p-4 border rounded-lg shadow-sm text-center cursor-pointer hover:bg-blue-100 transition"
+                   data-room="{{ room.id }}" data-id="{{ cubicle.id }}">
+                <span class="text-lg font-semibold">{{ cubicle.number }}</span>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Hidden cubicle input -->
+    <input type="hidden" name="cubicle_id" id="cubicle_id" required>
+
+    <!-- Submit -->
+    <div>
+      <button type="submit"
+              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Allocate
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const roomSelect = document.getElementById("room");
+  const cubicleCards = document.querySelectorAll(".cubicle-card");
+  const allCubicles = document.querySelectorAll("#cubicleCards > div");
+  const cubicleContainer = document.getElementById("cubicleContainer");
+  const cubicleIdInput = document.getElementById("cubicle_id");
+
+  roomSelect.addEventListener("change", function () {
+    const selectedRoom = this.value;
+    allCubicles.forEach(card => {
+      card.style.display = (card.dataset.room === selectedRoom) ? "block" : "none";
+      card.classList.remove("bg-blue-200", "border-blue-500");
+    });
+    cubicleIdInput.value = "";
+    cubicleContainer.classList.toggle("hidden", !selectedRoom);
+  });
+
+  cubicleCards.forEach(card => {
+    card.addEventListener("click", function () {
+      cubicleCards.forEach(c => c.classList.remove("bg-blue-200", "border-blue-500"));
+      this.classList.add("bg-blue-200", "border-blue-500");
+      cubicleIdInput.value = this.dataset.id;
+    });
+  });
+});
+</script>
+{% endblock %}

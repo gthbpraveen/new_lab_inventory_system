@@ -1588,61 +1588,257 @@ def delete_workstation(id):
         flash(f'Error deleting workstation: {e}', 'danger')
     return redirect(url_for('alloted_machines'))
 
-# new code with 
+# # new code with 
+# @app.route("/student_info", methods=["GET", "POST"])
+# def student_info():
+#     if request.method == "POST":
+#         roll = request.form['roll']
+#         if Student.query.get(roll):
+#             flash("Student already exists!", "warning")
+#         else:
+#             student = Student(**request.form)
+#             db.session.add(student)
+#             db.session.commit()
+#             flash("Student information saved.", "success")
+#         return redirect(url_for("student_info"))
+#     return render_template("student_info.html")
+
+# @app.route("/cubicle_allocation", methods=["GET", "POST"])
+# def cubicle_allocation():
+#     rooms = RoomLab.query.all()
+#     if request.method == "POST":
+#         roll = request.form['roll']
+#         cubicle_id = request.form['cubicle_id']
+#         cubicle = Cubicle.query.get(cubicle_id)
+#         if cubicle:
+#             cubicle.student_roll = roll
+#             db.session.commit()
+#             flash("Cubicle allocated.", "success")
+#         return redirect(url_for("cubicle_allocation"))
+#     return render_template("cubicle_allocation.html", rooms=rooms)
+
+# @app.route("/workstation_allocation/<roll>", methods=["GET", "POST"])
+# @app.route("/workstation_allocation", methods=["GET", "POST"])
+# def workstation_allocation(roll=None):
+#     if request.method == "POST":
+#         ws = Workstation(**request.form)
+#         db.session.add(ws)
+#         db.session.commit()
+#         flash("Workstation allocated.", "success")
+#         return redirect(url_for("workstation_allocation"))
+#     return render_template("workstation_allocation.html", roll=roll)
+
+# @app.route("/it_equipment/<roll>", methods=["GET", "POST"])
+# @app.route("/it_equipment", methods=["GET", "POST"])
+# def it_equipment(roll=None):
+#     if request.method == "POST":
+#         eq = Equipment(**request.form)
+#         db.session.add(eq)
+#         db.session.commit()
+#         flash("IT equipment allocated.", "success")
+#         return redirect(url_for("it_equipment"))
+#     return render_template("it_equipment.html", roll=roll)
+
+# @app.route("/allotment_roll_check", methods=["GET", "POST"])
+# def allotment_roll_check():
+#     if request.method == "POST":
+#         roll = request.form['roll']
+#         student = Student.query.get(roll)
+#         if student:
+#             return redirect(url_for("allotment_options", roll=roll))
+#         else:
+#             flash("Roll number not found. Please add student info first.", "warning")
+#             return redirect(url_for("student_info"))
+#     return render_template("allotment_roll_check.html")
+
+# @app.route("/allotment_options/<roll>")
+# def allotment_options(roll):
+#     return render_template("allotment_options.html", roll=roll)
+
+from flask import Flask, render_template, request, redirect, url_for, flash
+from models import db, Student, RoomLab, Cubicle, Workstation, Equipment
+from datetime import datetime
+
+
+
+# ------------------------
+# 1. Student Info
+# ------------------------
 @app.route("/student_info", methods=["GET", "POST"])
 def student_info():
+    prefill_roll = (request.args.get("roll") or "").strip()
+
     if request.method == "POST":
-        roll = request.form['roll']
+        roll = request.form['roll'].strip()
+
+        # Duplicate check
         if Student.query.get(roll):
             flash("Student already exists!", "warning")
-        else:
-            student = Student(**request.form)
-            db.session.add(student)
-            db.session.commit()
-            flash("Student information saved.", "success")
-        return redirect(url_for("student_info"))
-    return render_template("student_info.html")
+            # keep prefill so the field stays readonly on reload
+            return redirect(url_for("student_info", roll=roll))
 
+        # Create new student
+        student = Student(
+            roll=roll,
+            name=request.form['name'],
+            course=request.form['course'],
+            year=request.form['year'],
+            joining_year=request.form['joining_year'],
+            faculty=request.form['faculty'],
+            email=request.form['email'],
+            phone=request.form.get('phone')
+        )
+        db.session.add(student)
+        db.session.commit()
+        flash("Student information saved.", "success")
+
+        # Go to allotment hub for this roll
+        return redirect(url_for("allotment_options", roll=roll))
+
+    return render_template("student_info.html", prefill_roll=prefill_roll)
+
+    
+
+# ------------------------
+# 2. Cubicle Allocation
+# ------------------------
 @app.route("/cubicle_allocation", methods=["GET", "POST"])
 def cubicle_allocation():
+    roll_prefill = request.args.get("roll", "").strip()
     rooms = RoomLab.query.all()
-    if request.method == "POST":
-        roll = request.form['roll']
-        cubicle_id = request.form['cubicle_id']
-        cubicle = Cubicle.query.get(cubicle_id)
-        if cubicle:
-            cubicle.student_roll = roll
-            db.session.commit()
-            flash("Cubicle allocated.", "success")
-        return redirect(url_for("cubicle_allocation"))
-    return render_template("cubicle_allocation.html", rooms=rooms)
 
+    if request.method == "POST":
+        roll = request.form['roll'].strip()
+        cubicle_id = request.form['cubicle_id']
+
+        student = Student.query.get(roll)
+        if not student:
+            flash("Roll number not found. Please add student info first.", "warning")
+            return redirect(url_for("student_info"))
+
+        # Check if student already has a cubicle
+        if student.cubicle:
+            flash(f"Student {roll} already has a cubicle assigned (Cubicle {student.cubicle.number} in {student.cubicle.room_lab.name}).", "danger")
+            return redirect(url_for("cubicle_allocation", roll=roll))
+
+        cubicle = Cubicle.query.get(cubicle_id)
+        if not cubicle:
+            flash("Invalid cubicle selected.", "danger")
+            return redirect(url_for("cubicle_allocation", roll=roll))
+
+        if cubicle.student_roll:
+            flash(f"Cubicle {cubicle.number} in {cubicle.room_lab.name} is already allocated.", "danger")
+            return redirect(url_for("cubicle_allocation", roll=roll))
+
+        # Allocate cubicle
+        cubicle.student_roll = roll
+        db.session.commit()
+        flash(f"Cubicle {cubicle.number} in {cubicle.room_lab.name} allocated to {roll}.", "success")
+        return redirect(url_for("cubicle_allocation", roll=roll))
+
+    return render_template("cubicle_allocation.html", rooms=rooms, roll_prefill=roll_prefill)
+
+
+
+
+
+# --- Workstation Allocation (allow multiple per student; auto-fill cubicle/room) ---
 @app.route("/workstation_allocation/<roll>", methods=["GET", "POST"])
 @app.route("/workstation_allocation", methods=["GET", "POST"])
 def workstation_allocation(roll=None):
+    # Pre-fill roll from URL query if present
+    roll_prefill = (roll or request.args.get("roll", "")).strip() or None
+
     if request.method == "POST":
-        ws = Workstation(**request.form)
+        roll_post = request.form['roll'].strip()
+
+        # Ensure student exists; if not, send to student info
+        student = Student.query.get(roll_post)
+        if not student:
+            flash("Student does not exist. Please add them first.", "warning")
+            return redirect(url_for("student_info"))
+
+        # OPTIONAL: if you want to auto-insert cubicle/room if fields were blank
+        form_data = request.form.to_dict()
+        if not form_data.get("cubicle_no") or not form_data.get("room_lab_name"):
+            cub = Cubicle.query.filter_by(student_roll=roll_post).first()
+            if cub:
+                form_data.setdefault("cubicle_no", cub.number)
+                form_data.setdefault("room_lab_name", cub.room_lab.name)
+
+        ws = Workstation(**form_data)  # multiple WS allowed
         db.session.add(ws)
         db.session.commit()
-        flash("Workstation allocated.", "success")
-        return redirect(url_for("workstation_allocation"))
-    return render_template("workstation_allocation.html", roll=roll)
+        flash("Workstation allocated successfully.", "success")
+        return redirect(url_for("workstation_allocation", roll=roll_post))
 
+    # GET: compute auto-fill cubicle/room (if assigned) for template
+    cubicle_no, room_lab_name = None, None
+    if roll_prefill:
+        cub = Cubicle.query.filter_by(student_roll=roll_prefill).first()
+        if cub:
+            cubicle_no, room_lab_name = cub.number, cub.room_lab.name
+
+    return render_template(
+        "workstation_allocation.html",
+        roll_prefill=roll_prefill,
+        cubicle_no=cubicle_no,
+        room_lab_name=room_lab_name
+    )
+
+
+# --- IT Equipment Allocation (allow multiple per student) ---
 @app.route("/it_equipment/<roll>", methods=["GET", "POST"])
 @app.route("/it_equipment", methods=["GET", "POST"])
 def it_equipment(roll=None):
+    roll_prefill = (roll or request.args.get("roll", "")).strip() or None
+
     if request.method == "POST":
-        eq = Equipment(**request.form)
+        roll_post = request.form['assigned_to_roll'].strip()
+
+        # ensure student exists for assignment
+        student = Student.query.get(roll_post)
+        if not student:
+            flash("Student does not exist. Please add them first.", "warning")
+            return redirect(url_for("student_info"))
+
+        eq = Equipment(
+            name=request.form["name"],
+            category=request.form["category"],
+            manufacturer=request.form.get("manufacturer"),
+            model=request.form.get("model"),
+            serial_number=request.form["serial_number"],
+            invoice_number=request.form.get("invoice_number"),
+            cost_per_unit=(request.form.get("cost_per_unit") or None),
+            location=request.form.get("location"),
+            po_date=request.form.get("po_date"),
+            purchase_date=request.form.get("purchase_date"),
+            warranty_expiry=request.form.get("warranty_expiry"),
+            status="Assigned",
+            intender_name=request.form.get("intender_name"),
+            remarks=request.form.get("remarks"),
+            quantity=(request.form.get("quantity") or None),
+            department_code=request.form.get("department_code"),
+            mac_address=request.form.get("mac_address"),
+            assigned_to_roll=roll_post,
+            assigned_by="System",
+            assigned_date=datetime.utcnow()
+        )
         db.session.add(eq)
         db.session.commit()
-        flash("IT equipment allocated.", "success")
-        return redirect(url_for("it_equipment"))
-    return render_template("it_equipment.html", roll=roll)
+        flash("IT equipment assigned successfully.", "success")
+        return redirect(url_for("it_equipment", roll=roll_post))
 
+    return render_template("it_equipment.html", roll_prefill=roll_prefill)
+
+
+# ------------------------
+# 5. Allotment Roll Check
+# ------------------------
 @app.route("/allotment_roll_check", methods=["GET", "POST"])
 def allotment_roll_check():
     if request.method == "POST":
-        roll = request.form['roll']
+        roll = request.form['roll'].strip()
         student = Student.query.get(roll)
         if student:
             return redirect(url_for("allotment_options", roll=roll))
@@ -1651,6 +1847,10 @@ def allotment_roll_check():
             return redirect(url_for("student_info"))
     return render_template("allotment_roll_check.html")
 
+
+# ------------------------
+# 6. Allotment Options
+# ------------------------
 @app.route("/allotment_options/<roll>")
 def allotment_options(roll):
     return render_template("allotment_options.html", roll=roll)

@@ -1,0 +1,191 @@
+{% extends "login_home.html" %}
+{% block title %}Workstation Allocation{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+  <h2 class="text-2xl font-bold mb-6 text-gray-800">Allocate Workstation</h2>
+
+  <form method="POST" class="space-y-6">
+    <!-- Roll (pre-filled, readonly if provided) -->
+    <div>
+      <label class="block text-gray-700 font-medium mb-1">Roll Number</label>
+      <input name="roll"
+             value="{{ roll_prefill or '' }}"
+             placeholder="Enter Roll Number"
+             {% if roll_prefill %}readonly class="p-2 border rounded w-full bg-gray-100"
+             {% else %}class="p-2 border rounded w-full"{% endif %}
+             required>
+    </div>
+
+    <!-- Auto-filled room/cubicle if the student already has a cubicle -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Room/Lab Name</label>
+        <input name="room_lab_name" value="{{ room_lab_name or '' }}"
+               placeholder="e.g., CS-107"
+               class="p-2 border rounded w-full" readonly>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Cubicle Number</label>
+        <input name="cubicle_no" value="{{ cubicle_no or '' }}"
+               placeholder="e.g., 12"
+               class="p-2 border rounded w-full" readonly>
+      </div>
+    </div>
+
+    <!-- Your full workstation fields below -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Manufacturer</label>
+        <select name="manufacturer" class="p-2 border rounded w-full" required>
+          <option value="">Select</option>
+          <option>Dell</option><option>HP</option><option>Lenovo</option><option>Apple</option>
+          <option>Acer</option><option>ASUS</option><option>MSI</option><option>Intel</option>
+          <option>AMD</option><option>Supermicro</option><option>Gigabyte</option>
+          <option>Wipro</option><option>HCL</option><option>Others</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Model</label>
+        <input name="model" class="p-2 border rounded w-full" required>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Serial</label>
+        <input name="serial" class="p-2 border rounded w-full" required>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Operating System</label>
+        <select name="os" class="p-2 border rounded w-full" required>
+          <option value="">Select</option>
+          <option>Windows</option><option>Ubuntu</option><option>macOS</option>
+          <option>Dual Boot</option><option>Other</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-gray-700 font-medium mb-1">Other OS (if selected)</label>
+        <input name="otherOs" class="p-2 border rounded w-full">
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Processor</label>
+        <input name="processor" class="p-2 border rounded w-full" required>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Cores</label>
+        <input type="number" min="1" name="cores" class="p-2 border rounded w-full">
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">RAM (GB)</label>
+        <select name="ram" class="p-2 border rounded w-full" required>
+          <option value="">Select</option>
+          <option>2</option><option>4</option><option>8</option><option>16</option>
+          <option>32</option><option>64</option><option>128</option><option>other</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Other RAM (GB)</label>
+        <input name="otherRam" class="p-2 border rounded w-full">
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Primary Storage Type 1</label>
+        <select name="storage_type1" class="p-2 border rounded w-full" required>
+          <option value="">Select</option><option>HDD</option><option>SSD</option><option>NVMe</option><option>Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Capacity 1 (GB)</label>
+        <input type="number" min="1" name="storage_capacity1" class="p-2 border rounded w-full" required>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Primary Storage Type 2</label>
+        <select name="storage_type2" class="p-2 border rounded w-full">
+          <option value="">Select</option><option>HDD</option><option>SSD</option><option>NVMe</option><option>Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Capacity 2 (GB)</label>
+        <input type="number" min="1" name="storage_capacity2" class="p-2 border rounded w-full">
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">GPU</label>
+        <input name="gpu" class="p-2 border rounded w-full">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">VRAM (GB)</label>
+        <input type="number" step="0.5" min="0" name="vram" class="p-2 border rounded w-full">
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Issue Date</label>
+        <input type="date" name="issue_date" class="p-2 border rounded w-full" required>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Required Till</label>
+        <input type="date" name="system_required_till" class="p-2 border rounded w-full" required>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">PO Date</label>
+        <input type="date" name="po_date" class="p-2 border rounded w-full">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Source of Fund</label>
+        <input name="source_of_fund" class="p-2 border rounded w-full">
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Keyboard Provided</label>
+        <select name="keyboard_provided" class="p-2 border rounded w-full" required>
+          <option value="">Select</option><option>yes</option><option>no</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Keyboard Details</label>
+        <input name="keyboard_details" class="p-2 border rounded w-full">
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Mouse Provided</label>
+        <select name="mouse_provided" class="p-2 border rounded w-full" required>
+          <option value="">Select</option><option>yes</option><option>no</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Mouse Details</label>
+        <input name="mouse_details" class="p-2 border rounded w-full">
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Monitor Provided</label>
+        <select name="monitor_provided" class="p-2 border rounded w-full" required>
+          <option value="">Select</option><option>yes</option><option>no</option><option>laptop</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Monitor Details</label>
+        <input name="monitor_details" class="p-2 border rounded w-full">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Monitor Size (in)</label>
+        <input type="number" min="10" max="100" step="0.1" name="monitor_size" class="p-2 border rounded w-full">
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Monitor Serial</label>
+        <input name="monitor_serial" class="p-2 border rounded w-full">
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-gray-700 font-medium mb-1">MAC Address (optional)</label>
+        <input name="mac_address" class="p-2 border rounded w-full">
+      </div>
+    </div>
+
+    <div>
+      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        Save Workstation
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

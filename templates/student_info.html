@@ -9,8 +9,11 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="required-field block">Roll Number</label>
-        <input name="roll" id="roll" value="{{ student.roll if student }}" {% if student %}readonly{% endif %} class="w-full border rounded px-3 py-2" required>
-      </div>
+        <input name="roll" id="roll"  value="{{ prefill_roll or '' }}"
+       placeholder="Roll Number"
+       {% if prefill_roll %}readonly class="w-full border rounded px-3 py-2 bg-gray-100"
+       {% else %}class="w-full border rounded px-3 py-2"{% endif %}
+       required> </div>
       <div>
         <label class="required-field block">Full Name</label>
         <input name="name" value="{{ student.name if student }}" class="w-full border rounded px-3 py-2" required>
