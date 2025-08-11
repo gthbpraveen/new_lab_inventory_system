@@ -10,9 +10,7 @@ from datetime import date
 
 from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
-print("🔐 ENV Secret Key:", os.getenv("SECRET_KEY"))
-
-
+# `print("🔐 ENV Secret Key:", os.getenv("SECRET_KEY"))
 
 import requests
 
@@ -1589,6 +1587,79 @@ def delete_workstation(id):
         db.session.rollback()
         flash(f'Error deleting workstation: {e}', 'danger')
     return redirect(url_for('alloted_machines'))
+
+# new code with 
+@app.route("/student_info", methods=["GET", "POST"])
+def student_info():
+    if request.method == "POST":
+        roll = request.form['roll']
+        if Student.query.get(roll):
+            flash("Student already exists!", "warning")
+        else:
+            student = Student(**request.form)
+            db.session.add(student)
+            db.session.commit()
+            flash("Student information saved.", "success")
+        return redirect(url_for("student_info"))
+    return render_template("student_info.html")
+
+@app.route("/cubicle_allocation", methods=["GET", "POST"])
+def cubicle_allocation():
+    rooms = RoomLab.query.all()
+    if request.method == "POST":
+        roll = request.form['roll']
+        cubicle_id = request.form['cubicle_id']
+        cubicle = Cubicle.query.get(cubicle_id)
+        if cubicle:
+            cubicle.student_roll = roll
+            db.session.commit()
+            flash("Cubicle allocated.", "success")
+        return redirect(url_for("cubicle_allocation"))
+    return render_template("cubicle_allocation.html", rooms=rooms)
+
+@app.route("/workstation_allocation/<roll>", methods=["GET", "POST"])
+@app.route("/workstation_allocation", methods=["GET", "POST"])
+def workstation_allocation(roll=None):
+    if request.method == "POST":
+        ws = Workstation(**request.form)
+        db.session.add(ws)
+        db.session.commit()
+        flash("Workstation allocated.", "success")
+        return redirect(url_for("workstation_allocation"))
+    return render_template("workstation_allocation.html", roll=roll)
+
+@app.route("/it_equipment/<roll>", methods=["GET", "POST"])
+@app.route("/it_equipment", methods=["GET", "POST"])
+def it_equipment(roll=None):
+    if request.method == "POST":
+        eq = Equipment(**request.form)
+        db.session.add(eq)
+        db.session.commit()
+        flash("IT equipment allocated.", "success")
+        return redirect(url_for("it_equipment"))
+    return render_template("it_equipment.html", roll=roll)
+
+@app.route("/allotment_roll_check", methods=["GET", "POST"])
+def allotment_roll_check():
+    if request.method == "POST":
+        roll = request.form['roll']
+        student = Student.query.get(roll)
+        if student:
+            return redirect(url_for("allotment_options", roll=roll))
+        else:
+            flash("Roll number not found. Please add student info first.", "warning")
+            return redirect(url_for("student_info"))
+    return render_template("allotment_roll_check.html")
+
+@app.route("/allotment_options/<roll>")
+def allotment_options(roll):
+    return render_template("allotment_options.html", roll=roll)
+
+
+
+
+
+
 
 
 if __name__ == "__main__":

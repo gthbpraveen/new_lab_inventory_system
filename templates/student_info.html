@@ -1,0 +1,80 @@
+{% extends "login_home.html" %}
+{% block title %}Student Information{% endblock %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto bg-white rounded shadow p-6 page-transition">
+  <h1 class="text-xl font-semibold mb-4">Student Information</h1>
+
+  <form action="{{ url_for('student_info') }}" method="POST" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="required-field block">Roll Number</label>
+        <input name="roll" id="roll" value="{{ student.roll if student }}" {% if student %}readonly{% endif %} class="w-full border rounded px-3 py-2" required>
+      </div>
+      <div>
+        <label class="required-field block">Full Name</label>
+        <input name="name" value="{{ student.name if student }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+      <div>
+        <label class="required-field block">Course</label>
+        <select name="course" class="w-full border rounded px-3 py-2" required>
+          <option value="">Select Course</option>
+          <option {% if student and student.course=='B.Tech' %}selected{% endif %}>B.Tech</option>
+          <option {% if student and student.course=='M.Tech TA' %}selected{% endif %}>M.Tech TA</option>
+          <option {% if student and student.course=='M.Tech RA' %}selected{% endif %}>M.Tech RA</option>
+          <option {% if student and student.course=='Ph.D.' %}selected{% endif %}>Ph.D.</option>
+          <option {% if student and student.course=='Intern' %}selected{% endif %}>Intern</option>
+        </select>
+      </div>
+      <div>
+        <label class="required-field block">Year</label>
+        <select name="year" class="w-full border rounded px-3 py-2" required>
+          <option value="">Select Year</option>
+          {% for y in ['I','II','III','IV','V'] %}
+            <option value="{{ y }}" {% if student and student.year==y %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="required-field block">Joining Year</label>
+        <input name="joining_year" value="{{ student.joining_year if student }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+      <div>
+        <label class="required-field block">Email</label>
+        <input name="email" value="{{ student.email if student }}" type="email" class="w-full border rounded px-3 py-2" required>
+      </div>
+
+      <div>
+        <label class="block">Phone</label>
+        <input name="phone" value="{{ student.phone if student }}" class="w-full border rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="required-field block">Faculty In-charge</label>
+        <select name="faculty" class="w-full border rounded px-3 py-2" required>
+          <option value="">Select Faculty</option>
+          {% set faculty_list = [
+            "Prof. Antony Franklin","Dr. Ashish Mishra","Prof. Bheemarjuna Reddy Tamma","Prof. C. Krishna Mohan",
+            "Dr. J. Saketha Nath","Dr. Jyothi Vedurada","Dr. Kotaro Kataoka","Prof. M. V. Panduranga Rao",
+            "Dr. Manish Singh","Dr. Maria Francis","Prof. Maunendra Sankar Desarkar","Dr. N. R. Aravind",
+            "Dr. Nitin Saurabh","Dr. Praveen Tammana","Dr. Rajesh Kedia","Dr. Rakesh Venkat",
+            "Dr. Ramakrishna Upadrasta","Dr. Rameshwar Pratap","Dr. Rogers Mathew","Prof. Sathya Peri",
+            "Dr. Saurabh Kumar","Dr. Shirshendu Das","Dr. Sobhan Babu","Dr. Srijith P. K.",
+            "Prof. Subrahmanyam Kalyanasundaram","Prof. Vineeth N. Balasubramanian",
+            "Prof. C. Siva Ram Murthy","Prof. Ponnurangam Kumaraguru","Dr. Kenzo Fujisue","Dr. Naveen Sivadasan"
+          ] %}
+          {% for f in faculty_list %}
+            <option value="{{ f }}" {% if student and student.faculty==f %}selected{% endif %}>{{ f }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-6 flex space-x-3">
+      <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Save & Continue</button>
+      <a href="{{ url_for('student_info') }}" class="bg-gray-200 px-4 py-2 rounded">Back</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
