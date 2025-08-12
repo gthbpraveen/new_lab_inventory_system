@@ -1702,89 +1702,201 @@ def student_info():
 # ------------------------
 # 2. Cubicle Allocation
 # ------------------------
+
+# Add at top of app.py if not present
+from sqlalchemy.orm import joinedload
+from flask import render_template, request, redirect, url_for, flash
+
 @app.route("/cubicle_allocation", methods=["GET", "POST"])
-def cubicle_allocation():
-    roll_prefill = request.args.get("roll", "").strip()
-    rooms = RoomLab.query.all()
+@app.route("/cubicle_allocation/<roll>", methods=["GET", "POST"])
+def cubicle_allocation(roll=None):
+    """
+    Allocate exactly one cubicle per student.
+    - GET: show rooms + cubicles (allocated ones are greyed-out in template)
+           prefill roll if provided.
+    - POST: validate student, validate cubicle availability, ensure student
+            doesn't already have a cubicle, then assign.
+    """
+    # Prefill roll from URL or query param
+    roll_prefill = (roll or request.args.get("roll", "")).strip() or ""
+
+    # Always load rooms with their cubicles for the template (cards/grid)
+    rooms = RoomLab.query.options(joinedload(RoomLab.cubicles)).all()
 
     if request.method == "POST":
-        roll = request.form['roll'].strip()
-        cubicle_id = request.form['cubicle_id']
+        form = request.form
+        roll_in = (form.get("roll") or "").strip()
 
-        student = Student.query.get(roll)
+        if not roll_in:
+            flash("Roll number is required.", "warning")
+            return redirect(request.url)
+
+        # Ensure student exists
+        student = Student.query.get(roll_in)
         if not student:
-            flash("Roll number not found. Please add student info first.", "warning")
-            return redirect(url_for("student_info"))
+            flash("Student not found. Please register the student first.", "warning")
+            return redirect(url_for("student_info", prefill_roll=roll_in))
 
-        # Check if student already has a cubicle
-        if student.cubicle:
-            flash(f"Student {roll} already has a cubicle assigned (Cubicle {student.cubicle.number} in {student.cubicle.room_lab.name}).", "danger")
-            return redirect(url_for("cubicle_allocation", roll=roll))
+        # Read selection
+        room_id = form.get("room_id")  # (optional: if you keep it in the form)
+        cubicle_id = form.get("cubicle_id")
+        if not cubicle_id:
+            flash("Please select a cubicle.", "warning")
+            return redirect(url_for("cubicle_allocation", roll=roll_in))
 
         cubicle = Cubicle.query.get(cubicle_id)
         if not cubicle:
-            flash("Invalid cubicle selected.", "danger")
-            return redirect(url_for("cubicle_allocation", roll=roll))
+            flash("Selected cubicle does not exist.", "danger")
+            return redirect(url_for("cubicle_allocation", roll=roll_in))
 
-        if cubicle.student_roll:
-            flash(f"Cubicle {cubicle.number} in {cubicle.room_lab.name} is already allocated.", "danger")
-            return redirect(url_for("cubicle_allocation", roll=roll))
+        # If it's already allocated to someone else, block
+        if cubicle.student_roll and cubicle.student_roll != roll_in:
+            flash(f"Cubicle {cubicle.number} in {cubicle.room_lab.name} is already allocated to {cubicle.student_roll}.", "danger")
+            return redirect(url_for("cubicle_allocation", roll=roll_in))
 
-        # Allocate cubicle
-        cubicle.student_roll = roll
-        db.session.commit()
-        flash(f"Cubicle {cubicle.number} in {cubicle.room_lab.name} allocated to {roll}.", "success")
-        return redirect(url_for("cubicle_allocation", roll=roll))
+        # Enforce single cubicle per student
+        existing = Cubicle.query.filter_by(student_roll=roll_in).first()
+        if existing and existing.id != cubicle.id:
+            flash(
+                f"Student {roll_in} already has a cubicle "
+                f"({existing.room_lab.name} / {existing.number}). "
+                f"Please free/reassign before allocating a new one.",
+                "warning"
+            )
+            return redirect(url_for("cubicle_allocation", roll=roll_in))
 
-    return render_template("cubicle_allocation.html", rooms=rooms, roll_prefill=roll_prefill)
+        # Assign if free or already theirs
+        cubicle.student_roll = roll_in
+        try:
+            db.session.commit()
+            flash(
+                f"Cubicle {cubicle.number} allocated in {cubicle.room_lab.name} to {roll_in}.",
+                "success"
+            )
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Failed to allocate cubicle: {e}", "danger")
 
+        return redirect(url_for("cubicle_allocation", roll=roll_in))
 
+    # GET render
+    return render_template(
+        "cubicle_allocation.html",
+        rooms=rooms,
+        roll_prefill=roll_prefill
+    )
 
+# add near your other imports
+from sqlalchemy.orm import joinedload
 
-
-# --- Workstation Allocation (allow multiple per student; auto-fill cubicle/room) ---
-@app.route("/workstation_allocation/<roll>", methods=["GET", "POST"])
 @app.route("/workstation_allocation", methods=["GET", "POST"])
+@app.route("/workstation_allocation/<roll>", methods=["GET", "POST"])
 def workstation_allocation(roll=None):
-    # Pre-fill roll from URL query if present
+    # 1) Read prefill roll from URL or param
     roll_prefill = (roll or request.args.get("roll", "")).strip() or None
 
+    # 2) Load rooms with cubicles (needed for dropdown + room_map)
+    rooms = RoomLab.query.options(joinedload(RoomLab.cubicles)).all()
+
+    # 2a) Build JSON-safe room_map {room_name: [{id, number}, ...free only]}
+    room_map = {}
+    for r in rooms:
+        free = [{"id": c.id, "number": c.number}
+                for c in r.cubicles if c.student_roll is None]
+        room_map[r.name] = free
+
+    # 3) Pre-selected room/cubicle if this roll already has a cubicle
+    room_lab_name, cubicle_no = None, None
+    if roll_prefill:
+        cub = (Cubicle.query
+               .options(joinedload(Cubicle.room_lab))
+               .filter(Cubicle.student_roll == roll_prefill)
+               .order_by(Cubicle.id.asc())
+               .first())
+        if cub:
+            room_lab_name = cub.room_lab.name
+            cubicle_no = cub.number
+
+    # 4) Handle POST (save a workstation record)
     if request.method == "POST":
-        roll_post = request.form['roll'].strip()
+        f = request.form
+        roll_post = (f.get("roll") or "").strip()
+        if not roll_post:
+            flash("Roll number is required.", "warning")
+            return redirect(request.url)
 
-        # Ensure student exists; if not, send to student info
-        student = Student.query.get(roll_post)
-        if not student:
-            flash("Student does not exist. Please add them first.", "warning")
-            return redirect(url_for("student_info"))
+        # Ensure student exists
+        if not Student.query.get(roll_post):
+            flash("Student does not exist. Please register first.", "warning")
+            return redirect(url_for("student_info", prefill_roll=roll_post))
 
-        # OPTIONAL: if you want to auto-insert cubicle/room if fields were blank
-        form_data = request.form.to_dict()
-        if not form_data.get("cubicle_no") or not form_data.get("room_lab_name"):
-            cub = Cubicle.query.filter_by(student_roll=roll_post).first()
+        # If room/cubicle not provided, auto-fill from existing assignment (if any)
+        room_val = (f.get("room_lab_name") or "").strip()
+        cub_val  = (f.get("cubicle_no") or "").strip()
+        if not room_val or not cub_val:
+            cub = (Cubicle.query
+                   .options(joinedload(Cubicle.room_lab))
+                   .filter(Cubicle.student_roll == roll_post)
+                   .order_by(Cubicle.id.asc())
+                   .first())
             if cub:
-                form_data.setdefault("cubicle_no", cub.number)
-                form_data.setdefault("room_lab_name", cub.room_lab.name)
+                room_val = room_val or cub.room_lab.name
+                cub_val  = cub_val  or cub.number
 
-        ws = Workstation(**form_data)  # multiple WS allowed
-        db.session.add(ws)
-        db.session.commit()
-        flash("Workstation allocated successfully.", "success")
+        ws = Workstation(
+            roll=roll_post,
+            room_lab_name=room_val or None,
+            cubicle_no=cub_val or None,
+            manufacturer=f.get("manufacturer"),
+            otherManufacturer=f.get("otherManufacturer"),
+            model=f.get("model"),
+            serial=f.get("serial"),
+            os=f.get("os"),
+            otherOs=f.get("otherOs"),
+            processor=f.get("processor"),
+            cores=f.get("cores"),
+            ram=f.get("ram"),
+            otherRam=f.get("otherRam"),
+            storage_type1=f.get("storage_type1"),
+            storage_capacity1=f.get("storage_capacity1"),
+            storage_type2=f.get("storage_type2"),
+            storage_capacity2=f.get("storage_capacity2"),
+            gpu=f.get("gpu"),
+            vram=f.get("vram"),
+            issue_date=f.get("issue_date"),
+            system_required_till=f.get("system_required_till"),
+            po_date=f.get("po_date"),
+            source_of_fund=f.get("source_of_fund"),
+            keyboard_provided=f.get("keyboard_provided"),
+            keyboard_details=f.get("keyboard_details"),
+            mouse_provided=f.get("mouse_provided"),
+            mouse_details=f.get("mouse_details"),
+            monitor_provided=f.get("monitor_provided"),
+            monitor_details=f.get("monitor_details"),
+            monitor_size=f.get("monitor_size"),
+            monitor_serial=f.get("monitor_serial"),
+            mac_address=f.get("mac_address"),
+        )
+        try:
+            db.session.add(ws)
+            db.session.commit()
+            flash("Workstation allocated successfully.", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Could not save workstation: {e}", "danger")
+
         return redirect(url_for("workstation_allocation", roll=roll_post))
 
-    # GET: compute auto-fill cubicle/room (if assigned) for template
-    cubicle_no, room_lab_name = None, None
-    if roll_prefill:
-        cub = Cubicle.query.filter_by(student_roll=roll_prefill).first()
-        if cub:
-            cubicle_no, room_lab_name = cub.number, cub.room_lab.name
-
+    # 5) Render
     return render_template(
         "workstation_allocation.html",
+        rooms=rooms,
         roll_prefill=roll_prefill,
+        room_lab_name=room_lab_name,
         cubicle_no=cubicle_no,
-        room_lab_name=room_lab_name
+        room_map=room_map,   # <-- important for template JS
     )
+
 
 
 # --- IT Equipment Allocation (allow multiple per student) ---

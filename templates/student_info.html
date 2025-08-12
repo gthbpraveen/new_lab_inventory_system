@@ -3,24 +3,40 @@
 {% block content %}
 
 <div class="max-w-4xl mx-auto bg-white rounded shadow p-6 page-transition">
-  <h1 class="text-xl font-semibold mb-4">Student Information</h1>
+  <h1 class="border rounded px-3 py-2 text-xl bg-blue-50 mb-14 text-center font-bold">
+    New Student Registration
+  </h1>
 
-  <form action="{{ url_for('student_info') }}" method="POST" class="space-y-4">
+  <form action="{{ url_for('student_info') }}" method="POST" class="space-y-4" id="studentForm" novalidate>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="required-field block">Roll Number</label>
-        <input name="roll" id="roll"  value="{{ prefill_roll or '' }}"
-       placeholder="Roll Number"
-       {% if prefill_roll %}readonly class="w-full border rounded px-3 py-2 bg-gray-100"
-       {% else %}class="w-full border rounded px-3 py-2"{% endif %}
-       required> </div>
-      <div>
-        <label class="required-field block">Full Name</label>
-        <input name="name" value="{{ student.name if student }}" class="w-full border rounded px-3 py-2" required>
+      <!-- 1) Full Name -->
+      <div class="md:col-span-2">
+        <label for="name" class="required-field block">Full Name</label>
+        <input name="name" id="name"
+               value="{{ student.name if student else '' }}"
+               class="w-full border rounded px-3 py-2" required autocomplete="name">
       </div>
+
+      <!-- 2) Joining Year -->
+  <!-- 2) Joining Year -->
+<div>
+  <label for="joining_year" class="required-field block">Joining Year</label>
+  <select name="joining_year" id="joining_year" class="w-full border rounded px-3 py-2" required>
+    <option value="">Select Year</option>
+    {% for y in range(2010, 2051) %}
+      <option value="{{ y }}" {% if student and student.joining_year == y %}selected{% endif %}>
+        {{ y }}
+      </option>
+    {% endfor %}
+  </select>
+  <p class="text-xs text-gray-500 mt-1">Select the year of joining.</p>
+</div>
+
+
+      <!-- 3) Course -->
       <div>
-        <label class="required-field block">Course</label>
-        <select name="course" class="w-full border rounded px-3 py-2" required>
+        <label for="course" class="required-field block">Course</label>
+        <select name="course" id="course" class="w-full border rounded px-3 py-2" required>
           <option value="">Select Course</option>
           <option {% if student and student.course=='B.Tech' %}selected{% endif %}>B.Tech</option>
           <option {% if student and student.course=='M.Tech TA' %}selected{% endif %}>M.Tech TA</option>
@@ -29,9 +45,11 @@
           <option {% if student and student.course=='Intern' %}selected{% endif %}>Intern</option>
         </select>
       </div>
+
+      <!-- 4) Studying Year -->
       <div>
-        <label class="required-field block">Year</label>
-        <select name="year" class="w-full border rounded px-3 py-2" required>
+        <label for="year" class="required-field block">Studying Year</label>
+        <select name="year" id="year" class="w-full border rounded px-3 py-2" required>
           <option value="">Select Year</option>
           {% for y in ['I','II','III','IV','V'] %}
             <option value="{{ y }}" {% if student and student.year==y %}selected{% endif %}>{{ y }}</option>
@@ -39,22 +57,59 @@
         </select>
       </div>
 
-      <div>
-        <label class="required-field block">Joining Year</label>
-        <input name="joining_year" value="{{ student.joining_year if student }}" class="w-full border rounded px-3 py-2" required>
-      </div>
-      <div>
-        <label class="required-field block">Email</label>
-        <input name="email" value="{{ student.email if student }}" type="email" class="w-full border rounded px-3 py-2" required>
+      <!-- 5) Roll Number -->
+      {% if prefill_roll %}
+        <!-- Pre-filled (readonly) full roll -->
+        <div class="md:col-span-2">
+          <label for="roll_prefilled" class="required-field block">Roll Number</label>
+          <input name="roll" id="roll_prefilled"
+                 value="{{ prefill_roll }}"
+                 readonly class="w-full border rounded px-3 py-2 bg-gray-100" required>
+          <p class="text-xs text-gray-500 mt-1">This roll is pre-filled from the previous step.</p>
+        </div>
+      {% else %}
+        <!-- Single visible field: user enters only last 5; prefix is shown but not editable -->
+        <div class="md:col-span-2">
+          <label class="required-field block">Roll Number</label>
+          <div class="flex">
+            <span id="roll_prefix_badge"
+                  class="px-3 py-2 border border-r-0 rounded-l bg-gray-100 text-gray-700 min-w-[9rem] text-sm select-none">
+              csYYcode
+            </span>
+            <input id="roll_suffix" maxlength="5" placeholder="last 5 (e.g., 11091)"
+                   class="w-full border border-l-0 rounded-r px-3 py-2" required
+                   inputmode="latin" pattern="[a-z0-9]{5}" autocomplete="off">
+          </div>
+          <!-- Hidden full roll sent to server -->
+          <input type="hidden" name="roll" id="roll_full">
+          <p class="text-xs text-gray-500 mt-1">
+            Prefix is auto-built from Joining Year & Course. Enter only the last 5 (lowercase letters/digits).
+          </p>
+        </div>
+      {% endif %}
+
+      <!-- 6) Email (auto from roll; editable) -->
+      <div class="md:col-span-2">
+        <label for="email" class="required-field block">Email</label>
+        <input name="email" id="email"
+               value="{{ student.email if student else '' }}"
+               type="email" class="w-full border rounded px-3 py-2" required
+               placeholder="e.g., cs24mtech11091@iith.ac.in" autocomplete="email">
+        <p class="text-xs text-gray-500 mt-1">Auto-fills from roll; you can edit if needed.</p>
       </div>
 
+      <!-- 7) Phone -->
       <div>
-        <label class="block">Phone</label>
-        <input name="phone" value="{{ student.phone if student }}" class="w-full border rounded px-3 py-2">
+        <label for="phone" class="block">Phone</label>
+        <input name="phone" id="phone"
+               value="{{ student.phone if student else '' }}"
+               class="w-full border rounded px-3 py-2" autocomplete="tel">
       </div>
+
+      <!-- 8) Faculty -->
       <div>
-        <label class="required-field block">Faculty In-charge</label>
-        <select name="faculty" class="w-full border rounded px-3 py-2" required>
+        <label for="faculty" class="required-field block">Faculty In-charge</label>
+        <select name="faculty" id="faculty" class="w-full border rounded px-3 py-2" required>
           <option value="">Select Faculty</option>
           {% set faculty_list = [
             "Prof. Antony Franklin","Dr. Ashish Mishra","Prof. Bheemarjuna Reddy Tamma","Prof. C. Krishna Mohan",
@@ -79,5 +134,85 @@
     </div>
   </form>
 </div>
+
+<!-- Auto-roll/email script -->
+<script>
+(function () {
+  const prefilled = {{ 'true' if prefill_roll else 'false' }};
+
+  // If roll is prefilled, set email if empty and return
+  if (prefilled) {
+    const rollEl = document.getElementById('roll_prefilled');
+    const emailEl = document.getElementById('email');
+    if (rollEl && emailEl && !emailEl.value) {
+      emailEl.value = rollEl.value.toLowerCase() + '@iith.ac.in';
+    }
+    return;
+  }
+
+  const joinEl = document.getElementById('joining_year');
+  const courseEl = document.getElementById('course');
+  const prefixBadge = document.getElementById('roll_prefix_badge');
+  const suffixEl = document.getElementById('roll_suffix');
+  const rollFullEl = document.getElementById('roll_full');
+  const emailEl = document.getElementById('email');
+  const form = document.getElementById('studentForm');
+
+  function courseToCode(course) {
+    const c = (course || '').toLowerCase();
+    // map common course labels to codes
+    if (c.startsWith('m.tech')) return 'mtech';
+    if (c.startsWith('b.tech')) return 'btech';
+    if (c.startsWith('ph.d'))   return 'phd';
+    if (c.startsWith('intern')) return 'intern';
+    return c.replace(/\s+/g, '');
+  }
+
+  function recompute() {
+    const jy = (joinEl.value || '').trim();
+    const yy = jy.length >= 2 ? jy.slice(-2) : '';
+    const cc = courseToCode(courseEl.value);
+    const prefix = (yy && cc) ? `cs${yy}${cc}` : 'csYYcode';
+    prefixBadge.textContent = prefix;
+
+    // suffix: enforce lowercase a-z0-9 only, max 5
+    const raw = (suffixEl.value || '');
+    const suffix = raw.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5);
+    if (raw !== suffix) suffixEl.value = suffix;
+
+    const full = (prefix !== 'csYYcode' && suffix.length === 5) ? (prefix + suffix) : '';
+    rollFullEl.value = full;
+
+    // Auto email only if not manually edited (simple heuristic)
+    if (emailEl && (!emailEl.dataset.userEdited || emailEl.dataset.userEdited === 'false')) {
+      emailEl.value = full ? (full + '@iith.ac.in') : '';
+    }
+  }
+
+  if (emailEl) {
+    emailEl.addEventListener('input', function () {
+      this.dataset.userEdited = 'true';
+    });
+  }
+
+  ['input','change'].forEach(evt => {
+    if (joinEl) joinEl.addEventListener(evt, recompute);
+    if (courseEl) courseEl.addEventListener(evt, recompute);
+    if (suffixEl) suffixEl.addEventListener(evt, recompute);
+  });
+
+  // Initial compute
+  recompute();
+
+  // Validate before submit: ensure full roll present
+  form.addEventListener('submit', function (e) {
+    if (!document.getElementById('roll_full').value) {
+      e.preventDefault();
+      alert('Please complete Roll Number (enter the last 5 after selecting Joining Year and Course).');
+      document.getElementById('roll_suffix').focus();
+    }
+  });
+})();
+</script>
 
 {% endblock %}

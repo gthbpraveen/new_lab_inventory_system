@@ -4,182 +4,246 @@
 <div class="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-lg">
   <h2 class="text-2xl font-bold mb-6 text-gray-800">Allocate Workstation</h2>
 
-  <form method="POST" class="space-y-6">
-    <!-- Roll (pre-filled, readonly if provided) -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-1">Roll Number</label>
-      <input name="roll"
-             value="{{ roll_prefill or '' }}"
-             placeholder="Enter Roll Number"
-             {% if roll_prefill %}readonly class="p-2 border rounded w-full bg-gray-100"
-             {% else %}class="p-2 border rounded w-full"{% endif %}
-             required>
-    </div>
+  <form method="POST" class="space-y-8" id="wsForm">
+    <!-- ===================== Section: Assignment ===================== -->
+    <section class="space-y-4">
+      <h3 class="text-xl font-semibold text-indigo-800 border-b border-indigo-200 pb-2">Assignment</h3>
 
-    <!-- Auto-filled room/cubicle if the student already has a cubicle -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Roll -->
       <div>
-        <label class="block text-gray-700 font-medium mb-1">Room/Lab Name</label>
-        <input name="room_lab_name" value="{{ room_lab_name or '' }}"
-               placeholder="e.g., CS-107"
-               class="p-2 border rounded w-full" readonly>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Cubicle Number</label>
-        <input name="cubicle_no" value="{{ cubicle_no or '' }}"
-               placeholder="e.g., 12"
-               class="p-2 border rounded w-full" readonly>
-      </div>
-    </div>
-
-    <!-- Your full workstation fields below -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Manufacturer</label>
-        <select name="manufacturer" class="p-2 border rounded w-full" required>
-          <option value="">Select</option>
-          <option>Dell</option><option>HP</option><option>Lenovo</option><option>Apple</option>
-          <option>Acer</option><option>ASUS</option><option>MSI</option><option>Intel</option>
-          <option>AMD</option><option>Supermicro</option><option>Gigabyte</option>
-          <option>Wipro</option><option>HCL</option><option>Others</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Model</label>
-        <input name="model" class="p-2 border rounded w-full" required>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Serial</label>
-        <input name="serial" class="p-2 border rounded w-full" required>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Operating System</label>
-        <select name="os" class="p-2 border rounded w-full" required>
-          <option value="">Select</option>
-          <option>Windows</option><option>Ubuntu</option><option>macOS</option>
-          <option>Dual Boot</option><option>Other</option>
-        </select>
-      </div>
-      <div class="md:col-span-2">
-        <label class="block text-gray-700 font-medium mb-1">Other OS (if selected)</label>
-        <input name="otherOs" class="p-2 border rounded w-full">
+        <label class="block text-gray-700 font-medium mb-1">Roll Number</label>
+        <input name="roll"
+               value="{{ roll_prefill or '' }}"
+               placeholder="Enter Roll Number"
+               {% if roll_prefill %}readonly class="p-2 border rounded w-full bg-gray-100"
+               {% else %}class="p-2 border rounded w-full"{% endif %}
+               required>
       </div>
 
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Processor</label>
-        <input name="processor" class="p-2 border rounded w-full" required>
+      <!-- Room & Cubicle -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Room/Lab Name</label>
+          <select id="roomSelect" name="room_lab_name"
+                  class="p-2 border rounded w-full focus:ring focus:ring-blue-300" required>
+            <option value="">-- Select Room/Lab --</option>
+            {% for room in rooms %}
+              <option value="{{ room.name }}" {% if room_lab_name == room.name %}selected{% endif %}>
+                {{ room.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Cubicle Number</label>
+          <select id="cubicleSelect" name="cubicle_no"
+                  class="p-2 border rounded w-full focus:ring focus:ring-blue-300" required disabled>
+            <option value="">-- Select Cubicle --</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-1" id="cubHint">Choose a room to see available cubicles.</p>
+        </div>
       </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Cores</label>
-        <input type="number" min="1" name="cores" class="p-2 border rounded w-full">
-      </div>
+    </section>
 
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">RAM (GB)</label>
-        <select name="ram" class="p-2 border rounded w-full" required>
-          <option value="">Select</option>
-          <option>2</option><option>4</option><option>8</option><option>16</option>
-          <option>32</option><option>64</option><option>128</option><option>other</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Other RAM (GB)</label>
-        <input name="otherRam" class="p-2 border rounded w-full">
-      </div>
+    <!-- ===================== Section: CPU & OS ===================== -->
+    <section class="space-y-4">
+      <h3 class="text-xl font-semibold text-indigo-800 border-b border-indigo-200 pb-2">CPU & Operating System</h3>
 
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Primary Storage Type 1</label>
-        <select name="storage_type1" class="p-2 border rounded w-full" required>
-          <option value="">Select</option><option>HDD</option><option>SSD</option><option>NVMe</option><option>Other</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Capacity 1 (GB)</label>
-        <input type="number" min="1" name="storage_capacity1" class="p-2 border rounded w-full" required>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Primary Storage Type 2</label>
-        <select name="storage_type2" class="p-2 border rounded w-full">
-          <option value="">Select</option><option>HDD</option><option>SSD</option><option>NVMe</option><option>Other</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Capacity 2 (GB)</label>
-        <input type="number" min="1" name="storage_capacity2" class="p-2 border rounded w-full">
-      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Manufacturer</label>
+          <select name="manufacturer" id="manufacturer"
+                  class="p-2 border rounded w-full" required>
+            <option value="">Select</option>
+            <option>Dell</option><option>HP</option><option>Lenovo</option><option>Apple</option>
+            <option>Acer</option><option>ASUS</option><option>MSI</option><option>Intel</option>
+            <option>AMD</option><option>Supermicro</option><option>Gigabyte</option>
+            <option>Wipro</option><option>HCL</option><option>Others</option>
+          </select>
+        </div>
+        <div id="otherManWrap" class="hidden">
+          <label class="block text-gray-700 font-medium mb-1">Specify Other Manufacturer</label>
+          <input name="otherManufacturer" id="otherManufacturer" class="p-2 border rounded w-full">
+        </div>
 
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">GPU</label>
-        <input name="gpu" class="p-2 border rounded w-full">
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">VRAM (GB)</label>
-        <input type="number" step="0.5" min="0" name="vram" class="p-2 border rounded w-full">
-      </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Model</label>
+          <input name="model" class="p-2 border rounded w-full" required>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Serial</label>
+          <input name="serial" class="p-2 border rounded w-full" required>
+        </div>
 
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Issue Date</label>
-        <input type="date" name="issue_date" class="p-2 border rounded w-full" required>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Operating System</label>
+          <select name="os" id="os" class="p-2 border rounded w-full" required>
+            <option value="">Select</option>
+            <option>Windows</option><option>Ubuntu</option><option>macOS</option>
+            <option>Dual Boot</option><option>Other</option>
+          </select>
+        </div>
+        <div id="otherOsWrap" class="hidden md:col-span-2">
+          <label class="block text-gray-700 font-medium mb-1">Specify Other OS</label>
+          <input name="otherOs" id="otherOs" class="p-2 border rounded w-full">
+        </div>
       </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Required Till</label>
-        <input type="date" name="system_required_till" class="p-2 border rounded w-full" required>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">PO Date</label>
-        <input type="date" name="po_date" class="p-2 border rounded w-full">
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Source of Fund</label>
-        <input name="source_of_fund" class="p-2 border rounded w-full">
-      </div>
+    </section>
 
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Keyboard Provided</label>
-        <select name="keyboard_provided" class="p-2 border rounded w-full" required>
-          <option value="">Select</option><option>yes</option><option>no</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Keyboard Details</label>
-        <input name="keyboard_details" class="p-2 border rounded w-full">
-      </div>
+    <!-- ===================== Section: Processor & Memory ===================== -->
+    <section class="space-y-4">
+      <h3 class="text-xl font-semibold text-indigo-800 border-b border-indigo-200 pb-2">Processor & Memory</h3>
 
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Mouse Provided</label>
-        <select name="mouse_provided" class="p-2 border rounded w-full" required>
-          <option value="">Select</option><option>yes</option><option>no</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Mouse Details</label>
-        <input name="mouse_details" class="p-2 border rounded w-full">
-      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Processor</label>
+          <input name="processor" class="p-2 border rounded w-full" required>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">Cores</label>
+          <input type="number" min="1" name="cores" class="p-2 border rounded w-full">
+        </div>
 
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Monitor Provided</label>
-        <select name="monitor_provided" class="p-2 border rounded w-full" required>
-          <option value="">Select</option><option>yes</option><option>no</option><option>laptop</option>
-        </select>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">RAM (GB)</label>
+          <select name="ram" id="ram" class="p-2 border rounded w-full" required>
+            <option value="">Select</option>
+            <option>2</option><option>4</option><option>8</option><option>16</option>
+            <option>32</option><option>64</option><option>128</option><option value="other">Other</option>
+          </select>
+        </div>
+        <div id="otherRamWrap" class="hidden">
+          <label class="block text-gray-700 font-medium mb-1">Specify Other RAM (GB)</label>
+          <input name="otherRam" id="otherRam" type="number" min="1" class="p-2 border rounded w-full">
+        </div>
       </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Monitor Details</label>
-        <input name="monitor_details" class="p-2 border rounded w-full">
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Monitor Size (in)</label>
-        <input type="number" min="10" max="100" step="0.1" name="monitor_size" class="p-2 border rounded w-full">
-      </div>
-      <div>
-        <label class="block text-gray-700 font-medium mb-1">Monitor Serial</label>
-        <input name="monitor_serial" class="p-2 border rounded w-full">
-      </div>
+    </section>
 
-      <div class="md:col-span-2">
+    <!-- ===================== Section: Storage ===================== -->
+    <section class="space-y-4">
+      <h3 class="text-xl font-semibold text-indigo-800 border-b border-indigo-200 pb-2">Storage</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Primary Storage Type 1</label>
+          <select id="storage_type1" name="storage_type1" class="p-2 border rounded w-full" required>
+            <option value="">Select</option><option>HDD</option><option>SSD</option><option>NVMe</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Capacity 1 (GB)</label>
+          <input type="number" min="1" name="storage_capacity1" class="p-2 border rounded w-full" required>
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">Primary Storage Type 2 (optional)</label>
+          <select id="storage_type2" name="storage_type2" class="p-2 border rounded w-full">
+            <option value="">Select</option><option>HDD</option><option>SSD</option><option>NVMe</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">Capacity 2 (GB)</label>
+          <input type="number" min="1" name="storage_capacity2" class="p-2 border rounded w-full">
+        </div>
+
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">GPU</label>
+          <input name="gpu" class="p-2 border rounded w-full">
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">VRAM (GB)</label>
+          <input type="number" step="0.5" min="0" name="vram" class="p-2 border rounded w-full">
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Section: Peripherals ===================== -->
+    <section class="space-y-4">
+      <h3 class="text-xl font-semibold text-indigo-800 border-b border-indigo-200 pb-2">Peripherals</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Keyboard -->
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Keyboard Provided</label>
+          <select name="keyboard_provided" id="keyboard_provided" class="p-2 border rounded w-full" required>
+            <option value="">Select</option><option value="yes">yes</option><option value="no">no</option>
+          </select>
+        </div>
+        <div id="keyboard_details_wrap" class="hidden">
+          <label class="block text-gray-700 font-medium mb-1">Keyboard Details</label>
+          <input name="keyboard_details" id="keyboard_details" class="p-2 border rounded w-full">
+        </div>
+
+        <!-- Mouse -->
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Mouse Provided</label>
+          <select name="mouse_provided" id="mouse_provided" class="p-2 border rounded w-full" required>
+            <option value="">Select</option><option value="yes">yes</option><option value="no">no</option>
+          </select>
+        </div>
+        <div id="mouse_details_wrap" class="hidden">
+          <label class="block text-gray-700 font-medium mb-1">Mouse Details</label>
+          <input name="mouse_details" id="mouse_details" class="p-2 border rounded w-full">
+        </div>
+
+        <!-- Monitor -->
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Monitor Provided</label>
+          <select name="monitor_provided" id="monitor_provided" class="p-2 border rounded w-full" required>
+            <option value="">Select</option><option value="yes">yes</option><option value="no">no</option><option value="laptop">laptop</option>
+          </select>
+        </div>
+        <div id="monitor_extras" class="hidden md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-gray-700 font-medium mb-1">Monitor Details</label>
+            <input name="monitor_details" id="monitor_details" class="p-2 border rounded w-full">
+          </div>
+          <div>
+            <label class="block text-gray-700 font-medium mb-1">Monitor Size (in)</label>
+            <input type="number" min="10" max="100" step="0.1" name="monitor_size" id="monitor_size" class="p-2 border rounded w-full">
+          </div>
+          <div>
+            <label class="block text-gray-700 font-medium mb-1">Monitor Serial</label>
+            <input name="monitor_serial" id="monitor_serial" class="p-2 border rounded w-full">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Section: Dates & Funding ===================== -->
+    <section class="space-y-4">
+      <h3 class="text-xl font-semibold text-indigo-800 border-b border-indigo-200 pb-2">Dates & Funding</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Issue Date</label>
+          <input type="date" name="issue_date" id="issue_date" class="p-2 border rounded w-full" required>
+          <p class="text-xs text-gray-500 mt-1">Must be today or later.</p>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1 required-field">Required Till</label>
+          <input type="date" name="system_required_till" id="required_till" class="p-2 border rounded w-full" required>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">PO Date</label>
+          <input type="date" name="po_date" id="po_date" class="p-2 border rounded w-full">
+          <p class="text-xs text-gray-500 mt-1">Must be before Issue Date when set.</p>
+        </div>
+        <div>
+          <label class="block text-gray-700 font-medium mb-1">Source of Fund</label>
+          <input name="source_of_fund" class="p-2 border rounded w-full">
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Section: Network ===================== -->
+    <section class="space-y-4">
+      <h3 class="text-xl font-semibold text-indigo-800 border-b border-indigo-200 pb-2">Network</h3>
+      <div>
         <label class="block text-gray-700 font-medium mb-1">MAC Address (optional)</label>
-        <input name="mac_address" class="p-2 border rounded w-full">
+        <input name="mac_address" class="p-2 border rounded w-full" placeholder="e.g., 00:1a:2b:3c:4d:5e">
       </div>
-    </div>
+    </section>
 
     <div>
       <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
@@ -188,4 +252,217 @@
     </div>
   </form>
 </div>
+
+<!-- ==== Dynamic Logic ==== -->
+<script>
+(function () {
+  // ---------- Safe room map from server ----------
+  const roomMap = {{ room_map | tojson }};
+
+  const roomSel = document.getElementById('roomSelect');
+  const cubSel  = document.getElementById('cubicleSelect');
+  const cubHint = document.getElementById('cubHint');
+
+  function populateCubicles() {
+    const room = roomSel.value || "";
+    cubSel.innerHTML = '<option value="">-- Select Cubicle --</option>';
+    cubSel.disabled = true;
+
+    if (!room || !roomMap[room] || roomMap[room].length === 0) {
+      cubHint.textContent = room ? "No free cubicles in this room." : "Choose a room to see available cubicles.";
+      return;
+    }
+    const list = roomMap[room];
+    for (const c of list) {
+      const opt = document.createElement('option');
+      opt.value = c.number;
+      opt.textContent = c.number;
+      cubSel.appendChild(opt);
+    }
+    cubSel.disabled = false;
+    cubHint.textContent = list.length + " cubicle(s) available.";
+  }
+  roomSel.addEventListener('change', populateCubicles);
+
+  // ---------- Show/Hide Other Manufacturer ----------
+  const manufacturer = document.getElementById('manufacturer');
+  const otherManWrap = document.getElementById('otherManWrap');
+  const otherManufacturer = document.getElementById('otherManufacturer');
+  function toggleOtherMan() {
+    const show = (manufacturer.value === 'Others');
+    otherManWrap.classList.toggle('hidden', !show);
+    otherManufacturer.required = show;
+    if (!show) otherManufacturer.value = '';
+  }
+  manufacturer.addEventListener('change', toggleOtherMan); toggleOtherMan();
+
+  // ---------- Show/Hide Other OS ----------
+  const osSel = document.getElementById('os');
+  const otherOsWrap = document.getElementById('otherOsWrap');
+  const otherOs = document.getElementById('otherOs');
+  function toggleOtherOs() {
+    const show = (osSel.value === 'Other');
+    otherOsWrap.classList.toggle('hidden', !show);
+    otherOs.required = show;
+    if (!show) otherOs.value = '';
+  }
+  osSel.addEventListener('change', toggleOtherOs); toggleOtherOs();
+
+  // ---------- Show/Hide Other RAM ----------
+  const ramSel = document.getElementById('ram');
+  const otherRamWrap = document.getElementById('otherRamWrap');
+  const otherRam = document.getElementById('otherRam');
+  function toggleOtherRam() {
+    const show = (ramSel.value === 'other');
+    otherRamWrap.classList.toggle('hidden', !show);
+    otherRam.required = show;
+    if (!show) otherRam.value = '';
+  }
+  ramSel.addEventListener('change', toggleOtherRam); toggleOtherRam();
+
+  // ---------- Peripherals logic (yes/no -> details) ----------
+  function wiredToggle(selectId, wrapId, inputIds) {
+    const sel = document.getElementById(selectId);
+    const wrap = document.getElementById(wrapId);
+    const inputs = (inputIds || []).map(id => document.getElementById(id));
+    function apply() {
+      const v = sel.value;
+      if (v === 'yes') {
+        wrap.classList.remove('hidden');
+        inputs.forEach(i => { i.required = true; i.value = ''; });
+      } else {
+        wrap.classList.add('hidden');
+        inputs.forEach(i => { i.required = false; i.value = 'no'; });
+      }
+      if (v === 'laptop') {
+        wrap.classList.add('hidden');
+        inputs.forEach(i => { i.required = false; i.value = 'laptop'; });
+      }
+    }
+    sel.addEventListener('change', apply); apply();
+  }
+  wiredToggle('keyboard_provided', 'keyboard_details_wrap', ['keyboard_details']);
+  wiredToggle('mouse_provided', 'mouse_details_wrap', ['mouse_details']);
+  (function () {
+    const sel = document.getElementById('monitor_provided');
+    const wrap = document.getElementById('monitor_extras');
+    const ids  = ['monitor_details','monitor_size','monitor_serial'];
+    const inputs = ids.map(id => document.getElementById(id));
+    function apply() {
+      const v = sel.value;
+      if (v === 'yes') {
+        wrap.classList.remove('hidden');
+        inputs.forEach(i => { i.required = true; if (i.id!=='monitor_size') i.value = ''; });
+      } else if (v === 'no') {
+        wrap.classList.add('hidden');
+        document.getElementById('monitor_details').value = 'no';
+        document.getElementById('monitor_serial').value = 'no';
+        const sz = document.getElementById('monitor_size');
+        sz.value = '';
+        inputs.forEach(i => i.required = false);
+      } else { // laptop
+        wrap.classList.add('hidden');
+        document.getElementById('monitor_details').value = 'laptop';
+        document.getElementById('monitor_serial').value = 'laptop';
+        const sz = document.getElementById('monitor_size');
+        sz.value = '';
+        inputs.forEach(i => i.required = false);
+      }
+    }
+    sel.addEventListener('change', apply); apply();
+  })();
+
+  // ---------- Date constraints ----------
+  const issue = document.getElementById('issue_date');
+  const till  = document.getElementById('required_till');
+  const po    = document.getElementById('po_date');
+
+  function todayStr() {
+    const d = new Date();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${d.getFullYear()}-${m}-${day}`;
+  }
+  issue.min = todayStr();
+
+  function syncDateConstraints() {
+    if (issue.value) {
+      till.min = issue.value;
+      if (po.value && po.value >= issue.value) {
+        po.setCustomValidity('PO Date must be before Issue Date');
+      } else {
+        po.setCustomValidity('');
+      }
+    } else {
+      till.removeAttribute('min');
+    }
+    if (issue.value && till.value && till.value < issue.value) {
+      till.setCustomValidity('Required Till must be after or same as Issue Date');
+    } else {
+      till.setCustomValidity('');
+    }
+  }
+  issue.addEventListener('change', syncDateConstraints);
+  till.addEventListener('change', syncDateConstraints);
+  po.addEventListener('change', syncDateConstraints);
+  syncDateConstraints();
+
+  // ---------- Preselect room/cubicle from server (if provided) ----------
+  const preRoom = {{ (room_lab_name or '') | tojson }};
+  const preCub  = {{ (cubicle_no or '') | tojson }};
+
+  function ensurePreselectedCubicle() {
+    if (!preCub) return;
+
+    // Make sure the select is enabled before selecting
+    cubSel.disabled = false;
+
+    // Try to select an existing option
+    let found = false;
+    for (const opt of cubSel.options) {
+      if (opt.value === preCub) {
+        cubSel.value = preCub;
+        found = true;
+        break;
+      }
+    }
+    // If not in list (because it's not free), inject & select it
+    if (!found) {
+      const opt = document.createElement('option');
+      opt.value = preCub;
+      opt.textContent = `${preCub} (assigned)`;
+      cubSel.prepend(opt);
+      cubSel.value = preCub;
+    }
+    cubHint.textContent = "Preselected existing assignment.";
+  }
+
+  if (preRoom) {
+    roomSel.value = preRoom;
+    populateCubicles();
+    setTimeout(ensurePreselectedCubicle, 0);
+  }
+
+  // ---------- Final guard before submit ----------
+  document.getElementById('wsForm').addEventListener('submit', function (e) {
+    // If there is a pre-assigned cubicle, don't block on visible select
+    const hasPreassigned = Boolean(preRoom && preCub);
+
+    if (!roomSel.value && !hasPreassigned) {
+      e.preventDefault(); roomSel.focus(); return;
+    }
+    if (!cubSel.value && !hasPreassigned) {
+      e.preventDefault(); cubSel.focus(); return;
+    }
+
+    syncDateConstraints();
+    if (!this.checkValidity()) {
+      e.preventDefault();
+      this.reportValidity();
+    }
+  });
+})();
+</script>
+
+
 {% endblock %}

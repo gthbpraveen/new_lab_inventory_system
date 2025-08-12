@@ -2,8 +2,9 @@
 {% block title %}Allotment Options{% endblock %}
 {% block content %}
 <div class="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-6">
-  <h2 class="text-2xl font-bold mb-6 text-gray-800">Allotment Options for Roll: {{ roll }}</h2>
-
+  <h1 class="border rounded px-3 py-2 text-xl bg-blue-50 mb-14 text-center font-bold">
+Allotment Options for Roll number <br> {{ roll }}
+  </h1>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <!-- Cubicle Allocation -->
     <a href="{{ url_for('cubicle_allocation', roll=roll) }}"
