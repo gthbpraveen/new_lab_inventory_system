@@ -1963,11 +1963,72 @@ def allotment_roll_check():
 # ------------------------
 # 6. Allotment Options
 # ------------------------
+# --- Allotment options with current allocations summary ---
 @app.route("/allotment_options/<roll>")
 def allotment_options(roll):
-    return render_template("allotment_options.html", roll=roll)
+    # Student or 404
+    student = Student.query.get_or_404(roll)
 
+    # Current cubicle (if any)
+    cub = (
+        db.session.query(Cubicle, RoomLab)
+        .join(RoomLab, Cubicle.room_lab_id == RoomLab.id)
+        .filter(Cubicle.student_roll == roll)
+        .first()
+    )
+    # cub is a tuple (Cubicle, RoomLab) or None
 
+    # Workstations for this student (supports multiple)
+    workstations = Workstation.query.filter_by(roll=roll)\
+        .order_by(Workstation.issue_date.desc())\
+        .all()
+
+    # IT equipment assigned to this student
+    equipment = Equipment.query.filter_by(assigned_to_roll=roll)\
+        .order_by(Equipment.assigned_date.desc().nullslast())\
+        .all()
+
+    return render_template(
+        "allotment_options.html",
+        roll=roll,
+        student=student,
+        cub=cub,
+        workstations=workstations,
+        equipment=equipment,
+    )
+# Release cubicle
+@app.post("/cubicle/release/<int:cubicle_id>")
+def release_cubicle(cubicle_id):
+    cub = Cubicle.query.get_or_404(cubicle_id)
+    roll = cub.student_roll
+    cub.student_roll = None
+    db.session.commit()
+    flash("Cubicle released.", "success")
+    return redirect(url_for("allotment_options", roll=roll))
+
+# Delete workstation (requires id PK on Workstation)
+@app.post("/workstation/<int:ws_id>/delete", endpoint="workstation_delete")
+def workstation_delete(ws_id):
+    ws = Workstation.query.get_or_404(ws_id)
+    roll = ws.roll
+    db.session.delete(ws)
+    db.session.commit()
+    flash("Workstation deleted.", "success")
+    return redirect(url_for("allotment_options", roll=roll))
+
+# (Optional) Edit workstation/equipment routes should render forms you already have
+# For equipment:
+@app.post("/equipment/<int:eq_id>/unassign")
+def unassign_equipment(eq_id):
+    eq = Equipment.query.get_or_404(eq_id)
+    roll = eq.assigned_to_roll
+    eq.assigned_to_roll = None
+    eq.assigned_by = None
+    eq.assigned_date = None
+    eq.status = "Available"
+    db.session.commit()
+    flash("Equipment unassigned.", "success")
+    return redirect(url_for("allotment_options", roll=roll))
 
 
 

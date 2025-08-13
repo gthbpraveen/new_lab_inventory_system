@@ -1,26 +1,25 @@
 {% extends "login_home.html" %}
 {% block title %}Allotment Options{% endblock %}
 {% block content %}
-<div class="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-6">
-  <h1 class="border rounded px-3 py-2 text-xl bg-blue-50 mb-14 text-center font-bold">
-Allotment Options for Roll number <br> {{ roll }}
+<div class="max-w-5xl mx-auto bg-white shadow-lg rounded-lg p-6">
+  <h1 class="border rounded px-3 py-2 text-xl bg-blue-50 mb-8 text-center font-bold">
+    Allotment Options for Roll<br><span class="text-indigo-700">{{ roll }}</span>
   </h1>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <!-- Cubicle Allocation -->
+
+  <!-- Quick actions -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
     <a href="{{ url_for('cubicle_allocation', roll=roll) }}"
        class="block bg-blue-600 text-white p-6 rounded-lg shadow hover:bg-blue-700 transition text-center">
       <div class="text-4xl mb-2">🪑</div>
-      <h3 class="font-semibold text-lg">Allocate Cubicle</h3>
+      <h3 class="font-semibold text-lg">Allocate / Change Cubicle</h3>
     </a>
 
-    <!-- Workstation Allocation -->
     <a href="{{ url_for('workstation_allocation', roll=roll) }}"
        class="block bg-green-600 text-white p-6 rounded-lg shadow hover:bg-green-700 transition text-center">
       <div class="text-4xl mb-2">💻</div>
       <h3 class="font-semibold text-lg">Allocate Workstation</h3>
     </a>
 
-    <!-- IT Equipment Allocation -->
     <a href="{{ url_for('it_equipment', roll=roll) }}"
        class="block bg-purple-600 text-white p-6 rounded-lg shadow hover:bg-purple-700 transition text-center">
       <div class="text-4xl mb-2">🖱️</div>
@@ -28,7 +27,128 @@ Allotment Options for Roll number <br> {{ roll }}
     </a>
   </div>
 
-  <div class="mt-6">
+  <!-- Current Cubicle -->
+  <section class="mb-8">
+    <h2 class="text-lg font-semibold text-gray-800 mb-3">Current Cubicle</h2>
+    {% if cub %}
+      {% set cur_cub = cub[0] %}
+      {% set cur_room = cub[1] %}
+      <div class="flex items-center justify-between p-4 border rounded">
+        <div>
+          <div class="font-medium">Room: <span class="text-indigo-700">{{ cur_room.name }}</span></div>
+          <div class="font-medium">Cubicle: <span class="text-indigo-700">{{ cur_cub.number }}</span></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a class="px-3 py-2 bg-blue-50 border rounded hover:bg-blue-100"
+             href="{{ url_for('cubicle_allocation', roll=roll) }}">Change</a>
+          <form method="POST" action="{{ url_for('release_cubicle', cubicle_id=cur_cub.id) }}"
+                onsubmit="return confirm('Release this cubicle?');">
+            <button class="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700">Release</button>
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <div class="p-4 border rounded text-gray-600">
+        No cubicle assigned. <a class="text-blue-600 underline" href="{{ url_for('cubicle_allocation', roll=roll) }}">Allocate now</a>.
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- Workstations -->
+  <section class="mb-8">
+    <h2 class="text-lg font-semibold text-gray-800 mb-3">Workstations</h2>
+    {% if workstations %}
+      <div class="overflow-x-auto border rounded">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-3 py-2 text-left">Model</th>
+              <th class="px-3 py-2 text-left">Serial</th>
+              <th class="px-3 py-2 text-left">Room</th>
+              <th class="px-3 py-2 text-left">Cubicle</th>
+              <th class="px-3 py-2 text-left">Issue</th>
+              <th class="px-3 py-2 text-left">Till</th>
+              <th class="px-3 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ws in workstations %}
+              <tr class="border-t">
+                <td class="px-3 py-2">{{ ws.manufacturer or '' }} {{ ws.model or '' }}</td>
+                <td class="px-3 py-2">{{ ws.serial or '-' }}</td>
+                <td class="px-3 py-2">{{ ws.room_lab_name or '-' }}</td>
+                <td class="px-3 py-2">{{ ws.cubicle_no or '-' }}</td>
+                <td class="px-3 py-2">{{ ws.issue_date or '-' }}</td>
+                <td class="px-3 py-2">{{ ws.system_required_till or '-' }}</td>
+                <td class="px-3 py-2">
+                  <!-- If you have an edit route, link it here -->
+                  {# <a class="px-2 py-1 border rounded mr-2" href="{{ url_for('edit_workstation', ws_id=ws.id) }}">Edit</a> #}
+                  {% if ws.id %}
+                    <form method="POST" action="{{ url_for('workstation_delete', ws_id=ws.id) }}"
+      class="inline" onsubmit="return confirm('Delete this workstation?');">
+  <button class="px-2 py-1 bg-red-600 text-white rounded">Delete</button>
+</form>
+
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-4 border rounded text-gray-600">
+        No workstations yet. <a class="text-green-700 underline" href="{{ url_for('workstation_allocation', roll=roll) }}">Allocate one</a>.
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- IT Equipment -->
+  <section class="mb-6">
+    <h2 class="text-lg font-semibold text-gray-800 mb-3">IT Equipment</h2>
+    {% if equipment %}
+      <div class="overflow-x-auto border rounded">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-3 py-2 text-left">Name</th>
+              <th class="px-3 py-2 text-left">Category</th>
+              <th class="px-3 py-2 text-left">Model</th>
+              <th class="px-3 py-2 text-left">Serial</th>
+              <th class="px-3 py-2 text-left">Assigned</th>
+              <th class="px-3 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for eq in equipment %}
+              <tr class="border-t">
+                <td class="px-3 py-2">{{ eq.name }}</td>
+                <td class="px-3 py-2">{{ eq.category }}</td>
+                <td class="px-3 py-2">{{ eq.model or '-' }}</td>
+                <td class="px-3 py-2">{{ eq.serial_number }}</td>
+                <td class="px-3 py-2">
+                  {{ eq.assigned_date.strftime('%Y-%m-%d') if eq.assigned_date else '-' }}
+                </td>
+                <td class="px-3 py-2">
+                  {# <a class="px-2 py-1 border rounded mr-2" href="{{ url_for('edit_equipment', eq_id=eq.id) }}">Edit</a> #}
+                  <form method="POST" action="{{ url_for('unassign_equipment', eq_id=eq.id) }}"
+                        class="inline" onsubmit="return confirm('Unassign this equipment?');">
+                    <button class="px-2 py-1 bg-yellow-600 text-white rounded">Unassign</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-4 border rounded text-gray-600">
+        No IT equipment assigned. <a class="text-purple-700 underline" href="{{ url_for('it_equipment', roll=roll) }}">Assign now</a>.
+      </div>
+    {% endif %}
+  </section>
+
+  <div class="mt-4">
     <a href="{{ url_for('allotment_roll_check') }}" class="text-blue-600 hover:underline">
       ⬅ Back to Roll Check
     </a>
