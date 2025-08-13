@@ -334,45 +334,162 @@ def index():
         error=error,
         success=success
     )
+# @app.route("/records")
+# def view_records():
+#     all_records = Workstation.query.all()
+
+
+#     lab_capacities = {
+#         "CS-107": 43,
+#         "CS-108": 21,
+#         "CS-109": 114,
+#         "CS-207": 30,
+#         "CS-208": 25,
+#         "CS-209": 142,
+#         "CS-317": 25,
+#         "CS-318": 25,
+#         "CS-319": 32,
+#         "CS-320": 27,
+#         "CS-411": 25,
+#         "CS-412": 33
+#     }
+
+#     from collections import defaultdict
+#     grouped_records = defaultdict(list)
+
+    
+#     for r in all_records:
+#         grouped_records[r.room_lab_name].append(r)
+
+#     lab_stats = {}
+#     for lab, records in grouped_records.items():
+#         total = lab_capacities.get(lab, 0)
+#         used = len(records)
+#         available = total - used
+#         lab_stats[lab] = {"total": total, "used": used, "available": available}
+
+    
+#     grouped_records = dict(sorted(grouped_records.items()))
+
+#     return render_template("records.html", grouped_records=grouped_records, lab_stats=lab_stats)
+from collections import defaultdict
+from sqlalchemy.orm import joinedload
+
+def safe(v, dash="—"):
+    v = (v or "").strip() if isinstance(v, str) else v
+    return v if v not in ("", None) else dash
+
 @app.route("/records")
 def view_records():
-    all_records = Workstation.query.all()
+    # Load rooms with cubicles to compute stats and staff
+    rooms = (RoomLab.query
+             .options(joinedload(RoomLab.cubicles))
+             .all())
+    rooms_index = {r.name: r for r in rooms}
 
-    # Lab-wise capacity definition
-    lab_capacities = {
-        "CS-107": 43,
-        "CS-108": 21,
-        "CS-109": 114,
-        "CS-207": 30,
-        "CS-208": 25,
-        "CS-209": 142,
-        "CS-317": 25,
-        "CS-318": 25,
-        "CS-319": 32,
-        "CS-320": 27,
-        "CS-411": 25,
-        "CS-412": 33
-    }
+    # Compute stats per room from cubicles
+    lab_stats = {}
+    for r in rooms:
+        total = r.capacity or 0
+        used = sum(1 for c in r.cubicles if c.student_roll)
+        lab_stats[r.name] = {
+            "total": total,
+            "used": used,
+            "available": max(total - used, 0),
+            "staff_incharge": r.staff_incharge or ""
+        }
 
-    from collections import defaultdict
+    # Pull workstation + student
+    pairs = (db.session.query(Workstation, Student)
+             .outerjoin(Student, Student.roll == Workstation.roll)
+             .all())
+
     grouped_records = defaultdict(list)
 
-    # Group records by lab
-    for r in all_records:
-        grouped_records[r.room_lab_name].append(r)
+    for ws, st in pairs:
+        # Backfill room/cubicle from Cubicle table if WS doesn't have it
+        room_name = (ws.room_lab_name or "").strip()
+        cub_num   = (ws.cubicle_no or "").strip()
 
-    # Calculate stats per lab
-    lab_stats = {}
-    for lab, records in grouped_records.items():
-        total = lab_capacities.get(lab, 0)
-        used = len(records)
-        available = total - used
-        lab_stats[lab] = {"total": total, "used": used, "available": available}
+        if not room_name or not cub_num:
+            cub = (Cubicle.query
+                   .options(joinedload(Cubicle.room_lab))
+                   .filter(Cubicle.student_roll == ws.roll)
+                   .first())
+            if cub:
+                room_name = room_name or (cub.room_lab.name if cub.room_lab else "")
+                cub_num   = cub_num   or (cub.number or "")
 
-    # Sort labs by name
-    grouped_records = dict(sorted(grouped_records.items()))
+        display_room = room_name if room_name else "Unassigned"
+        staff_incharge = rooms_index.get(display_room).staff_incharge if display_room in rooms_index else ""
 
-    return render_template("records.html", grouped_records=grouped_records, lab_stats=lab_stats)
+        # Build display row with safe fallback
+        storage_display = ""
+        if ws.storage_type1 and ws.storage_capacity1:
+            storage_display = f"{ws.storage_type1} {ws.storage_capacity1}"
+        if ws.storage_type2 and ws.storage_capacity2:
+            storage_display += (("\n" if storage_display else "") +
+                                f"{ws.storage_type2} {ws.storage_capacity2}")
+
+        row = {
+            "name": safe(st.name if st else ""),
+            "roll": safe(ws.roll),
+            "course": safe(st.course if st else ""),
+            "year": safe(st.year if st else ""),
+            "faculty": safe(st.faculty if st else ""),
+            "email": safe(st.email if st else ""),
+            "phone": safe(st.phone if st else ""),
+
+            "room_lab_name": safe(display_room),
+            "cubicle_no": safe(cub_num),
+
+            "manufacturer": safe(ws.manufacturer),
+            "otherManufacturer": safe(ws.otherManufacturer),
+            "model": safe(ws.model),
+            "serial": safe(ws.serial),
+            "os": safe(ws.os),
+            "otherOs": safe(ws.otherOs),
+            "processor": safe(ws.processor),
+            "cores": safe(ws.cores),
+            "ram": safe(ws.ram),
+            "otherRam": safe(ws.otherRam),
+            "storage": safe(storage_display),
+            "gpu": safe(ws.gpu),
+            "vram": safe(ws.vram),
+            "issue_date": safe(ws.issue_date),
+            "system_required_till": safe(ws.system_required_till),
+            "po_date": safe(ws.po_date),
+            "source_of_fund": safe(ws.source_of_fund),
+            "keyboard_provided": safe(ws.keyboard_provided),
+            "keyboard_details": safe(ws.keyboard_details),
+            "mouse_provided": safe(ws.mouse_provided),
+            "mouse_details": safe(ws.mouse_details),
+            "monitor_provided": safe(ws.monitor_provided),
+            "monitor_details": safe(ws.monitor_details),
+            "monitor_size": safe(ws.monitor_size),
+            "monitor_serial": safe(ws.monitor_serial),
+            "mac_address": safe(ws.mac_address),
+
+            "staff_incharge": safe(staff_incharge),
+        }
+        grouped_records[display_room].append(row)
+
+    # Sort rooms and rows
+    def cub_key(val):
+        s = val.get("cubicle_no", "—")
+        try:
+            return (int(s),)
+        except Exception:
+            return (s,)
+    grouped_records = {
+        room: sorted(rows, key=cub_key)
+        for room, rows in sorted(grouped_records.items(), key=lambda x: x[0])
+    }
+
+    return render_template("records.html",
+                           grouped_records=grouped_records,
+                           lab_stats=lab_stats)
+
 
 from flask_login import login_required, current_user
 
@@ -403,14 +520,14 @@ from flask import render_template
 from collections import defaultdict
 from models import Workstation  # Adjust this import to match your structure
 
-
-
 from flask import render_template
 from collections import defaultdict
+from models import Workstation, Student
 
 @app.route("/utilization")
 def utilization():
-    all_records = Workstation.query.all()
+    # Join Workstation with Student so we get names
+    all_records = db.session.query(Workstation, Student).join(Student, Workstation.roll == Student.roll).all()
 
     lab_capacities = {
         "CS-107": 43,
@@ -430,21 +547,14 @@ def utilization():
     lab_counts = defaultdict(int)
     used_seats_map = defaultdict(list)
 
-    for r in all_records:
-        lab_counts[r.room_lab_name] += 1
+    for ws, student in all_records:
+        lab_counts[ws.room_lab_name] += 1
         try:
-            seat_no = int(r.cubicle_no)
-            hover_name = "Occupied"
-            if r.name and r.roll:
-                hover_name = f"{r.name} ({r.roll})"
-            elif r.name:
-                hover_name = r.name
-            elif r.roll:
-                hover_name = r.roll
-
-            used_seats_map[r.room_lab_name].append((seat_no, hover_name))
+            seat_no = int(ws.cubicle_no)
+            hover_name = f"{student.name} ({student.roll})"
+            used_seats_map[ws.room_lab_name].append((seat_no, hover_name))
         except (ValueError, TypeError):
-            pass  # Invalid seat number; skip
+            pass  # Invalid seat number
 
     lab_stats = {}
     total_seats = 0
@@ -453,7 +563,7 @@ def utilization():
     for lab, total in lab_capacities.items():
         used = lab_counts.get(lab, 0)
         available = total - used
-        used_seats = dict(used_seats_map.get(lab, []))  # {seat_no: hover_text}
+        used_seats = dict(used_seats_map.get(lab, []))  # {seat_no: "Name (Roll)"}
 
         lab_stats[lab] = {
             "total": total,
@@ -467,11 +577,6 @@ def utilization():
 
     total_available = total_seats - total_used
     occupancy_percent = round((total_used / total_seats * 100), 1) if total_seats else 0
-    print("======== DEBUG: LAB STATS ========")
-    for lab, stats in lab_stats.items():
-        print(f"{lab}: total={stats['total']}, used={stats['used']}, available={stats['available']}")
-    print(f"TOTAL: {total_seats}, USED: {total_used}, AVAILABLE: {total_available}, OCCUPANCY: {occupancy_percent}%")
-    print("===================================")
 
     return render_template(
         "utilization.html",
@@ -482,16 +587,158 @@ def utilization():
         occupancy_percent=occupancy_percent
     )
 
+
+# from flask import render_template
+# from collections import defaultdict
+
+# @app.route("/utilization")
+# def utilization():
+#     all_records = Workstation.query.all()
+
+#     lab_capacities = {
+#         "CS-107": 43,
+#         "CS-108": 21,
+#         "CS-109": 114,
+#         "CS-207": 30,
+#         "CS-208": 25,
+#         "CS-209": 142,
+#         "CS-317": 25,
+#         "CS-318": 25,
+#         "CS-319": 32,
+#         "CS-320": 27,
+#         "CS-411": 25,
+#         "CS-412": 33
+#     }
+
+#     lab_counts = defaultdict(int)
+#     used_seats_map = defaultdict(list)
+
+#     for r in all_records:
+#         lab_counts[r.room_lab_name] += 1
+#         try:
+#             seat_no = int(r.cubicle_no)
+#             hover_name = "Occupied"
+#             if r.name and r.roll:
+#                 hover_name = f"{r.name} ({r.roll})"
+#             elif r.name:
+#                 hover_name = r.name
+#             elif r.roll:
+#                 hover_name = r.roll
+
+#             used_seats_map[r.room_lab_name].append((seat_no, hover_name))
+#         except (ValueError, TypeError):
+#             pass  # Invalid seat number; skip
+
+#     lab_stats = {}
+#     total_seats = 0
+#     total_used = 0
+
+#     for lab, total in lab_capacities.items():
+#         used = lab_counts.get(lab, 0)
+#         available = total - used
+#         used_seats = dict(used_seats_map.get(lab, []))  # {seat_no: hover_text}
+
+#         lab_stats[lab] = {
+#             "total": total,
+#             "used": used,
+#             "available": available,
+#             "used_seats": used_seats
+#         }
+
+#         total_seats += total
+#         total_used += used
+
+#     total_available = total_seats - total_used
+#     occupancy_percent = round((total_used / total_seats * 100), 1) if total_seats else 0
+#     print("======== DEBUG: LAB STATS ========")
+#     for lab, stats in lab_stats.items():
+#         print(f"{lab}: total={stats['total']}, used={stats['used']}, available={stats['available']}")
+#     print(f"TOTAL: {total_seats}, USED: {total_used}, AVAILABLE: {total_available}, OCCUPANCY: {occupancy_percent}%")
+#     print("===================================")
+
+#     return render_template(
+#         "utilization.html",
+#         lab_stats=lab_stats,
+#         total_seats=total_seats,
+#         total_used=total_used,
+#         total_available=total_available,
+#         occupancy_percent=occupancy_percent
+#     )
+
+# @app.route("/alloted_machines")
+# def alloted_machines():
+#     # Get only records where student name or roll is not null (i.e., allotted)
+#      allotted_records = Workstation.query.filter(
+#         (Workstation.name != None) | (Workstation.roll != None)
+#     ).all()
+#      allotted_records.sort(key=lambda r: (r.room_lab_name or "", r.cubicle_no or ""))
+
+
+#      return render_template("alloted_machines.html", records=allotted_records)
+
+from sqlalchemy.orm import joinedload
+
 @app.route("/alloted_machines")
 def alloted_machines():
-    # Get only records where student name or roll is not null (i.e., allotted)
-     allotted_records = Workstation.query.filter(
-        (Workstation.name != None) | (Workstation.roll != None)
-    ).all()
-     allotted_records.sort(key=lambda r: (r.room_lab_name or "", r.cubicle_no or ""))
+    # Only workstations that are assigned (i.e., have a roll)
+    rows = (db.session.query(
+                Workstation,
+                Student.name.label("student_name")
+            )
+            .join(Student, Student.roll == Workstation.roll)
+            .order_by(Workstation.room_lab_name.asc().nullsfirst(),
+                      Workstation.cubicle_no.asc().nullsfirst())
+            .all())
+
+    # Flatten to dicts so the current template keys work cleanly
+    records = []
+    for ws, sname in rows:
+        records.append({
+            "roll": ws.roll,
+            "name": sname,
+            "room_lab_name": ws.room_lab_name,
+            "cubicle_no": ws.cubicle_no,
+            "processor": ws.processor,
+            "cores": ws.cores,
+            "ram": ws.ram,
+            "storage_type1": ws.storage_type1,
+            "storage_capacity1": ws.storage_capacity1,
+            "storage_type2": ws.storage_type2,
+            "storage_capacity2": ws.storage_capacity2,
+            "gpu": ws.gpu,
+        })
+    return render_template("alloted_machines.html", records=records)
 
 
-     return render_template("alloted_machines.html", records=allotted_records)
+@app.route("/workstation/<roll>/edit", methods=["GET", "POST"])
+def edit_workstation(roll):
+    ws = Workstation.query.get_or_404(roll)
+    student = Student.query.get(roll)
+    if request.method == "POST":
+        f = request.form
+        # update selected fields (add more as needed)
+        ws.processor = f.get("processor")
+        ws.cores = f.get("cores")
+        ws.ram = f.get("ram")
+        ws.gpu = f.get("gpu")
+        ws.room_lab_name = f.get("room_lab_name")
+        ws.cubicle_no = f.get("cubicle_no")
+        db.session.commit()
+        flash("Workstation updated.", "success")
+        return redirect(url_for("alloted_machines"))
+    return render_template("edit_workstation.html", ws=ws, student=student)
+
+@app.route("/workstation/<roll>/delete", methods=["POST"])
+def delete_workstation(roll):
+    ws = Workstation.query.get_or_404(roll)
+    db.session.delete(ws)
+    db.session.commit()
+    flash("Workstation deleted.", "success")
+    return redirect(url_for("alloted_machines"))
+
+
+
+
 
 from models import Equipment, Workstation, EquipmentHistory
 
@@ -726,11 +973,86 @@ def reject_user(user_id):
 
 from flask_login import current_user
 
+# @app.route("/cse_labs")
+# @login_required
+# def cse_labs():
+#     layout_template = "login_home.html" if current_user.is_authenticated else "base.html"
+#     return render_template("cse_labs.html", layout=layout_template)
+from flask import render_template
+from flask_login import login_required, current_user
+from models import RoomLab
+
 @app.route("/cse_labs")
 @login_required
 def cse_labs():
     layout_template = "login_home.html" if current_user.is_authenticated else "base.html"
-    return render_template("cse_labs.html", layout=layout_template)
+
+    # Pull rooms from DB so capacity & faculty match reality
+    rooms = RoomLab.query.order_by(RoomLab.name).all()
+
+    # Floor/color logic by room code
+    floor_color = {
+        '1': ('First Floor', 'blue'),
+        '2': ('Second Floor', 'green'),
+        '3': ('Third Floor', 'orange'),
+        '4': ('Fourth Floor', 'red'),
+    }
+
+    # Optional: descriptive tags and blurbs per lab
+    desc_map = {
+        "CS-107": "M.Tech Teaching Assistants Lab.",
+        "CS-108": "Visual Learning and Intelligence Lab (VIGIL).",
+        "CS-109": "Lab dedicated for teaching and hands-on practical sessions.",
+        "CS-207": "Compilers lab.",
+        "CS-208": "Compilers Lab.",
+        "CS-209": "Teaching & hands-on sessions.",
+        "CS-317": "Practical Networking and Blockchain Lab (PRANET).",
+        "CS-318": "NetX Lab.",
+        "CS-319": "Networked Wireless Systems Lab (NeWS).",
+        "CS-320": "Project and prototyping space.",
+        "CS-411": "Natural Language and Information Processing Lab.",
+        "CS-412": "Bayesian Reasoning and INtelligence Lab.",
+    }
+    tag_map = {
+        "CS-107": ["AI", "Systems"],
+        "CS-108": ["Security", "Networks"],
+        "CS-109": ["ML", "Simulation"],
+        "CS-207": ["Data", "Algorithms"],
+        "CS-208": ["Embedded", "Design"],
+        "CS-209": ["Cloud", "Big Data"],
+        "CS-317": ["DevOps", "Testing"],
+        "CS-318": ["IoT", "Sensors"],
+        "CS-319": ["DBMS", "Transactions"],
+        "CS-320": ["Prototyping", "Hardware"],
+        "CS-411": ["Thesis", "Discussion"],
+        "CS-412": ["Graphics", "Vision"],
+    }
+
+    labs = []
+    for r in rooms:
+        code = r.name  # e.g., "CS-107"
+        # derive floor/color from the first digit after the hyphen
+        digit = code.split("-")[1][0] if "-" in code and code.split("-")[1] else "1"
+        floor, color = floor_color.get(digit, ("Unknown Floor", "gray"))
+
+        # friendly name (keep your original style)
+        number = int(code.split("-")[1]) if "-" in code and code.split("-")[1].isdigit() else 0
+        kind = "Teaching Lab" if number in (107, 109, 209) else "Research Lab"
+        name = f"{code} {kind}"
+
+        labs.append({
+            "code": code,
+            "name": name,
+            "desc": desc_map.get(code, "Lab space."),
+            "tags": tag_map.get(code, []),
+            "count": r.capacity,
+            "floor": floor,
+            "color": color,
+            "faculty": r.staff_incharge or "Not Assigned",
+        })
+
+    return render_template("cse_labs.html", layout=layout_template, labs=labs)
+
 
 @app.route("/contact_us")
 def contact_us():
@@ -1008,89 +1330,175 @@ lab_meta = {
     "CS-412": {"faculty": "Dr. L. Mehta", "meeting_rooms": 1, "capacity": 33, "image": "mylab/cs412.jpg"},
 }
 
-
-
+from flask import render_template, abort
+from flask_login import login_required
+from sqlalchemy.orm import joinedload
+from models import RoomLab, Workstation
 
 @app.route('/lab_details/<lab_code>')
 @login_required
 def lab_details(lab_code):
-    from models import Workstation  # Ensure this is the correct model
-
-    total_capacity = {
-        "CS-107": 43,
-        "CS-108": 21,
-        "CS-109": 114,
-        "CS-207": 30,
-        "CS-208": 25,
-        "CS-209": 142,
-        "CS-317": 25,
-        "CS-318": 25,
-        "CS-319": 32,
-        "CS-320": 27,
-        "CS-411": 25,
-        "CS-412": 33
-    }
-
-    lab_meta = {
-        "CS-107": {"faculty": "Dr. Aravind", "meeting_rooms": 1},
-        "CS-108": {"faculty": "Dr. Shravan", "meeting_rooms": 1},
-        "CS-109": {"faculty": "Dr. Geetha", "meeting_rooms": 2},
-        "CS-207": {"faculty": "Dr. Rajeev", "meeting_rooms": 1},
-        "CS-208": {"faculty": "Dr. Sneha", "meeting_rooms": 1},
-        "CS-209": {"faculty": "Dr. Ramesh", "meeting_rooms": 3},
-        "CS-317": {"faculty": "Dr. Anjali", "meeting_rooms": 1},
-        "CS-318": {"faculty": "Dr. Vinay", "meeting_rooms": 1},
-        "CS-319": {"faculty": "Dr. Divya", "meeting_rooms": 1},
-        "CS-320": {"faculty": "Dr. Manoj", "meeting_rooms": 1},
-        "CS-411": {"faculty": "Dr. Isha", "meeting_rooms": 2},
-        "CS-412": {"faculty": "Dr. Aditya", "meeting_rooms": 2}
-    }
-
     lab_name = lab_code.upper()
-    capacity = total_capacity.get(lab_name, 0)
-    faculty = lab_meta.get(lab_name, {}).get("faculty", "Not Assigned")
-    meeting_rooms = lab_meta.get(lab_name, {}).get("meeting_rooms", 0)
 
-    workstations = Workstation.query.filter_by(room_lab_name=lab_name).all()
+    # Get lab info from DB
+    room = RoomLab.query.filter_by(name=lab_name).first()
+    if not room:
+        abort(404, description="Lab not found")
 
-    # Create seat map
+    # Pull workstations & the related student in one go
+    ws_list = (Workstation.query
+               .options(joinedload(Workstation.student))
+               .filter_by(room_lab_name=lab_name)
+               .all())
+
+    # Map seat number -> workstation (only valid integer seats)
     assigned_seats = {}
-    for ws in workstations:
+    for ws in ws_list:
         if ws.cubicle_no:
-            cleaned = ws.cubicle_no.strip()
-            if cleaned.isdigit():
-                assigned_seats[int(cleaned)] = ws
+            c = ws.cubicle_no.strip()
+            if c.isdigit():
+                assigned_seats[int(c)] = ws
 
+    # Build seat grid from 1..capacity
     seats = []
-    for seat_num in range(1, capacity + 1):
-        if seat_num in assigned_seats:
-            student = assigned_seats[seat_num]
+    for seat_num in range(1, (room.capacity or 0) + 1):
+        ws = assigned_seats.get(seat_num)
+        if ws and ws.student:
             seats.append({
                 "number": seat_num,
                 "occupied": True,
-                "student_name": student.name,
-                "roll_number": student.roll,
-                "email": student.email,
-                "branch": student.course,
-                "year": student.year,
-                "photo_url": f"/static/photos/{student.roll}.jpg"
+                "student_name": ws.student.name,
+                "roll_number": ws.student.roll,
+                "email": ws.student.email,
+                "branch": ws.student.course,
+                "year": ws.student.year,
+                "photo_url": f"/static/photos/{ws.student.roll}.jpg"
             })
         else:
-            seats.append({
-                "number": seat_num,
-                "occupied": False
-            })
+            seats.append({"number": seat_num, "occupied": False})
+
+    # Infra meta (extend as needed)
+    infra_meta = {
+        "CS-107": {"meeting_rooms": 1, "whiteboards": 4, "printers": 1, "projectors": 1},
+        "CS-108": {"meeting_rooms": 1, "whiteboards": 3, "printers": 1, "projectors": 1},
+        "CS-109": {"meeting_rooms": 2, "whiteboards": 6, "printers": 2, "projectors": 2},
+        "CS-207": {"meeting_rooms": 1, "whiteboards": 3, "printers": 1, "projectors": 1},
+        "CS-208": {"meeting_rooms": 1, "whiteboards": 3, "printers": 1, "projectors": 1},
+        "CS-209": {"meeting_rooms": 3, "whiteboards": 8, "printers": 2, "projectors": 2},
+        "CS-317": {"meeting_rooms": 1, "whiteboards": 2, "printers": 1, "projectors": 1},
+        "CS-318": {"meeting_rooms": 1, "whiteboards": 2, "printers": 1, "projectors": 1},
+        "CS-319": {"meeting_rooms": 1, "whiteboards": 2, "printers": 1, "projectors": 1},
+        "CS-320": {"meeting_rooms": 1, "whiteboards": 2, "printers": 1, "projectors": 1},
+        "CS-411": {"meeting_rooms": 2, "whiteboards": 3, "printers": 1, "projectors": 2},
+        "CS-412": {"meeting_rooms": 2, "whiteboards": 3, "printers": 1, "projectors": 2},
+    }
+    meta = infra_meta.get(lab_name, {})
+    meeting_rooms = meta.get("meeting_rooms", 0)
+    whiteboards = meta.get("whiteboards", 0)
+    printers = meta.get("printers", 0)
+    projectors = meta.get("projectors", 0)
+
+    # Used seats = how many valid seat numbers are occupied
+    used_valid = len(assigned_seats)
+    capacity = room.capacity or 0
+    available = capacity - used_valid if capacity else 0
 
     return render_template(
         "lab_details.html",
         lab_code=lab_name,
         capacity=capacity,
-        used_seating=len(workstations),
-        available_seating=capacity - len(workstations),
-        faculty=faculty,
+        used_seating=used_valid,
+        available_seating=available,
+        faculty=room.staff_incharge or "Not Assigned",
         meeting_rooms=meeting_rooms,
+        whiteboards=whiteboards,
+        printers=printers,
+        projectors=projectors,
         seats=seats
     )
+
+
+
+# @app.route('/lab_details/<lab_code>')
+# @login_required
+# def lab_details(lab_code):
+#     from models import Workstation  
+
+#     total_capacity = {
+#         "CS-107": 43,
+#         "CS-108": 21,
+#         "CS-109": 114,
+#         "CS-207": 30,
+#         "CS-208": 25,
+#         "CS-209": 142,
+#         "CS-317": 25,
+#         "CS-318": 25,
+#         "CS-319": 32,
+#         "CS-320": 27,
+#         "CS-411": 25,
+#         "CS-412": 33
+#     }
+
+#     lab_meta = {
+#         "CS-107": {"faculty": "Dr. Aravind", "meeting_rooms": 1},
+#         "CS-108": {"faculty": "Dr. Shravan", "meeting_rooms": 1},
+#         "CS-109": {"faculty": "Dr. Geetha", "meeting_rooms": 2},
+#         "CS-207": {"faculty": "Dr. Rajeev", "meeting_rooms": 1},
+#         "CS-208": {"faculty": "Dr. Sneha", "meeting_rooms": 1},
+#         "CS-209": {"faculty": "Dr. Ramesh", "meeting_rooms": 3},
+#         "CS-317": {"faculty": "Dr. Anjali", "meeting_rooms": 1},
+#         "CS-318": {"faculty": "Dr. Vinay", "meeting_rooms": 1},
+#         "CS-319": {"faculty": "Dr. Divya", "meeting_rooms": 1},
+#         "CS-320": {"faculty": "Dr. Manoj", "meeting_rooms": 1},
+#         "CS-411": {"faculty": "Dr. Isha", "meeting_rooms": 2},
+#         "CS-412": {"faculty": "Dr. Aditya", "meeting_rooms": 2}
+#     }
+
+#     lab_name = lab_code.upper()
+#     capacity = total_capacity.get(lab_name, 0)
+#     faculty = lab_meta.get(lab_name, {}).get("faculty", "Not Assigned")
+#     meeting_rooms = lab_meta.get(lab_name, {}).get("meeting_rooms", 0)
+
+#     workstations = Workstation.query.filter_by(room_lab_name=lab_name).all()
+
+#     # Create seat map
+#     assigned_seats = {}
+#     for ws in workstations:
+#         if ws.cubicle_no:
+#             cleaned = ws.cubicle_no.strip()
+#             if cleaned.isdigit():
+#                 assigned_seats[int(cleaned)] = ws
+
+#     seats = []
+#     for seat_num in range(1, capacity + 1):
+#         if seat_num in assigned_seats:
+#             student = assigned_seats[seat_num]
+#             seats.append({
+#                 "number": seat_num,
+#                 "occupied": True,
+#                 "student_name": student.name,
+#                 "roll_number": student.roll,
+#                 "email": student.email,
+#                 "branch": student.course,
+#                 "year": student.year,
+#                 "photo_url": f"/static/photos/{student.roll}.jpg"
+#             })
+#         else:
+#             seats.append({
+#                 "number": seat_num,
+#                 "occupied": False
+#             })
+
+#     return render_template(
+#         "lab_details.html",
+#         lab_code=lab_name,
+#         capacity=capacity,
+#         used_seating=len(workstations),
+#         available_seating=capacity - len(workstations),
+#         faculty=faculty,
+#         meeting_rooms=meeting_rooms,
+#         seats=seats
+#     )
 
 
 @app.route("/student/<string:roll>", methods=["GET", "POST"])
@@ -1511,82 +1919,82 @@ def allocate_space():
 
     return render_template("allocate_space.html", form_data={})
 
-from flask import render_template, request, redirect, url_for, flash
-from models import Workstation # adjust import path as per your project
-from app import db # or your SQLAlchemy instance
-@app.route('/edit_workstation/<int:id>', methods=['GET', 'POST'])
-def edit_workstation(id):
-    workstation = Workstation.query.get_or_404(id)
+# from flask import render_template, request, redirect, url_for, flash
+# from models import Workstation # adjust import path as per your project
+# from app import db # or your SQLAlchemy instance
+# @app.route('/edit_workstation/<int:id>', methods=['GET', 'POST'])
+# def edit_workstation(id):
+#     workstation = Workstation.query.get_or_404(id)
 
-    if request.method == 'POST':
-        # All assignments...
-        workstation.name = request.form['name']
-        workstation.roll = request.form['roll']
-        workstation.course = request.form['course']
-        workstation.year = request.form['year']
-        workstation.faculty = request.form['faculty']
-        workstation.staff_incharge = request.form['staff_incharge']
-        workstation.email = request.form['email']
-        workstation.phone = request.form['phone']
-        workstation.room_lab_name = request.form['room_lab_name']
-        workstation.cubicle_no = request.form['cubicle_no']
+#     if request.method == 'POST':
+      
+#         workstation.name = request.form['name']
+#         workstation.roll = request.form['roll']
+#         workstation.course = request.form['course']
+#         workstation.year = request.form['year']
+#         workstation.faculty = request.form['faculty']
+#         workstation.staff_incharge = request.form['staff_incharge']
+#         workstation.email = request.form['email']
+#         workstation.phone = request.form['phone']
+#         workstation.room_lab_name = request.form['room_lab_name']
+#         workstation.cubicle_no = request.form['cubicle_no']
 
-        workstation.manufacturer = request.form['manufacturer']
-        workstation.otherManufacturer = request.form['otherManufacturer']
-        workstation.model = request.form['model']
-        workstation.serial = request.form['serial']
-        workstation.os = request.form['os']
-        workstation.otherOs = request.form['otherOs']
-        workstation.processor = request.form['processor']
-        workstation.cores = request.form['cores']
-        workstation.ram = request.form['ram']
-        workstation.otherRam = request.form['otherRam']
+#         workstation.manufacturer = request.form['manufacturer']
+#         workstation.otherManufacturer = request.form['otherManufacturer']
+#         workstation.model = request.form['model']
+#         workstation.serial = request.form['serial']
+#         workstation.os = request.form['os']
+#         workstation.otherOs = request.form['otherOs']
+#         workstation.processor = request.form['processor']
+#         workstation.cores = request.form['cores']
+#         workstation.ram = request.form['ram']
+#         workstation.otherRam = request.form['otherRam']
 
-        workstation.storage_type1 = request.form['storage_type1']
-        workstation.storage_capacity1 = request.form['storage_capacity1']
-        workstation.storage_type2 = request.form['storage_type2']
-        workstation.storage_capacity2 = request.form['storage_capacity2']
+#         workstation.storage_type1 = request.form['storage_type1']
+#         workstation.storage_capacity1 = request.form['storage_capacity1']
+#         workstation.storage_type2 = request.form['storage_type2']
+#         workstation.storage_capacity2 = request.form['storage_capacity2']
 
-        workstation.gpu = request.form['gpu']
-        workstation.vram = request.form['vram']
+#         workstation.gpu = request.form['gpu']
+#         workstation.vram = request.form['vram']
 
-        workstation.issue_date = request.form['issue_date']
-        workstation.system_required_till = request.form['system_required_till']
-        workstation.po_date = request.form['po_date']
-        workstation.source_of_fund = request.form['source_of_fund']
+#         workstation.issue_date = request.form['issue_date']
+#         workstation.system_required_till = request.form['system_required_till']
+#         workstation.po_date = request.form['po_date']
+#         workstation.source_of_fund = request.form['source_of_fund']
 
-        workstation.keyboard_provided = request.form['keyboard_provided']
-        workstation.keyboard_details = request.form['keyboard_details']
-        workstation.mouse_provided = request.form['mouse_provided']
-        workstation.mouse_details = request.form['mouse_details']
-        workstation.monitor_provided = request.form['monitor_provided']
-        workstation.monitor_details = request.form['monitor_details']
-        workstation.monitor_size = request.form['monitor_size']
-        workstation.monitor_serial = request.form['monitor_serial']
+#         workstation.keyboard_provided = request.form['keyboard_provided']
+#         workstation.keyboard_details = request.form['keyboard_details']
+#         workstation.mouse_provided = request.form['mouse_provided']
+#         workstation.mouse_details = request.form['mouse_details']
+#         workstation.monitor_provided = request.form['monitor_provided']
+#         workstation.monitor_details = request.form['monitor_details']
+#         workstation.monitor_size = request.form['monitor_size']
+#         workstation.monitor_serial = request.form['monitor_serial']
 
-        try:
-            db.session.commit()
-            flash('Workstation updated successfully!', 'success')
-            return redirect(url_for('alloted_machines'))  # Replace with actual route
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error updating workstation: {e}', 'danger')
-
-
-    return render_template('edit_workstation.html', workstation=workstation)
+#         try:
+#             db.session.commit()
+#             flash('Workstation updated successfully!', 'success')
+#             return redirect(url_for('alloted_machines'))  # Replace with actual route
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f'Error updating workstation: {e}', 'danger')
 
 
-@app.route('/delete_workstation/<int:id>', methods=['POST', 'GET'])
-def delete_workstation(id):
-    workstation = Workstation.query.get_or_404(id)
-    try:
-        db.session.delete(workstation)
-        db.session.commit()
-        flash('Workstation deleted successfully!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error deleting workstation: {e}', 'danger')
-    return redirect(url_for('alloted_machines'))
+#     return render_template('edit_workstation.html', workstation=workstation)
+
+
+# @app.route('/delete_workstation/<int:id>', methods=['POST', 'GET'])
+# def delete_workstation(id):
+#     workstation = Workstation.query.get_or_404(id)
+#     try:
+#         db.session.delete(workstation)
+#         db.session.commit()
+#         flash('Workstation deleted successfully!', 'success')
+#     except Exception as e:
+#         db.session.rollback()
+#         flash(f'Error deleting workstation: {e}', 'danger')
+#     return redirect(url_for('alloted_machines'))
 
 # # new code with 
 # @app.route("/student_info", methods=["GET", "POST"])
