@@ -3,26 +3,38 @@
 
 {% block content %}
 <style>
-@keyframes blink-green {
-  0%, 100% { background-color: #22c55e; }
-  50% { background-color: #86efac; }
-}
 @keyframes blink-red {
-  0%, 100% { background-color: #ef4444; }
-  50% { background-color: #fca5a5; }
-}
-.blink-green {
-  animation: blink-green 1s infinite;
+  0%, 100% { background-color: #dc2626; }
+  50% { background-color: #f87171; }
 }
 .blink-red {
   animation: blink-red 1s infinite;
+  color: white;
+}
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 50;
+  padding-top: 100px;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.6);
+}
+.modal-content {
+  background: white;
+  margin: auto;
+  padding: 20px;
+  border-radius: 12px;
+  width: 400px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
 }
 </style>
 
 <!-- Header -->
 <div class="bg-gradient-to-r from-blue-500 to-emerald-600 rounded-xl shadow-lg py-8 px-6 mb-10 text-center">
   <h2 class="text-4xl font-extrabold text-white mb-2">🖥️ Lab Utilization Overview</h2>
-  <p class="text-green-100 text-sm mb-5">Live seat status in each lab — total, used, and available systems with seat numbers.</p>
+  <p class="text-green-100 text-sm mb-5">Click on a red seat to view details.</p>
   <div class="text-2xl font-extrabold text-white mb-2 gap-8">
     <strong>Total Seats:</strong> {{ total_seats }} &nbsp; | &nbsp;
     <strong>Used:</strong> {{ total_used }} &nbsp; | &nbsp;
@@ -47,13 +59,16 @@
       </div>
     </div>
 
-    <!-- Seating Grid -->
+    <!-- Seat Grid -->
     <div class="border rounded-lg p-3 bg-gray-50">
       <div class="grid grid-cols-10 gap-1 text-center text-xs font-medium">
         {% for i in range(1, stats["total"] + 1) %}
-          {% if i in stats["used_seats"] %}
-            <div class="text-white rounded-sm py-1 blink-red" 
-                 title="{{ stats['used_seats'][i] }}">{{ i }}</div>
+          {% if i in stats["used_seats"] and stats["used_seats"][i].occupied %}
+            <div class="rounded-sm py-1 blink-red cursor-pointer"
+                 onclick="showSeatModal('{{ lab }}', '{{ i }}', '{{ stats['used_seats'][i].student.name }}', '{{ stats['used_seats'][i].student.roll }}', '{{ stats['used_seats'][i].student.faculty }}',
+                 {% if stats['used_seats'][i].workstation %}'{{ stats['used_seats'][i].workstation.asset }}','{{ stats['used_seats'][i].workstation.model }}','{{ stats['used_seats'][i].workstation.manufacturer }}','{{ stats['used_seats'][i].workstation.status }}','{{ stats['used_seats'][i].workstation.till }}'{% else %}null{% endif %})">
+              {{ i }}
+            </div>
           {% else %}
             <div class="bg-green-500 text-white rounded-sm py-1"
                  title="Available Seat {{ i }}">{{ i }}</div>
@@ -65,6 +80,42 @@
   </div>
   {% endfor %}
 </div>
+
+<!-- Modal -->
+<div id="seatModal" class="modal">
+  <div class="modal-content">
+    <h3 class="text-lg font-bold mb-2 text-center">Seat Details</h3>
+    <p id="seatInfo"></p>
+    <div class="mt-4 text-right">
+      <button onclick="closeModal()" class="bg-red-500 text-white px-4 py-1 rounded">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showSeatModal(lab, seat, name, roll, faculty, asset=null, model=null, manufacturer=null, status=null, till=null) {
+  let info = `<strong>Lab:</strong> ${lab}<br>
+              <strong>Seat:</strong> ${seat}<br>
+              <strong>Student:</strong> ${name} <br/>
+              <strong>Roll Number:</stromg> ${roll}<br>
+              <strong>Faculty:</strong> ${faculty}<br>`;
+  if (asset) {
+    info += `<strong>Workstation:</strong><br>
+             Serial: ${asset}<br>
+             Model: ${model}<br>
+             Manufacturer: ${manufacturer}<br>
+             Status: ${status}<br>
+             Till: ${till}`;
+  } else {
+    info += `<strong>Space Allotted:</strong> No workstation assigned`;
+  }
+  document.getElementById("seatInfo").innerHTML = info;
+  document.getElementById("seatModal").style.display = "block";
+}
+function closeModal() {
+  document.getElementById("seatModal").style.display = "none";
+}
+</script>
 
 <!-- Back Button -->
 <div class="mt-12 text-center">

@@ -1,0 +1,374 @@
+{% extends "login_home.html" %}
+{% block title %}{{ 'Edit Asset' if asset else 'New Asset' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+  <h2 class="text-2xl font-bold text-gray-800 mb-6">
+    {{ 'Edit Workstation Asset' if asset else 'Add New Workstation Asset' }}
+  </h2>
+
+  <form method="POST" action="">
+    <!-- CPU Details -->
+    <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">CPU Details</h2>
+
+      <div>
+        <label for="manufacturer" class="block text-gray-700 font-medium mb-2 required-field">CPU Manufacturer</label>
+        <select id="manufacturer" name="manufacturer" required
+          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+          onchange="toggleOtherManufacturer()">
+          <option value="">Select Manufacturer</option>
+          {% set manufacturers = [
+            'Dell','HP','Lenovo','Apple','Acer','ASUS','MSI','Samsung','Sony','Toshiba',
+            'Fujitsu','Panasonic','HCL','Wipro','Supermicro','Gigabyte','Intel','AMD',
+            'Asrock','Apogee','Tyron','Zebronics','Others'
+          ] %}
+          {% for m in manufacturers %}
+            <option value="{{m}}" {% if asset and asset.manufacturer==m %}selected{% endif %}>{{m}}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Other Manufacturer -->
+      <div id="otherManufacturerContainer"
+           class="mt-4 {% if not (asset and asset.manufacturer=='Others') %}hidden{% endif %}">
+        <label for="otherManufacturer" class="block text-gray-700 font-medium mb-2">Specify Other Manufacturer</label>
+        <input type="text" id="otherManufacturer" name="otherManufacturer"
+               value="{{ asset.otherManufacturer if asset else '' }}"
+               class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <div class="mt-4">
+        <label for="model" class="block text-gray-700 font-medium mb-2 required-field">Model Name</label>
+        <input type="text" id="model" name="model" required value="{{ asset.model if asset else '' }}"
+          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <div class="mt-4">
+        <label for="serial" class="block text-gray-700 font-medium mb-2 required-field">Serial Number</label>
+        <input type="text" id="serial" name="serial" required value="{{ asset.serial if asset else '' }}"
+          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <div class="mt-4">
+        <label for="os" class="block text-gray-700 font-medium mb-2 required-field">Operating System</label>
+        <select id="os" name="os" required
+                class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
+                onchange="toggleOtherOs()">
+          <option value="">Select OS</option>
+          {% for o in ['Windows','macOS','Ubuntu','Dual Boot','Other'] %}
+            <option value="{{o}}" {% if asset and asset.os==o %}selected{% endif %}>{{o}}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Other OS -->
+      <div id="otherOsContainer"
+           class="mt-4 {% if not (asset and asset.os=='Other') %}hidden{% endif %}">
+        <label for="otherOs" class="block text-gray-700 font-medium mb-2">Specify Other OS</label>
+        <input type="text" id="otherOs" name="otherOs"
+               value="{{ asset.otherOs if asset else '' }}"
+               class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <div class="mt-4">
+        <label for="mac_address" class="block text-gray-700 font-medium mb-2 required-field">Primary MAC Address</label>
+        <input type="text" id="mac_address" name="mac_address"
+               value="{{ asset.mac_address if asset else '' }}"
+               placeholder="e.g., 00:1A:2B:3C:4D:5E" required
+               class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <div class="mt-4">
+        <label for="mac_address2" class="block text-gray-700 font-medium mb-2">Secondary MAC Address (Optional)</label>
+        <input type="text" id="mac_address2" name="mac_address2"
+               value="{{ asset.mac_address2 if asset else '' }}"
+               placeholder="e.g., 02:1B:44:11:3A:B7"
+               class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+      </div>
+    </div>
+
+    <!-- Processor & Memory -->
+    <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Processor & Memory</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="processor" class="block text-gray-700 mb-2">Processor</label>
+          <input type="text" id="processor" name="processor" value="{{ asset.processor if asset else '' }}"
+            class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label for="cores" class="block text-gray-700 mb-2">Cores</label>
+          <input type="number" id="cores" name="cores" value="{{ asset.cores if asset else '' }}"
+            class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label for="ram" class="block text-gray-700 mb-2">RAM</label>
+          <select id="ram" name="ram" onchange="toggleOtherRam()"
+                  class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+            <option value="">Select</option>
+            {% for r in ['2','4','8','16','32','64','128','other'] %}
+              <option value="{{r}}" {% if asset and asset.ram==r %}selected{% endif %}>{{r}} GB</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Other RAM full width -->
+      <div id="otherRamContainer"
+           class="mt-4 {% if not (asset and asset.ram=='other') %}hidden{% endif %}">
+        <label for="otherRam" class="block text-gray-700 mb-2">Other RAM (GB)</label>
+        <input type="number" id="otherRam" name="otherRam" value="{{ asset.otherRam if asset else '' }}"
+          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+      </div>
+    </div>
+
+    <!-- Storage & Graphics -->
+    <div class="form-section bg-indigo-50 rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Storage & Graphics</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="storage_type1" class="block mb-2">Primary Storage</label>
+          <select id="storage_type1" name="storage_type1" class="block w-full px-4 py-2 border rounded-md">
+            {% for st in ['HDD','SSD','NVMe','Other'] %}
+              <option value="{{st}}" {% if asset and asset.storage_type1==st %}selected{% endif %}>{{st}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="storage_capacity1" class="block mb-2">Capacity (GB)</label>
+          <input type="number" id="storage_capacity1" name="storage_capacity1" value="{{ asset.storage_capacity1 if asset else '' }}"
+            class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div>
+          <label for="storage_type2" class="block mb-2">Secondary Storage</label>
+          <select id="storage_type2" name="storage_type2" class="block w-full px-4 py-2 border rounded-md">
+            <option value="">None</option>
+            {% for st in ['HDD','SSD','NVMe','Other'] %}
+              <option value="{{st}}" {% if asset and asset.storage_type2==st %}selected{% endif %}>{{st}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="storage_capacity2" class="block mb-2">Capacity (GB)</label>
+          <input type="number" id="storage_capacity2" name="storage_capacity2" value="{{ asset.storage_capacity2 if asset else '' }}"
+            class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div>
+          <label for="gpu" class="block mb-2">GPU</label>
+          <input type="text" id="gpu" name="gpu" value="{{ asset.gpu if asset else '' }}"
+            class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div>
+          <label for="vram" class="block mb-2">VRAM (GB)</label>
+          <input type="number" id="vram" name="vram" value="{{ asset.vram if asset else '' }}"
+            class="block w-full px-4 py-2 border rounded-md">
+        </div>
+      </div>
+    </div>
+
+    <!-- Fund & Allotment -->
+    <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Fund & Allotment</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="po_date" class="block mb-2">PO Date</label>
+          <input type="date" id="po_date" name="po_date" value="{{ asset.po_date if asset else '' }}"
+            class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div>
+          <label for="source_of_fund" class="block mb-2">Source of Fund</label>
+          <input type="text" id="source_of_fund" name="source_of_fund" value="{{ asset.source_of_fund if asset else '' }}"
+            class="block w-full px-4 py-2 border rounded-md">
+        </div>
+      </div>
+    </div>
+
+    <!-- Peripherals -->
+    <div class="form-section bg-green-50 rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Peripherals</h2>
+
+      <!-- Keyboard -->
+      <div class="mb-6">
+        <label class="block mb-2">Keyboard Provided?</label>
+        <select id="keyboard_provided" name="keyboard_provided" onchange="togglePeripheral('keyboard')"
+                class="block w-full px-4 py-2 border rounded-md">
+          <option value="">Select</option>
+          <option value="yes" {% if asset and asset.keyboard_provided=='yes' %}selected{% endif %}>Yes</option>
+          <option value="no" {% if asset and asset.keyboard_provided=='no' %}selected{% endif %}>No</option>
+        </select>
+        <div id="keyboard-details-container"
+             class="mt-2 {% if not (asset and asset.keyboard_provided=='yes') %}hidden{% endif %}">
+          <input type="text" id="keyboard_details" name="keyboard_details" value="{{ asset.keyboard_details if asset else '' }}"
+            placeholder="Keyboard details" class="block w-full px-4 py-2 border rounded-md">
+        </div>
+      </div>
+
+      <!-- Mouse -->
+      <div class="mb-6">
+        <label class="block mb-2">Mouse Provided?</label>
+        <select id="mouse_provided" name="mouse_provided" onchange="togglePeripheral('mouse')"
+                class="block w-full px-4 py-2 border rounded-md">
+          <option value="">Select</option>
+          <option value="yes" {% if asset and asset.mouse_provided=='yes' %}selected{% endif %}>Yes</option>
+          <option value="no" {% if asset and asset.mouse_provided=='no' %}selected{% endif %}>No</option>
+        </select>
+        <div id="mouse-details-container"
+             class="mt-2 {% if not (asset and asset.mouse_provided=='yes') %}hidden{% endif %}">
+          <input type="text" id="mouse_details" name="mouse_details" value="{{ asset.mouse_details if asset else '' }}"
+            placeholder="Mouse details" class="block w-full px-4 py-2 border rounded-md">
+        </div>
+      </div>
+
+      <!-- Monitor -->
+      <div>
+        <label class="block mb-2">Monitor Provided?</label>
+        <select id="monitor_provided" name="monitor_provided" onchange="togglePeripheral('monitor')"
+                class="block w-full px-4 py-2 border rounded-md">
+          <option value="">Select</option>
+          <option value="yes" {% if asset and asset.monitor_provided=='yes' %}selected{% endif %}>Yes</option>
+          <option value="no" {% if asset and asset.monitor_provided=='no' %}selected{% endif %}>No</option>
+          <option value="laptop" {% if asset and asset.monitor_provided=='laptop' %}selected{% endif %}>Laptop Screen</option>
+        </select>
+        <div id="monitor-details-container"
+             class="mt-2 {% if not (asset and asset.monitor_provided=='yes') %}hidden{% endif %}">
+          <input type="text" id="monitor_details" name="monitor_details" value="{{ asset.monitor_details if asset else '' }}"
+            placeholder="Monitor details" class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div id="monitor-size-container"
+             class="mt-2 {% if not (asset and asset.monitor_provided=='yes') %}hidden{% endif %}">
+          <input type="number" id="monitor_size" name="monitor_size" value="{{ asset.monitor_size if asset else '' }}"
+            placeholder="Size in inches" class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div id="monitor-serial-container"
+             class="mt-2 {% if not (asset and asset.monitor_provided=='yes') %}hidden{% endif %}">
+          <input type="text" id="monitor_serial" name="monitor_serial" value="{{ asset.monitor_serial if asset else '' }}"
+            placeholder="Serial Number" class="block w-full px-4 py-2 border rounded-md">
+        </div>
+     <!-- Location Section -->
+
+
+  <div>
+    <label for="location" class="block text-gray-700 font-medium mb-2 required-field">
+      Select Location
+    </label>
+    <select id="location" name="location" required
+      class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-yellow-500">
+      <option value="">-- Select Location --</option>
+
+      <optgroup label="Labs">
+        {% set lab_list = [
+          'CS-107','CS-108','CS-109',
+          'CS-207','CS-208','CS-209',
+          'CS-317','CS-318','CS-319','CS-320',
+          'CS-411','CS-412'
+        ] %}
+        {% for l in lab_list %}
+          <option value="{{l}}" {% if asset and asset.location==l %}selected{% endif %}>{{l}}</option>
+        {% endfor %}
+      </optgroup>
+
+      <optgroup label="Other Locations">
+        {% set other_locations = [
+          'CSE Office','CSE Store','Institute Datacenter','SmartRack'
+        ] %}
+        {% for o in other_locations %}
+          <option value="{{o}}" {% if asset and asset.location==o %}selected{% endif %}>{{o}}</option>
+        {% endfor %}
+      </optgroup>
+    </select>
+  </div>
+</div>
+
+
+<!-- Indenter Section -->
+
+
+  <div>
+    <label for="indenter" class="block text-gray-700 font-medium mb-2 required-field">
+      Select Faculty / Staff
+    </label>
+    <select id="indenter" name="indenter" required
+      class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-green-500">
+      <option value="">-- Select Faculty / Staff --</option>
+
+      <optgroup label="Faculty">
+        {% set faculty_list = [
+          'Prof. Antony Franklin','Dr. Ashish Mishra','Prof. Bheemarjuna Reddy Tamma',
+          'Prof. C. Krishna Mohan','Dr. J. Saketha Nath','Dr. Jyothi Vedurada',
+          'Dr. Kotaro Kataoka','Prof. M. V. Panduranga Rao','Dr. Manish Singh',
+          'Dr. Maria Francis','Prof. Maunendra Sankar Desarkar','Dr. N. R. Aravind',
+          'Dr. Nitin Saurabh','Dr. Praveen Tammana','Dr. Rajesh Kedia',
+          'Dr. Rakesh Venkat','Dr. Ramakrishna Upadrasta','Dr. Rameshwar Pratap',
+          'Dr. Rogers Mathew','Prof. Sathya Peri','Dr. Saurabh Kumar',
+          'Dr. Shirshendu Das','Dr. Sobhan Babu','Dr. Srijith P. K.',
+          'Prof. Subrahmanyam Kalyanasundaram','Prof. Vineeth N. Balasubramanian'
+        ] %}
+        {% for f in faculty_list %}
+          <option value="{{f}}" {% if asset and asset.indenter==f %}selected{% endif %}>{{f}}</option>
+        {% endfor %}
+      </optgroup>
+
+      <optgroup label="Staff">
+        {% set staff_list = [
+          'G Praveen Kumar','Shiva Kumar Reddy','Sunitha M',
+          'Nikith Reddy','Vijay Chakravarthy','Syam N'
+        ] %}
+        {% for s in staff_list %}
+          <option value="{{s}}" {% if asset and asset.indenter==s %}selected{% endif %}>{{s}}</option>
+        {% endfor %}
+      </optgroup>
+    </select>
+  </div>
+</div>
+
+
+
+
+
+
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="flex justify-end space-x-3">
+      <a href="{{ url_for('assets_list') }}" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</a>
+      <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+        {{ 'Update Asset' if asset else 'Create Asset' }}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+function toggleOtherManufacturer() {
+  let val = document.getElementById("manufacturer").value;
+  document.getElementById("otherManufacturerContainer").classList.toggle("hidden", val !== "Others");
+}
+function toggleOtherOs() {
+  let val = document.getElementById("os").value;
+  document.getElementById("otherOsContainer").classList.toggle("hidden", val !== "Other");
+}
+function toggleOtherRam() {
+  let val = document.getElementById("ram").value;
+  document.getElementById("otherRamContainer").classList.toggle("hidden", val !== "other");
+}
+function togglePeripheral(type) {
+  if (type === "keyboard") {
+    let val = document.getElementById("keyboard_provided").value;
+    document.getElementById("keyboard-details-container").classList.toggle("hidden", val !== "yes");
+  }
+  if (type === "mouse") {
+    let val = document.getElementById("mouse_provided").value;
+    document.getElementById("mouse-details-container").classList.toggle("hidden", val !== "yes");
+  }
+  if (type === "monitor") {
+    let val = document.getElementById("monitor_provided").value;
+    let show = (val === "yes");
+    document.getElementById("monitor-details-container").classList.toggle("hidden", !show);
+    document.getElementById("monitor-size-container").classList.toggle("hidden", !show);
+    document.getElementById("monitor-serial-container").classList.toggle("hidden", !show);
+  }
+}
+</script>
+{% endblock %}

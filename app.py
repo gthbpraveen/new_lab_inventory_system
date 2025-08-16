@@ -1,57 +1,61 @@
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from flask import redirect, url_for
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask import Flask, render_template, request
-from models import db, User, Workstation, Equipment, ProvisioningRequest
-import pandas as pd
 import os
-from datetime import date
+import secrets
+from datetime import datetime, timedelta, date
 
-
+from flask import Flask, render_template, request, flash, redirect, url_for
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_migrate import Migrate
 from dotenv import load_dotenv
-load_dotenv()  # Load environment variables from .env file
-# `print("🔐 ENV Secret Key:", os.getenv("SECRET_KEY"))
-
 import requests
 
-from collections import defaultdict
-from werkzeug.security import check_password_hash
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from datetime import datetime, timedelta
-import secrets
-from flask import flash, redirect, url_for
-from flask import flash, redirect, url_for
+# Models
+from models import (
+    db,
+    User,
+    Equipment,
+    ProvisioningRequest,
+    # If you need these elsewhere, import now or inside the route files:
+    RoomLab, Cubicle, Student, EquipmentHistory, WorkstationAsset, WorkstationAssignment,
+)
 
+# ------------------- Load env -------------------
+load_dotenv()
+
+# ------------------- App & DB -------------------
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Normalize database URL (Heroku-style)
+db_url = os.getenv("DATABASE_URL") or f"sqlite:///{os.path.join(basedir, 'database.db')}"
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+
 db.init_app(app)
-# app.secret_key = "PPPAAA@RRRTTT"
-
-
-app.secret_key = os.getenv("SECRET_KEY")
-
-
-
-#db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-
+# ------------------- Login -------------------
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-from models import Workstation, Equipment
-from models import User
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    # SQLAlchemy 2.0 preferred way
+    try:
+        return db.session.get(User, int(user_id))
+    except Exception:
+        return None
 
-with app.app_context():
-    db.create_all()
+if os.getenv("AUTO_CREATE_DB") == "1":
+    with app.app_context():
+        db.create_all()
+
+
 GOOGLE_SHEET_WEBHOOK_URL = os.getenv("GOOGLE_SHEET_WEBHOOK_URL")
 # GOOGLE_SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwQiFsBus3K7wJkSqLtHeeeMvZFr2TObboA0v85D3BfhP4xUKYY8Qi7CFpGv04tYz_n/exec"
 
@@ -79,7 +83,7 @@ def login_home():
 
 from flask import render_template, request, redirect, url_for
 
-from models import Student, Workstation, Equipment, EquipmentHistory, RoomLab, Cubicle
+from models import Student, Equipment, EquipmentHistory, RoomLab, Cubicle
 from datetime import datetime
 
 # @app.route("/index", methods=["GET", "POST"])
@@ -518,61 +522,59 @@ def search():
 
 from flask import render_template
 from collections import defaultdict
-from models import Workstation  # Adjust this import to match your structure
+# from models import Workstation  # Adjust this import to match your structure
 
 from flask import render_template
 from collections import defaultdict
-from models import Workstation, Student
+from models import Student
 
 @app.route("/utilization")
 def utilization():
-    # Join Workstation with Student so we get names
-    all_records = db.session.query(Workstation, Student).join(Student, Workstation.roll == Student.roll).all()
+    rooms = RoomLab.query.all()
+    merged_data = {}
 
-    lab_capacities = {
-        "CS-107": 43,
-        "CS-108": 21,
-        "CS-109": 114,
-        "CS-207": 30,
-        "CS-208": 25,
-        "CS-209": 142,
-        "CS-317": 25,
-        "CS-318": 25,
-        "CS-319": 32,
-        "CS-320": 27,
-        "CS-411": 25,
-        "CS-412": 33
-    }
-
-    lab_counts = defaultdict(int)
-    used_seats_map = defaultdict(list)
-
-    for ws, student in all_records:
-        lab_counts[ws.room_lab_name] += 1
-        try:
-            seat_no = int(ws.cubicle_no)
-            hover_name = f"{student.name} ({student.roll})"
-            used_seats_map[ws.room_lab_name].append((seat_no, hover_name))
-        except (ValueError, TypeError):
-            pass  # Invalid seat number
-
-    lab_stats = {}
     total_seats = 0
     total_used = 0
 
-    for lab, total in lab_capacities.items():
-        used = lab_counts.get(lab, 0)
-        available = total - used
-        used_seats = dict(used_seats_map.get(lab, []))  # {seat_no: "Name (Roll)"}
+    for room in rooms:
+        cubicles = Cubicle.query.filter_by(room_lab_id=room.id).all()
+        seats = {}
+        used = 0
 
-        lab_stats[lab] = {
-            "total": total,
+        for c in cubicles:
+            if c.student:  # Occupied
+                active_ws = c.student.active_assignment
+                workstation = None
+                if active_ws and active_ws.asset:
+                    workstation = {
+                        "asset": active_ws.asset.serial,
+                        "model": active_ws.asset.model,
+                        "manufacturer": active_ws.asset.manufacturer,
+                        "status": active_ws.asset.status,
+                        "till": active_ws.system_required_till,
+                    }
+
+                seats[int(c.number)] = {
+                    "occupied": True,
+                    "student": {
+                        "name": c.student.name,
+                        "roll": c.student.roll,
+                        "faculty": c.student.faculty if c.student.faculty else "No Faculty"
+                    },
+                    "workstation": workstation
+                }
+                used += 1
+            else:  # Free
+                seats[int(c.number)] = {"occupied": False}
+
+        merged_data[room.name] = {
+            "total": room.capacity,
             "used": used,
-            "available": available,
-            "used_seats": used_seats
+            "available": room.capacity - used,
+            "used_seats": seats
         }
 
-        total_seats += total
+        total_seats += room.capacity
         total_used += used
 
     total_available = total_seats - total_used
@@ -580,12 +582,14 @@ def utilization():
 
     return render_template(
         "utilization.html",
-        lab_stats=lab_stats,
+        lab_stats=merged_data,
         total_seats=total_seats,
         total_used=total_used,
         total_available=total_available,
         occupancy_percent=occupancy_percent
     )
+
+
 
 
 # from flask import render_template
@@ -678,69 +682,51 @@ def utilization():
 
 from sqlalchemy.orm import joinedload
 
+# ============= Allotted Machines (active assignments) =============
 @app.route("/alloted_machines")
+@login_required
 def alloted_machines():
-    # Only workstations that are assigned (i.e., have a roll)
-    rows = (db.session.query(
-                Workstation,
-                Student.name.label("student_name")
-            )
-            .join(Student, Student.roll == Workstation.roll)
-            .order_by(Workstation.room_lab_name.asc().nullsfirst(),
-                      Workstation.cubicle_no.asc().nullsfirst())
-            .all())
+    # Active workstation assignments with asset + student
+    assigns = (WorkstationAssignment.query
+               .options(joinedload(WorkstationAssignment.asset))
+               .filter_by(is_active=True)
+               .order_by(WorkstationAssignment.id.desc())
+               .all())
 
-    # Flatten to dicts so the current template keys work cleanly
+    # Build records compatible with your template columns:
+    # Name, Roll, Lab, Cubicle, Processor, Cores, RAM, Storage, GPU, and actions
     records = []
-    for ws, sname in rows:
+    for a in assigns:
+        asset = a.asset
+        roll = a.student_roll
+        # find student's cubicle (if any)
+        cur_cub = Cubicle.query.filter_by(student_roll=roll).first()
+        room_name = cur_cub.room_lab.name if (cur_cub and cur_cub.room_lab) else None
+        cub_no = cur_cub.number if cur_cub else None
+
         records.append({
-            "roll": ws.roll,
-            "name": sname,
-            "room_lab_name": ws.room_lab_name,
-            "cubicle_no": ws.cubicle_no,
-            "processor": ws.processor,
-            "cores": ws.cores,
-            "ram": ws.ram,
-            "storage_type1": ws.storage_type1,
-            "storage_capacity1": ws.storage_capacity1,
-            "storage_type2": ws.storage_type2,
-            "storage_capacity2": ws.storage_capacity2,
-            "gpu": ws.gpu,
+            "id": a.id,  # assignment id (for actions like return)
+            "name": (db.session.get(Student, roll).name if db.session.get(Student, roll) else ""),
+            "roll": roll,
+            "room_lab_name": room_name or "-",
+            "cubicle_no": cub_no or "-",
+            "processor": asset.processor if asset else "",
+            "cores": asset.cores if asset else "",
+            "ram": asset.ram if asset else "",
+            "storage_type1": asset.storage_type1 if asset else "",
+            "storage_capacity1": asset.storage_capacity1 if asset else "",
+            "storage_type2": asset.storage_type2 if asset else "",
+            "storage_capacity2": asset.storage_capacity2 if asset else "",
+            "gpu": asset.gpu if asset else "",
         })
-    return render_template("alloted_machines.html", records=records)
 
-
-@app.route("/workstation/<roll>/edit", methods=["GET", "POST"])
-def edit_workstation(roll):
-    ws = Workstation.query.get_or_404(roll)
-    student = Student.query.get(roll)
-    if request.method == "POST":
-        f = request.form
-        # update selected fields (add more as needed)
-        ws.processor = f.get("processor")
-        ws.cores = f.get("cores")
-        ws.ram = f.get("ram")
-        ws.gpu = f.get("gpu")
-        ws.room_lab_name = f.get("room_lab_name")
-        ws.cubicle_no = f.get("cubicle_no")
-        db.session.commit()
-        flash("Workstation updated.", "success")
-        return redirect(url_for("alloted_machines"))
-    return render_template("edit_workstation.html", ws=ws, student=student)
-
-@app.route("/workstation/<roll>/delete", methods=["POST"])
-def delete_workstation(roll):
-    ws = Workstation.query.get_or_404(roll)
-    db.session.delete(ws)
-    db.session.commit()
-    flash("Workstation deleted.", "success")
-    return redirect(url_for("alloted_machines"))
+    return render_template("allotted_machines.html", records=records)
 
 
 
 
 
-from models import Equipment, Workstation, EquipmentHistory
+from models import Equipment, EquipmentHistory
 
 from datetime import datetime
 from flask import render_template, request, redirect, flash
@@ -1072,7 +1058,7 @@ from flask_login import login_required
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from datetime import date
-from models import db, Equipment, Workstation
+from models import db, Equipment
 
 @app.route("/equipment_entry", methods=["GET", "POST"])
 @login_required
@@ -1195,12 +1181,12 @@ def equipment_list():
 
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import Equipment, Workstation, db
+from models import Equipment, db
 from datetime import datetime
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from datetime import datetime
-from models import Equipment, Workstation  # Update this line as per your actual import
+from models import Equipment # Update this line as per your actual import
 
 
 
@@ -1333,7 +1319,7 @@ lab_meta = {
 from flask import render_template, abort
 from flask_login import login_required
 from sqlalchemy.orm import joinedload
-from models import RoomLab, Workstation
+from models import RoomLab
 
 @app.route('/lab_details/<lab_code>')
 @login_required
@@ -1644,36 +1630,48 @@ def os_related():
 
 from flask import render_template, request
 # from flask import app, db  # Replace 'yourapp' with your actual app name
-from models import Workstation
+# from models import Workstation
 from flask import render_template, request
+from flask import request, render_template
+from datetime import datetime
+from models import db, Student, Cubicle, RoomLab
+
+from flask import request, render_template
+from datetime import datetime
+from models import db, Student, Cubicle, RoomLab
 
 @app.route('/students_directory', methods=['GET'])
 def students_directory():
-    # Get filter values from query parameters
+    # Get filter values
     course = request.args.get('course')
     year = request.args.get('year')
+    joining_year = request.args.get('joining_year')
     room_lab_name = request.args.get('room_lab_name')
     roll = request.args.get('roll')
     faculty = request.args.get('faculty')
+    page = request.args.get('page', 1, type=int)
 
-    # Start with base query
-    query = Workstation.query
+    # Base query: join Student -> Cubicle -> RoomLab
+    query = Student.query.outerjoin(Cubicle).outerjoin(RoomLab)
 
     # Apply filters
     if course:
-        query = query.filter(Workstation.course == course)
+        query = query.filter(Student.course == course)
     if year:
-        query = query.filter(Workstation.year == year)
+        query = query.filter(Student.year == year)
+    if joining_year:
+        query = query.filter(Student.joining_year == joining_year)
     if room_lab_name:
-        query = query.filter(Workstation.room_lab_name == room_lab_name)
+        query = query.filter(RoomLab.name == room_lab_name)
     if roll:
-        query = query.filter(Workstation.roll.ilike(f"%{roll}%"))
+        query = query.filter(Student.roll.ilike(f"%{roll}%"))
     if faculty:
-        query = query.filter(Workstation.faculty == faculty)
+        query = query.filter(Student.faculty == faculty)
 
-    students = query.all()
+    # Paginate (10 results per page)
+    students_pagination = query.paginate(page=page, per_page=10, error_out=False)
 
-    # For dropdown filters
+    # Dropdown filters
     faculty_list = [
         "Prof. Antony Franklin", "Dr. Ashish Mishra", "Prof. Bheemarjuna Reddy Tamma",
         "Prof. C. Krishna Mohan", "Dr. J. Saketha Nath", "Dr. Jyothi Vedurada",
@@ -1685,12 +1683,21 @@ def students_directory():
         "Dr. Srijith P. K.", "Prof. Subrahmanyam Kalyanasundaram", "Prof. Vineeth N. Balasubramanian"
     ]
 
-    labs = ["CS-107", "CS-108", "CS-109", "CS-207", "CS-208", "CS-209",
-            "CS-317", "CS-318", "CS-319", "CS-320", "CS-411", "CS-412"]
+    labs = [room.name for room in RoomLab.query.all()]
+    joining_years = [str(y) for y in range(2015, datetime.now().year + 1)]  # dynamic
 
-    return render_template("students_directory.html", students=students,
-                           faculty_list=faculty_list, labs=labs)
-
+    return render_template("students_directory.html",
+                           students_pagination=students_pagination,
+                           faculty_list=faculty_list,
+                           labs=labs,
+                           joining_years=joining_years,
+                           # pass filters back for dropdowns
+                           selected_course=course,
+                           selected_year=year,
+                           selected_joining_year=joining_year,
+                           selected_lab=room_lab_name,
+                           selected_faculty=faculty,
+                           selected_roll=roll)
 
 
 @app.route('/equipment/edit/<int:id>', methods=['GET', 'POST'])
@@ -1881,7 +1888,7 @@ def get_students_by_course_year():
     return jsonify(data)
 
 from flask import render_template, request
-from models import Workstation, db
+from models import db
 @app.route("/allocate_space", methods=["GET", "POST"])
 def allocate_space():
     error = None
@@ -2064,7 +2071,7 @@ def allocate_space():
 #     return render_template("allotment_options.html", roll=roll)
 
 from flask import Flask, render_template, request, redirect, url_for, flash
-from models import db, Student, RoomLab, Cubicle, Workstation, Equipment
+from models import db, Student, RoomLab, Cubicle, Equipment
 from datetime import datetime
 
 
@@ -2115,84 +2122,142 @@ def student_info():
 from sqlalchemy.orm import joinedload
 from flask import render_template, request, redirect, url_for, flash
 
+# ---------- Helper to build room -> free cubicles map ----------
+
+def build_room_map():
+    """
+    Returns: { "CS-107": [ {"id": 1, "number": "3"}, ... only free cubicles ], ... }
+    """
+    rooms = RoomLab.query.options(joinedload(RoomLab.cubicles)).all()
+    room_map = {}
+    for r in rooms:
+        free = [{"id": c.id, "number": c.number} for c in r.cubicles if c.student_roll is None]
+        room_map[r.name] = free
+    return rooms, room_map
+
+# ============= Cubicle Allocation Page (Create/Change) =============
 @app.route("/cubicle_allocation", methods=["GET", "POST"])
 @app.route("/cubicle_allocation/<roll>", methods=["GET", "POST"])
+@login_required
 def cubicle_allocation(roll=None):
-    """
-    Allocate exactly one cubicle per student.
-    - GET: show rooms + cubicles (allocated ones are greyed-out in template)
-           prefill roll if provided.
-    - POST: validate student, validate cubicle availability, ensure student
-            doesn't already have a cubicle, then assign.
-    """
-    # Prefill roll from URL or query param
-    roll_prefill = (roll or request.args.get("roll", "")).strip() or ""
+    # Pre-fill POST data if redirected
+    form_data = None
+    error = None
+    success = False
 
-    # Always load rooms with their cubicles for the template (cards/grid)
-    rooms = RoomLab.query.options(joinedload(RoomLab.cubicles)).all()
+    # For dynamic room->free cubicles (and to preselect current cubicle for the roll)
+    rooms, room_map = build_room_map(selected_for_roll=roll)
 
     if request.method == "POST":
-        form = request.form
-        roll_in = (form.get("roll") or "").strip()
+        f = request.form
+        name = (f.get("name") or "").strip()
+        roll_post = (f.get("roll") or "").strip()
+        course = f.get("course")
+        year = f.get("year")
+        faculty = f.get("faculty")
+        email = f.get("email")
+        phone = f.get("phone")
+        room_lab_name = f.get("room_lab_name")  # as string name
+        cubicle_no = f.get("cubicle_no")
 
-        if not roll_in:
-            flash("Roll number is required.", "warning")
-            return redirect(request.url)
+        form_data = f  # re-render if error
 
-        # Ensure student exists
-        student = Student.query.get(roll_in)
-        if not student:
-            flash("Student not found. Please register the student first.", "warning")
-            return redirect(url_for("student_info", prefill_roll=roll_in))
+        if not (name and roll_post and room_lab_name and cubicle_no):
+            error = "Please fill all required fields (Name, Roll, Room/Lab, Cubicle)."
+        else:
+            # Ensure student exists or create/update
+            student = db.session.get(Student, roll_post)
+            if not student:
+                student = Student(
+                    roll=roll_post, name=name, course=course, year=year,
+                    faculty=faculty, email=email, phone=phone
+                )
+                db.session.add(student)
+            else:
+                # light update
+                student.name = name
+                student.course = course
+                student.year = year
+                student.faculty = faculty
+                student.email = email
+                student.phone = phone
 
-        # Read selection
-        room_id = form.get("room_id")  # (optional: if you keep it in the form)
-        cubicle_id = form.get("cubicle_id")
-        if not cubicle_id:
-            flash("Please select a cubicle.", "warning")
-            return redirect(url_for("cubicle_allocation", roll=roll_in))
+            # Find room & cubicle
+            room = RoomLab.query.filter_by(name=room_lab_name).first()
+            if not room:
+                error = f"Room {room_lab_name} not found."
+            else:
+                cub = Cubicle.query.filter_by(room_lab_id=room.id, number=str(cubicle_no)).first()
+                if not cub:
+                    error = f"Cubicle {cubicle_no} in room {room_lab_name} not found."
+                else:
+                    # If cub is occupied by someone else, block
+                    if cub.student_roll and cub.student_roll != roll_post:
+                        error = f"Cubicle {cubicle_no} in room {room_lab_name} is already assigned."
+                    else:
+                        # If student had previous cubicle, release it
+                        prev = Cubicle.query.filter_by(student_roll=roll_post).first()
+                        if prev and prev.id != cub.id:
+                            prev.student_roll = None
 
-        cubicle = Cubicle.query.get(cubicle_id)
-        if not cubicle:
-            flash("Selected cubicle does not exist.", "danger")
-            return redirect(url_for("cubicle_allocation", roll=roll_in))
+                        # Assign this one
+                        cub.student_roll = roll_post
+                        try:
+                            db.session.commit()
+                            success = True
+                            form_data = None
+                        except Exception as e:
+                            db.session.rollback()
+                            error = f"Error saving allocation: {e}"
 
-        # If it's already allocated to someone else, block
-        if cubicle.student_roll and cubicle.student_roll != roll_in:
-            flash(f"Cubicle {cubicle.number} in {cubicle.room_lab.name} is already allocated to {cubicle.student_roll}.", "danger")
-            return redirect(url_for("cubicle_allocation", roll=roll_in))
+    # For GET (or after POST), pre-fill form with student data if roll provided
+    student_obj = db.session.get(Student, roll) if roll else None
+    if not form_data and student_obj:
+        # fill form_data-like dict for template
+        cur_cub = Cubicle.query.filter_by(student_roll=student_obj.roll).first()
+        cur_room = cur_cub.room_lab.name if cur_cub else ""
+        form_data = {
+            "name": student_obj.name,
+            "roll": student_obj.roll,
+            "course": student_obj.course,
+            "year": student_obj.year,
+            "faculty": student_obj.faculty,
+            "email": student_obj.email,
+            "phone": student_obj.phone,
+            "room_lab_name": cur_room,
+            "cubicle_no": cur_cub.number if cur_cub else "",
+        }
 
-        # Enforce single cubicle per student
-        existing = Cubicle.query.filter_by(student_roll=roll_in).first()
-        if existing and existing.id != cubicle.id:
-            flash(
-                f"Student {roll_in} already has a cubicle "
-                f"({existing.room_lab.name} / {existing.number}). "
-                f"Please free/reassign before allocating a new one.",
-                "warning"
-            )
-            return redirect(url_for("cubicle_allocation", roll=roll_in))
-
-        # Assign if free or already theirs
-        cubicle.student_roll = roll_in
-        try:
-            db.session.commit()
-            flash(
-                f"Cubicle {cubicle.number} allocated in {cubicle.room_lab.name} to {roll_in}.",
-                "success"
-            )
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Failed to allocate cubicle: {e}", "danger")
-
-        return redirect(url_for("cubicle_allocation", roll=roll_in))
-
-    # GET render
+    # Pass rooms & JS room_map to template
     return render_template(
-        "cubicle_allocation.html",
+        "allocate_space.html",
+        form_data=form_data,
+        error=error,
+        success=success,
         rooms=rooms,
-        roll_prefill=roll_prefill
+        room_map=room_map,
     )
+
+
+# ============= Release Cubicle =============
+@app.route("/release_cubicle/<int:cubicle_id>", methods=["POST"])
+@login_required
+def release_cubicle(cubicle_id):
+    cub = db.session.get(Cubicle, cubicle_id)
+    if not cub or not cub.student_roll:
+        flash("Cubicle not found or already free.", "warning")
+        return redirect(request.referrer or url_for("allotment_roll_check"))
+
+    roll = cub.student_roll
+    try:
+        cub.student_roll = None
+        db.session.commit()
+        flash("Cubicle released.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error releasing cubicle: {e}", "danger")
+
+    return redirect(url_for("allotment_options", roll=roll))
 
 # add near your other imports
 from sqlalchemy.orm import joinedload
@@ -2355,92 +2420,406 @@ def it_equipment(roll=None):
 # ------------------------
 # 5. Allotment Roll Check
 # ------------------------
-@app.route("/allotment_roll_check", methods=["GET", "POST"])
-def allotment_roll_check():
+# ============= Roll Check Page =============
+@app.route("/allotted_roll_check", methods=["GET", "POST"])
+@login_required
+def allotted_roll_check():
+    roll = None
+    student = None
+
     if request.method == "POST":
-        roll = request.form['roll'].strip()
-        student = Student.query.get(roll)
-        if student:
-            return redirect(url_for("allotment_options", roll=roll))
+        roll = (request.form.get("roll") or "").strip()
+        if roll:
+            student = db.session.get(Student, roll)
         else:
-            flash("Roll number not found. Please add student info first.", "warning")
-            return redirect(url_for("student_info"))
-    return render_template("allotment_roll_check.html")
+            flash("Please enter a roll number.", "warning")
+
+    return render_template("allotted_roll_check.html", roll=roll, student=student)
 
 
 # ------------------------
 # 6. Allotment Options
 # ------------------------
 # --- Allotment options with current allocations summary ---
-@app.route("/allotment_options/<roll>")
+# ============= Allotment Options per Roll =============
+@app.route("/allotment_options/<roll>", methods=["GET"])
+@login_required
 def allotment_options(roll):
-    # Student or 404
-    student = Student.query.get_or_404(roll)
+    student = db.session.get(Student, roll)
+    if not student:
+        flash("Roll number not found. Please register student.", "warning")
+        return redirect(url_for("allotted_roll_check"))
 
     # Current cubicle (if any)
-    cub = (
-        db.session.query(Cubicle, RoomLab)
-        .join(RoomLab, Cubicle.room_lab_id == RoomLab.id)
-        .filter(Cubicle.student_roll == roll)
-        .first()
-    )
-    # cub is a tuple (Cubicle, RoomLab) or None
+    cur_cub = Cubicle.query.filter_by(student_roll=roll).first()
+    cur_room = cur_cub.room_lab if cur_cub else None
 
-    # Workstations for this student (supports multiple)
-    workstations = Workstation.query.filter_by(roll=roll)\
-        .order_by(Workstation.issue_date.desc())\
-        .all()
+    # Active assignments for this student (join asset)
+    workstations = (WorkstationAssignment.query
+                    .options(joinedload(WorkstationAssignment.asset))
+                    .filter_by(student_roll=roll, is_active=True)
+                    .order_by(WorkstationAssignment.id.desc())
+                    .all())
 
-    # IT equipment assigned to this student
-    equipment = Equipment.query.filter_by(assigned_to_roll=roll)\
-        .order_by(Equipment.assigned_date.desc().nullslast())\
-        .all()
+    # IT equipment
+    equipment = Equipment.query.filter_by(assigned_to_roll=roll).order_by(Equipment.id.desc()).all()
+
+    # For your template: it expects "cub" to be (Cubicle, RoomLab) tuple or None
+    cub_tuple = (cur_cub, cur_room) if cur_cub and cur_room else None
 
     return render_template(
         "allotment_options.html",
         roll=roll,
-        student=student,
-        cub=cub,
+        cub=cub_tuple,
         workstations=workstations,
-        equipment=equipment,
+        equipment=equipment
     )
-# Release cubicle
-@app.post("/cubicle/release/<int:cubicle_id>")
-def release_cubicle(cubicle_id):
-    cub = Cubicle.query.get_or_404(cubicle_id)
-    roll = cub.student_roll
-    cub.student_roll = None
-    db.session.commit()
-    flash("Cubicle released.", "success")
-    return redirect(url_for("allotment_options", roll=roll))
 
-# Delete workstation (requires id PK on Workstation)
-@app.post("/workstation/<int:ws_id>/delete", endpoint="workstation_delete")
+
+# ============= Return/Delete a Workstation Assignment =============
+@app.route("/workstation_delete/<int:ws_id>", methods=["POST"])
+@login_required
 def workstation_delete(ws_id):
-    ws = Workstation.query.get_or_404(ws_id)
-    roll = ws.roll
-    db.session.delete(ws)
-    db.session.commit()
-    flash("Workstation deleted.", "success")
-    return redirect(url_for("allotment_options", roll=roll))
+    """Interpret as 'return' the workstation assignment (end & free)."""
+    asg = db.session.get(WorkstationAssignment, ws_id)
+    if not asg or not asg.is_active:
+        flash("Assignment not found or already returned.", "warning")
+        return redirect(request.referrer or url_for("allotted_roll_check"))
 
-# (Optional) Edit workstation/equipment routes should render forms you already have
-# For equipment:
-@app.post("/equipment/<int:eq_id>/unassign")
+    try:
+        # mark returned
+        asg.end_date = date.today().isoformat()
+        asg.is_active = False
+        # free asset
+        asset = db.session.get(WorkstationAsset, asg.workstation_id)
+        if asset:
+            asset.status = "in_stock"
+        db.session.commit()
+        flash("Workstation returned successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error returning workstation: {e}", "danger")
+
+    return redirect(url_for("allotment_options", roll=asg.student_roll))
+
+
+# ============= Unassign IT equipment =============
+@app.route("/unassign_equipment/<int:eq_id>", methods=["POST"])
+@login_required
 def unassign_equipment(eq_id):
-    eq = Equipment.query.get_or_404(eq_id)
+    eq = db.session.get(Equipment, eq_id)
+    if not eq or not eq.assigned_to_roll:
+        flash("Equipment not assigned or not found.", "warning")
+        return redirect(request.referrer or url_for("allotted_roll_check"))
+
     roll = eq.assigned_to_roll
-    eq.assigned_to_roll = None
-    eq.assigned_by = None
-    eq.assigned_date = None
-    eq.status = "Available"
-    db.session.commit()
-    flash("Equipment unassigned.", "success")
+    try:
+        eq.assigned_to_roll = None
+        eq.assigned_date = None
+        eq.status = "Available"
+        db.session.commit()
+        flash("Equipment unassigned.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error unassigning equipment: {e}", "danger")
+
     return redirect(url_for("allotment_options", roll=roll))
 
 
 
+# =========================
+# Workstation Inventory (Assets)
+# =========================
 
+from sqlalchemy.orm import joinedload
+from datetime import date
+from flask import request, render_template, redirect, url_for, flash
+
+@app.route("/assets")
+def assets_list():
+    q = WorkstationAsset.query
+    status = request.args.get("status")
+    search = request.args.get("search", "").strip()
+
+    if status:
+        q = q.filter(WorkstationAsset.status == status)
+    if search:
+        like = f"%{search}%"
+        q = q.filter(
+            (WorkstationAsset.serial.ilike(like)) |
+            (WorkstationAsset.model.ilike(like)) |
+            (WorkstationAsset.manufacturer.ilike(like))
+        )
+
+    assets = q.order_by(WorkstationAsset.id.desc()).all()
+    return render_template("assets_list.html", assets=assets, status=status, search=search)
+
+
+@app.route("/assets/new", methods=["GET", "POST"])
+def asset_new():
+    if request.method == "POST":
+        f = request.form
+        a = WorkstationAsset(
+            manufacturer=f.get("manufacturer") or None,
+            otherManufacturer=f.get("otherManufacturer") or None,
+            model=f.get("model") or None,
+            serial=(f.get("serial") or "").strip() or None,
+            os=f.get("os") or None,
+            otherOs=f.get("otherOs") or None,
+            processor=f.get("processor") or None,
+            cores=f.get("cores") or None,
+            ram=f.get("ram") or None,
+            otherRam=f.get("otherRam") or None,
+            storage_type1=f.get("storage_type1") or None,
+            storage_capacity1=f.get("storage_capacity1") or None,
+            storage_type2=f.get("storage_type2") or None,
+            storage_capacity2=f.get("storage_capacity2") or None,
+            gpu=f.get("gpu") or None,
+            vram=f.get("vram") or None,
+            keyboard_provided=f.get("keyboard_provided") or None,
+            keyboard_details=f.get("keyboard_details") or None,
+            mouse_provided=f.get("mouse_provided") or None,
+            mouse_details=f.get("mouse_details") or None,
+            monitor_provided=f.get("monitor_provided") or None,
+            monitor_details=f.get("monitor_details") or None,
+            monitor_size=f.get("monitor_size") or None,
+            monitor_serial=f.get("monitor_serial") or None,
+            mac_address=f.get("mac_address") or None,
+            po_date=f.get("po_date") or None,
+            source_of_fund=f.get("source_of_fund") or None,
+            status="in_stock",
+        )
+        try:
+            db.session.add(a)
+            db.session.commit()
+            flash("Asset added.", "success")
+            return redirect(url_for("assets_list"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error adding asset: {e}", "danger")
+    return render_template("asset_form.html", asset=None)
+
+
+
+@app.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
+def asset_edit(asset_id):
+    a = WorkstationAsset.query.get_or_404(asset_id)
+    if request.method == "POST":
+        f = request.form
+        a.manufacturer     = f.get("manufacturer") or None
+        a.otherManufacturer= f.get("otherManufacturer") or None
+        a.model            = f.get("model") or None
+        a.serial           = (f.get("serial") or "").strip() or None
+        a.os               = f.get("os") or None
+        a.otherOs          = f.get("otherOs") or None
+        a.processor        = f.get("processor") or None
+        a.cores            = f.get("cores") or None
+        a.ram              = f.get("ram") or None
+        a.otherRam         = f.get("otherRam") or None
+        a.storage_type1    = f.get("storage_type1") or None
+        a.storage_capacity1= f.get("storage_capacity1") or None
+        a.storage_type2    = f.get("storage_type2") or None
+        a.storage_capacity2= f.get("storage_capacity2") or None
+        a.gpu              = f.get("gpu") or None
+        a.vram             = f.get("vram") or None
+        a.keyboard_provided= f.get("keyboard_provided") or None
+        a.keyboard_details = f.get("keyboard_details") or None
+        a.mouse_provided   = f.get("mouse_provided") or None
+        a.mouse_details    = f.get("mouse_details") or None
+        a.monitor_provided = f.get("monitor_provided") or None
+        a.monitor_details  = f.get("monitor_details") or None
+        a.monitor_size     = f.get("monitor_size") or None
+        a.monitor_serial   = f.get("monitor_serial") or None
+        a.mac_address      = f.get("mac_address") or None
+        a.po_date          = f.get("po_date") or None
+        a.source_of_fund   = f.get("source_of_fund") or None
+        # NOTE: do NOT change status here, use retire/unretire
+        try:
+            db.session.commit()
+            flash("Asset updated.", "success")
+            return redirect(url_for("assets_list"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error updating asset: {e}", "danger")
+    return render_template("asset_form.html", asset=a)
+
+
+
+@app.route("/assets/<int:asset_id>/retire", methods=["POST"])
+def asset_retire(asset_id):
+    a = WorkstationAsset.query.get_or_404(asset_id)
+    # Allow retire from in_stock only; prevent retire if assigned
+    if a.status == "assigned":
+        flash("Cannot retire an assigned asset. Return it first.", "warning")
+        return redirect(url_for("assets_list"))
+    a.status = "retired"
+    db.session.commit()
+    flash("Asset retired.", "success")
+    return redirect(url_for("assets_list"))
+
+@app.route("/assets/<int:asset_id>/unretire", methods=["POST"])
+def asset_unretire(asset_id):
+    a = WorkstationAsset.query.get_or_404(asset_id)
+    if a.status == "retired":
+        a.status = "in_stock"
+        db.session.commit()
+        flash("Asset un-retired and now in stock.", "success")
+    return redirect(url_for("assets_list"))
+
+
+@app.route("/assets/<int:asset_id>/delete", methods=["POST"])
+def asset_delete(asset_id):
+    a = WorkstationAsset.query.get_or_404(asset_id)
+    if a.assignments and len(a.assignments) > 0:
+        flash("Cannot delete: this asset has assignment history. Consider retire.", "warning")
+        return redirect(url_for("assets_list"))
+    try:
+        db.session.delete(a)
+        db.session.commit()
+        flash("Asset deleted.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting asset: {e}", "danger")
+    return redirect(url_for("assets_list"))
+
+
+# =========================
+# Assign / Return
+# =========================
+
+@app.route("/assignments")
+def assignments_list():
+    q = (WorkstationAssignment.query
+         .options(joinedload(WorkstationAssignment.asset))
+         .filter(WorkstationAssignment.is_active == True))
+    roll = request.args.get("roll", "").strip()
+    serial = request.args.get("serial", "").strip()
+    if roll:
+        q = q.filter(WorkstationAssignment.student_roll == roll)
+    if serial:
+        q = q.join(WorkstationAsset).filter(WorkstationAsset.serial.ilike(f"%{serial}%"))
+    assignments = q.order_by(WorkstationAssignment.id.desc()).all()
+    return render_template("assignments_list.html", assignments=assignments, roll=roll, serial=serial)
+
+@app.route("/assignments/new", methods=["GET", "POST"])
+def assignment_new():
+    # Limit assets to 'in_stock'
+    in_stock_assets = WorkstationAsset.query.filter_by(status="in_stock").order_by(WorkstationAsset.id.desc()).all()
+
+    if request.method == "POST":
+        f = request.form
+        roll = (f.get("student_roll") or "").strip()
+        asset_id = f.get("workstation_id")
+        issue_date = f.get("issue_date")
+        till = f.get("system_required_till")
+        remarks = f.get("remarks") or None
+
+        # validate
+        if not roll or not asset_id or not issue_date or not till:
+            flash("Roll, asset, issue date and required till are mandatory.", "warning")
+            return render_template("assignment_form.html", assets=in_stock_assets)
+
+        # st = Student.query.get(roll)
+        # if not st:
+        #     flash("Student not found. Register student first.", "warning")
+        #     return render_template("assignment_form.html", assets=in_stock_assets)
+        st = Student.query.filter_by(roll=roll).first()
+        if not st:
+            flash("Student not found. Register student first.", "warning")
+            return render_template("assignment_form.html", assets=in_stock_assets)
+
+
+        a = WorkstationAsset.query.get(asset_id)
+        if not a or a.status != "in_stock":
+            flash("Selected asset is not available for assignment.", "warning")
+            return render_template("assignment_form.html", assets=in_stock_assets)
+
+        # create assignment
+        assign = WorkstationAssignment(
+            workstation_id=a.id,
+            student_roll=roll,
+            issue_date=issue_date,
+            system_required_till=till,
+            remarks=remarks,
+            is_active=True
+        )
+        try:
+            db.session.add(assign)
+            a.status = "assigned"
+            db.session.commit()
+            flash("Workstation assigned.", "success")
+            return redirect(url_for("assignments_list"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error assigning workstation: {e}", "danger")
+
+    return render_template("assignment_form.html", assets=in_stock_assets)
+
+
+@app.route("/assignments/<int:assign_id>/return", methods=["POST"])
+def assignment_return(assign_id):
+    assign = WorkstationAssignment.query.options(joinedload(WorkstationAssignment.asset)).get_or_404(assign_id)
+    if not assign.is_active:
+        flash("This assignment is already returned.", "info")
+        return redirect(url_for("assignments_list"))
+    try:
+        assign.is_active = False
+        assign.end_date = date.today().isoformat()
+        if assign.asset and assign.asset.status == "assigned":
+            assign.asset.status = "in_stock"
+        db.session.commit()
+        flash("Workstation returned.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error returning workstation: {e}", "danger")
+    return redirect(url_for("assignments_list"))
+
+@app.route("/space_allocation", methods=["GET", "POST"])
+def space_allocation():
+    rooms = RoomLab.query.all()
+    roll_prefill = request.args.get("roll", "").strip()
+
+    current_cubicle = None
+    if roll_prefill:
+        current_cubicle = Cubicle.query.filter_by(student_roll=roll_prefill).first()
+
+    if request.method == "POST":
+        roll = request.form["roll"].strip()
+        cubicle_id = request.form["cubicle_id"]
+
+        cubicle = Cubicle.query.get(cubicle_id)
+        if not cubicle:
+            flash("Invalid cubicle selected", "danger")
+            return redirect(url_for("space_allocation", roll=roll))
+
+        if cubicle.student_roll:
+            flash(f"Cubicle {cubicle.number} is already allocated.", "danger")
+            return redirect(url_for("space_allocation", roll=roll))
+
+        # release old allocation
+        prev = Cubicle.query.filter_by(student_roll=roll).first()
+        if prev:
+            prev.student_roll = None
+
+        cubicle.student_roll = roll
+        db.session.commit()
+        flash(f"Space {cubicle.number} allocated to {roll}", "success")
+        return redirect(url_for("space_allocation", roll=roll))
+
+    return render_template("space_allocation.html",
+                           rooms=rooms,
+                           roll_prefill=roll_prefill,
+                           current_cubicle=current_cubicle)
+
+
+@app.route("/space/release/<int:cubicle_id>", methods=["POST"])
+def space_release(cubicle_id):
+    cubicle = Cubicle.query.get_or_404(cubicle_id)
+    roll = cubicle.student_roll
+    cubicle.student_roll = None
+    db.session.commit()
+    flash(f"Released cubicle {cubicle.number} from roll {roll}", "success")
+    return redirect(url_for("space_allocation", roll=roll))
 
 
 if __name__ == "__main__":

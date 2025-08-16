@@ -43,11 +43,12 @@
           </td>
           <td class="px-4 py-2">{{ r.gpu }}</td>
           <td class="px-4 py-2 space-x-1">
-            <a href="{{ url_for('edit_workstation', roll=r.roll) }}" class="inline-block bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded text-xs">✏️ Edit</a>
-            <form action="{{ url_for('delete_workstation', roll=r.roll) }}" method="POST" onsubmit="return confirm('Are you sure?');">
-  <button type="submit" class="text-red-600 hover:underline">🗑️ Delete</button>
-</form>
-
+            <form action="{{ url_for('workstation_delete', ws_id=r.id) }}" method="POST"
+                  onsubmit="return confirm('Mark this workstation as returned?');" class="inline">
+              <button type="submit" class="inline-block bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs">
+                Return
+              </button>
+            </form>
           </td>
         </tr>
         {% endfor %}

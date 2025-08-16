@@ -1,0 +1,246 @@
+{% extends "login_home.html" %}
+{% block title %}Equipment Inventory{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6 bg-white rounded shadow">
+
+  <header class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">💼 IT Equipment</h1>
+    <p class="text-sm text-gray-600">Manage standalone equipment (laptops, NICs, etc.).</p>
+  </header>
+
+  <!-- Filters -->
+  <form method="GET" action="{{ url_for('asset_equipment') }}" class="mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+    <input name="q" value="{{ request.args.get('q','') }}" placeholder="Search name/serial/model"
+           class="border rounded px-3 py-2" />
+    <select name="status" class="border rounded px-3 py-2">
+      <option value="">All Status</option>
+      {% for s in ['Available','Assigned','Repair','Retired'] %}
+        <option value="{{ s }}" {% if request.args.get('status') == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Filter</button>
+    <a href="{{ url_for('asset_equipment') }}" class="px-4 py-2 border rounded">Reset</a>
+  </form>
+
+  <!-- Add Equipment -->
+  <details class="mb-6">
+    <summary class="cursor-pointer font-semibold text-indigo-700">➕ Add New Equipment</summary>
+    <form method="POST" action="{{ url_for('equipment_create') }}" class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-sm">Name</label>
+        <input name="name" class="w-full border rounded px-3 py-2" required />
+      </div>
+      <div>
+        <label class="block text-sm">Category</label>
+        <input name="category" class="w-full border rounded px-3 py-2" required placeholder="e.g., Laptop/NIC/Cable"/>
+      </div>
+      <div>
+        <label class="block text-sm">Manufacturer</label>
+        <input name="manufacturer" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm">Model</label>
+        <input name="model" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm">Serial Number</label>
+        <input name="serial_number" class="w-full border rounded px-3 py-2" required />
+      </div>
+      <div>
+        <label class="block text-sm">Invoice #</label>
+        <input name="invoice_number" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm">Cost per Unit</label>
+        <input name="cost_per_unit" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm">Location</label>
+        <input name="location" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm">PO Date</label>
+        <input type="date" name="po_date" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm">Purchase Date</label>
+        <input type="date" name="purchase_date" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm">Warranty Expiry</label>
+        <input type="date" name="warranty_expiry" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm">Status</label>
+        <select name="status" class="w-full border rounded px-3 py-2">
+          <option>Available</option><option>Assigned</option><option>Repair</option><option>Retired</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm">Intender Name</label>
+        <input name="intender_name" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm">Quantity</label>
+        <input name="quantity" type="number" min="1" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm">Department Code</label>
+        <input name="department_code" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm">MAC Address</label>
+        <input name="mac_address" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div class="md:col-span-4">
+        <label class="block text-sm">Remarks</label>
+        <input name="remarks" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div class="md:col-span-4 flex justify-end">
+        <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save Equipment</button>
+      </div>
+    </form>
+  </details>
+
+  <!-- Equipment List -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm border">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-3 py-2 text-left">ID</th>
+          <th class="px-3 py-2 text-left">Name / Category</th>
+          <th class="px-3 py-2 text-left">Serial</th>
+          <th class="px-3 py-2 text-left">Model</th>
+          <th class="px-3 py-2 text-left">Status</th>
+          <th class="px-3 py-2 text-left">Assigned To</th>
+          <th class="px-3 py-2 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in equipment %}
+          <tr class="border-t">
+            <td class="px-3 py-2">{{ e.id }}</td>
+            <td class="px-3 py-2">{{ e.name }} <span class="text-gray-500">({{ e.category }})</span></td>
+            <td class="px-3 py-2 font-mono">{{ e.serial_number }}</td>
+            <td class="px-3 py-2">{{ e.model or '-' }}</td>
+            <td class="px-3 py-2">
+              <span class="px-2 py-1 rounded text-xs
+                {% if e.status=='Available' %}bg-green-100 text-green-700
+                {% elif e.status=='Assigned' %}bg-blue-100 text-blue-700
+                {% elif e.status=='Repair' %}bg-yellow-100 text-yellow-700
+                {% else %}bg-gray-200 text-gray-700{% endif %}">
+                {{ e.status }}
+              </span>
+            </td>
+            <td class="px-3 py-2">
+              {% if e.assigned_to_roll %}
+                {{ e.assigned_to_roll }}
+                <br><span class="text-xs text-gray-500">{{ e.assigned_date.strftime('%Y-%m-%d') if e.assigned_date else '' }}</span>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td class="px-3 py-2 space-x-2">
+              {% if e.status != 'Assigned' %}
+                <!-- Assign equipment quick form -->
+                <form method="POST" action="{{ url_for('assign_equipment', eq_id=e.id) }}" class="inline-flex gap-2">
+                  <input name="roll" placeholder="roll" class="border rounded px-2 py-1 text-xs" required />
+                  <button class="px-2 py-1 bg-indigo-600 text-white rounded text-xs">Assign</button>
+                </form>
+              {% else %}
+                <form method="POST" action="{{ url_for('unassign_equipment', eq_id=e.id) }}" class="inline" onsubmit="return confirm('Unassign this equipment?');">
+                  <button class="px-2 py-1 bg-yellow-600 text-white rounded text-xs">Unassign</button>
+                </form>
+              {% endif %}
+
+              <!-- Edit -->
+              <a href="{{ url_for('asset_equipment', edit_id=e.id) }}" class="px-2 py-1 bg-yellow-500 text-white rounded text-xs">Edit</a>
+
+              <!-- Delete -->
+              <form action="{{ url_for('equipment_delete', eq_id=e.id) }}" method="POST" class="inline" onsubmit="return confirm('Delete this equipment?');">
+                <button class="px-2 py-1 bg-red-600 text-white rounded text-xs">Delete</button>
+              </form>
+            </td>
+          </tr>
+
+          {% if edit_id and edit_id == e.id %}
+          <!-- Inline Edit Row -->
+          <tr class="bg-yellow-50 border-b">
+            <td colspan="7" class="px-3 py-4">
+              <form method="POST" action="{{ url_for('equipment_update', eq_id=e.id) }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label class="block text-sm">Name</label>
+                  <input name="name" class="w-full border rounded px-3 py-2" value="{{ e.name }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">Category</label>
+                  <input name="category" class="w-full border rounded px-3 py-2" value="{{ e.category }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">Manufacturer</label>
+                  <input name="manufacturer" class="w-full border rounded px-3 py-2" value="{{ e.manufacturer or '' }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">Model</label>
+                  <input name="model" class="w-full border rounded px-3 py-2" value="{{ e.model or '' }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">Serial Number</label>
+                  <input name="serial_number" class="w-full border rounded px-3 py-2" value="{{ e.serial_number }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">Invoice #</label>
+                  <input name="invoice_number" class="w-full border rounded px-3 py-2" value="{{ e.invoice_number or '' }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">Cost per Unit</label>
+                  <input type="number" step="0.01" name="cost_per_unit" class="w-full border rounded px-3 py-2" value="{{ e.cost_per_unit or '' }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">Location</label>
+                  <input name="location" class="w-full border rounded px-3 py-2" value="{{ e.location or '' }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">PO Date</label>
+                  <input type="date" name="po_date" class="w-full border rounded px-3 py-2" value="{{ e.po_date or '' }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">Purchase Date</label>
+                  <input type="date" name="purchase_date" class="w-full border rounded px-3 py-2" value="{{ e.purchase_date or '' }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">Warranty Expiry</label>
+                  <input type="date" name="warranty_expiry" class="w-full border rounded px-3 py-2" value="{{ e.warranty_expiry or '' }}" />
+                </div>
+                <div>
+                  <label class="block text-sm">Status</label>
+                  <select name="status" class="w-full border rounded px-3 py-2">
+                    {% for s in ['Available','Assigned','Repair','Retired'] %}
+                      <option value="{{ s }}" {% if e.status==s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm">Remarks</label>
+                  <input name="remarks" class="w-full border rounded px-3 py-2" value="{{ e.remarks or '' }}" />
+                </div>
+                <div class="md:col-span-4 text-right">
+                  <button class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Update</button>
+                </div>
+              </form>
+            </td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

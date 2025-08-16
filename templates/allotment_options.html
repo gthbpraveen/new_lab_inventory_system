@@ -6,24 +6,15 @@
     Allotment Options for Roll<br><span class="text-indigo-700">{{ roll }}</span>
   </h1>
 
-  <!-- Quick actions -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-    <a href="{{ url_for('cubicle_allocation', roll=roll) }}"
-       class="block bg-blue-600 text-white p-6 rounded-lg shadow hover:bg-blue-700 transition text-center">
-      <div class="text-4xl mb-2">🪑</div>
-      <h3 class="font-semibold text-lg">Allocate / Change Cubicle</h3>
+    <a href="{{ url_for('space_allocation') }}" class="block bg-blue-600 text-white p-6 rounded-lg shadow hover:bg-blue-700 text-center">
+      <div class="text-4xl mb-2">🪑</div><h3 class="font-semibold text-lg">Allocate / Change Cubicle</h3>
     </a>
-
-    <a href="{{ url_for('workstation_allocation', roll=roll) }}"
-       class="block bg-green-600 text-white p-6 rounded-lg shadow hover:bg-green-700 transition text-center">
-      <div class="text-4xl mb-2">💻</div>
-      <h3 class="font-semibold text-lg">Allocate Workstation</h3>
+    <a href="{{ url_for('assets_list') }}" class="block bg-green-600 text-white p-6 rounded-lg shadow hover:bg-green-700 text-center">
+      <div class="text-4xl mb-2">💻</div><h3 class="font-semibold text-lg">Manage Workstation Assets</h3>
     </a>
-
-    <a href="{{ url_for('it_equipment', roll=roll) }}"
-       class="block bg-purple-600 text-white p-6 rounded-lg shadow hover:bg-purple-700 transition text-center">
-      <div class="text-4xl mb-2">🖱️</div>
-      <h3 class="font-semibold text-lg">Assign IT Equipment</h3>
+    <a href="{{ url_for('assignments_list', roll=roll) }}" class="block bg-purple-600 text-white p-6 rounded-lg shadow hover:bg-purple-700 text-center">
+      <div class="text-4xl mb-2">👥</div><h3 class="font-semibold text-lg">Assign / Return Workstations</h3>
     </a>
   </div>
 
@@ -38,58 +29,45 @@
           <div class="font-medium">Room: <span class="text-indigo-700">{{ cur_room.name }}</span></div>
           <div class="font-medium">Cubicle: <span class="text-indigo-700">{{ cur_cub.number }}</span></div>
         </div>
-        <div class="flex items-center gap-2">
-          <a class="px-3 py-2 bg-blue-50 border rounded hover:bg-blue-100"
-             href="{{ url_for('cubicle_allocation', roll=roll) }}">Change</a>
-          <form method="POST" action="{{ url_for('release_cubicle', cubicle_id=cur_cub.id) }}"
-                onsubmit="return confirm('Release this cubicle?');">
-            <button class="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700">Release</button>
-          </form>
-        </div>
+        <form method="POST" action="{{ url_for('space_release', cubicle_id=cur_cub.id) }}"
+              onsubmit="return confirm('Release this cubicle?');">
+          <button class="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700">Release</button>
+        </form>
       </div>
     {% else %}
       <div class="p-4 border rounded text-gray-600">
-        No cubicle assigned. <a class="text-blue-600 underline" href="{{ url_for('cubicle_allocation', roll=roll) }}">Allocate now</a>.
+        No cubicle assigned. <a class="text-blue-600 underline" href="{{ url_for('space_allocation') }}">Allocate now</a>.
       </div>
     {% endif %}
   </section>
 
-  <!-- Workstations -->
+  <!-- Active Workstation Assignments -->
   <section class="mb-8">
-    <h2 class="text-lg font-semibold text-gray-800 mb-3">Workstations</h2>
+    <h2 class="text-lg font-semibold text-gray-800 mb-3">Active Workstation Assignments</h2>
     {% if workstations %}
       <div class="overflow-x-auto border rounded">
         <table class="min-w-full text-sm">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-3 py-2 text-left">Model</th>
+              <th class="px-3 py-2 text-left">Asset</th>
               <th class="px-3 py-2 text-left">Serial</th>
-              <th class="px-3 py-2 text-left">Room</th>
-              <th class="px-3 py-2 text-left">Cubicle</th>
               <th class="px-3 py-2 text-left">Issue</th>
               <th class="px-3 py-2 text-left">Till</th>
               <th class="px-3 py-2 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {% for ws in workstations %}
+            {% for a in workstations %}
               <tr class="border-t">
-                <td class="px-3 py-2">{{ ws.manufacturer or '' }} {{ ws.model or '' }}</td>
-                <td class="px-3 py-2">{{ ws.serial or '-' }}</td>
-                <td class="px-3 py-2">{{ ws.room_lab_name or '-' }}</td>
-                <td class="px-3 py-2">{{ ws.cubicle_no or '-' }}</td>
-                <td class="px-3 py-2">{{ ws.issue_date or '-' }}</td>
-                <td class="px-3 py-2">{{ ws.system_required_till or '-' }}</td>
+                <td class="px-3 py-2">{{ a.asset.manufacturer or '' }} {{ a.asset.model or '' }}</td>
+                <td class="px-3 py-2">{{ a.asset.serial or '-' }}</td>
+                <td class="px-3 py-2">{{ a.issue_date or '-' }}</td>
+                <td class="px-3 py-2">{{ a.system_required_till or '-' }}</td>
                 <td class="px-3 py-2">
-                  <!-- If you have an edit route, link it here -->
-                  {# <a class="px-2 py-1 border rounded mr-2" href="{{ url_for('edit_workstation', ws_id=ws.id) }}">Edit</a> #}
-                  {% if ws.id %}
-                    <form method="POST" action="{{ url_for('workstation_delete', ws_id=ws.id) }}"
-      class="inline" onsubmit="return confirm('Delete this workstation?');">
-  <button class="px-2 py-1 bg-red-600 text-white rounded">Delete</button>
-</form>
-
-                  {% endif %}
+                  <form method="POST" action="{{ url_for('assignment_return', assign_id=a.id) }}"
+                        class="inline" onsubmit="return confirm('Return this workstation?');">
+                    <button class="px-2 py-1 bg-red-600 text-white rounded">Return</button>
+                  </form>
                 </td>
               </tr>
             {% endfor %}
@@ -98,12 +76,12 @@
       </div>
     {% else %}
       <div class="p-4 border rounded text-gray-600">
-        No workstations yet. <a class="text-green-700 underline" href="{{ url_for('workstation_allocation', roll=roll) }}">Allocate one</a>.
+        No active assignments. <a class="text-purple-700 underline" href="{{ url_for('assignment_new') }}">Assign now</a>.
       </div>
     {% endif %}
   </section>
 
-  <!-- IT Equipment -->
+  <!-- IT Equipment (optional) -->
   <section class="mb-6">
     <h2 class="text-lg font-semibold text-gray-800 mb-3">IT Equipment</h2>
     {% if equipment %}
@@ -126,11 +104,8 @@
                 <td class="px-3 py-2">{{ eq.category }}</td>
                 <td class="px-3 py-2">{{ eq.model or '-' }}</td>
                 <td class="px-3 py-2">{{ eq.serial_number }}</td>
+                <td class="px-3 py-2">{{ eq.assigned_date.strftime('%Y-%m-%d') if eq.assigned_date else '-' }}</td>
                 <td class="px-3 py-2">
-                  {{ eq.assigned_date.strftime('%Y-%m-%d') if eq.assigned_date else '-' }}
-                </td>
-                <td class="px-3 py-2">
-                  {# <a class="px-2 py-1 border rounded mr-2" href="{{ url_for('edit_equipment', eq_id=eq.id) }}">Edit</a> #}
                   <form method="POST" action="{{ url_for('unassign_equipment', eq_id=eq.id) }}"
                         class="inline" onsubmit="return confirm('Unassign this equipment?');">
                     <button class="px-2 py-1 bg-yellow-600 text-white rounded">Unassign</button>
@@ -143,13 +118,13 @@
       </div>
     {% else %}
       <div class="p-4 border rounded text-gray-600">
-        No IT equipment assigned. <a class="text-purple-700 underline" href="{{ url_for('it_equipment', roll=roll) }}">Assign now</a>.
+        No IT equipment assigned.
       </div>
     {% endif %}
   </section>
 
   <div class="mt-4">
-    <a href="{{ url_for('allotment_roll_check') }}" class="text-blue-600 hover:underline">
+    <a href="{{ url_for('allotted_roll_check') }}" class="text-blue-600 hover:underline">
       ⬅ Back to Roll Check
     </a>
   </div>

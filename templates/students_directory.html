@@ -7,53 +7,72 @@
 
   <!-- Filter Panel -->
   <form method="GET" action="/students_directory" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 bg-white shadow p-4 rounded-lg mb-6">
+
+    <!-- Course -->
     <div>
       <label class="block text-sm font-medium text-gray-700">Course</label>
       <select name="course" class="w-full mt-1 px-3 py-2 border rounded">
-        <option value="">All</option>
-        <option value="B.Tech">B.Tech</option>
-        <option value="M.Tech TA">M.Tech TA</option>
-        <option value="M.Tech RA">M.Tech RA</option>
-        <option value="Ph.D.">Ph.D.</option>
-        <option value="Intern">Intern</option>
+        <option value="" {% if not selected_course %}selected{% endif %}>All</option>
+        <option value="B.Tech" {% if selected_course == "B.Tech" %}selected{% endif %}>B.Tech</option>
+        <option value="M.Tech TA" {% if selected_course == "M.Tech TA" %}selected{% endif %}>M.Tech TA</option>
+        <option value="M.Tech RA" {% if selected_course == "M.Tech RA" %}selected{% endif %}>M.Tech RA</option>
+        <option value="Ph.D." {% if selected_course == "Ph.D." %}selected{% endif %}>Ph.D.</option>
+        <option value="Intern" {% if selected_course == "Intern" %}selected{% endif %}>Intern</option>
       </select>
     </div>
 
+    <!-- Year -->
     <div>
       <label class="block text-sm font-medium text-gray-700">Year</label>
       <select name="year" class="w-full mt-1 px-3 py-2 border rounded">
-        <option value="">All</option>
-        <option value="I">I</option>
-        <option value="II">II</option>
-        <option value="III">III</option>
-        <option value="IV">IV</option>
-        <option value="V">V</option>
+        <option value="" {% if not selected_year %}selected{% endif %}>All</option>
+        <option value="I" {% if selected_year == "I" %}selected{% endif %}>I</option>
+        <option value="II" {% if selected_year == "II" %}selected{% endif %}>II</option>
+        <option value="III" {% if selected_year == "III" %}selected{% endif %}>III</option>
+        <option value="IV" {% if selected_year == "IV" %}selected{% endif %}>IV</option>
+        <option value="V" {% if selected_year == "V" %}selected{% endif %}>V</option>
       </select>
     </div>
 
+    <!-- Joining Year -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Joining Year</label>
+      <select name="joining_year" class="w-full mt-1 px-3 py-2 border rounded">
+        <option value="" {% if not selected_joining_year %}selected{% endif %}>All</option>
+        {% for y in joining_years %}
+        <option value="{{ y }}" {% if selected_joining_year == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Lab Room -->
     <div>
       <label class="block text-sm font-medium text-gray-700">Lab Room</label>
       <select name="room_lab_name" class="w-full mt-1 px-3 py-2 border rounded">
-        <option value="">All</option>
-        {% for room in ["CS-107","CS-108","CS-109","CS-207","CS-208","CS-209","CS-317","CS-318","CS-319","CS-320","CS-411","CS-412"] %}
-        <option value="{{ room }}">{{ room }}</option>
+        <option value="" {% if not selected_lab %}selected{% endif %}>All</option>
+        {% for room in labs %}
+        <option value="{{ room }}" {% if selected_lab == room %}selected{% endif %}>{{ room }}</option>
         {% endfor %}
       </select>
     </div>
 
+    <!-- Faculty -->
     <div>
       <label class="block text-sm font-medium text-gray-700">Faculty In-charge</label>
       <select name="faculty" class="w-full mt-1 px-3 py-2 border rounded">
-        <option value="">All</option>
+        <option value="" {% if not selected_faculty %}selected{% endif %}>All</option>
         {% for f in faculty_list %}
-        <option value="{{ f }}">{{ f }}</option>
+        <option value="{{ f }}" {% if selected_faculty == f %}selected{% endif %}>{{ f }}</option>
         {% endfor %}
       </select>
     </div>
 
+    <!-- Roll -->
     <div class="md:col-span-2 lg:col-span-1">
       <label class="block text-sm font-medium text-gray-700">Search by Roll Number</label>
-      <input type="text" name="roll" placeholder="Enter Roll Number" class="w-full mt-1 px-3 py-2 border rounded" />
+      <input type="text" name="roll" placeholder="Enter Roll Number"
+             value="{{ selected_roll or '' }}"
+             class="w-full mt-1 px-3 py-2 border rounded" />
     </div>
 
     <div class="md:col-span-1 flex items-end">
@@ -62,7 +81,7 @@
   </form>
 
   <!-- Results Table -->
-  {% if students %}
+  {% if students_pagination.items %}
   <div class="overflow-x-auto">
     <table class="min-w-full bg-white border border-gray-300">
       <thead>
@@ -71,6 +90,7 @@
           <th class="py-2 px-4 border">Roll Number</th>
           <th class="py-2 px-4 border">Course</th>
           <th class="py-2 px-4 border">Year</th>
+          <th class="py-2 px-4 border">Joining Year</th>
           <th class="py-2 px-4 border">Lab</th>
           <th class="py-2 px-4 border">Cubicle</th>
           <th class="py-2 px-4 border">Faculty</th>
@@ -79,23 +99,55 @@
         </tr>
       </thead>
       <tbody>
-        {% for student in students %}
-      <tr class="text-sm text-gray-800 hover:bg-gray-50">
-  <td class="py-2 px-4 border">{{ student.name }}</td>
-  <td class="py-2 px-4 border">{{ student.roll }}</td>
-  <td class="py-2 px-4 border">{{ student.course }}</td>
-  <td class="py-2 px-4 border">{{ student.year }}</td>
-  <td class="py-2 px-4 border">{{ student.room_lab_name }}</td>  <!-- ✅ corrected -->
-  <td class="py-2 px-4 border">{{ student.cubicle_no }}</td>      <!-- ✅ corrected -->
-  <td class="py-2 px-4 border">{{ student.faculty }}</td>
-  <td class="py-2 px-4 border">{{ student.staff_incharge }}</td> <!-- ✅ corrected -->
-  <td class="py-2 px-4 border">{{ student.email }}</td>
-</tr>
-
+        {% for student in students_pagination.items %}
+        <tr class="text-sm text-gray-800 hover:bg-gray-50">
+          <td class="py-2 px-4 border">{{ student.name }}</td>
+          <td class="py-2 px-4 border">{{ student.roll }}</td>
+          <td class="py-2 px-4 border">{{ student.course }}</td>
+          <td class="py-2 px-4 border">{{ student.year }}</td>
+          <td class="py-2 px-4 border">{{ student.joining_year }}</td>
+          <td class="py-2 px-4 border">{{ student.cubicle.room_lab.name if student.cubicle else '' }}</td>
+          <td class="py-2 px-4 border">{{ student.cubicle.number if student.cubicle else '' }}</td>
+          <td class="py-2 px-4 border">{{ student.faculty }}</td>
+          <td class="py-2 px-4 border">{{ student.cubicle.room_lab.staff_incharge if student.cubicle else '' }}</td>
+          <td class="py-2 px-4 border">{{ student.email }}</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination Controls -->
+  <div class="flex justify-center mt-6 space-x-2">
+    {% if students_pagination.has_prev %}
+      <a href="{{ url_for('students_directory',
+                          page=students_pagination.prev_num,
+                          course=selected_course,
+                          year=selected_year,
+                          joining_year=selected_joining_year,
+                          room_lab_name=selected_lab,
+                          faculty=selected_faculty,
+                          roll=selected_roll) }}"
+         class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">Previous</a>
+    {% endif %}
+
+    <span class="px-4 py-2 bg-gray-100 rounded">
+      Page {{ students_pagination.page }} of {{ students_pagination.pages }}
+    </span>
+
+    {% if students_pagination.has_next %}
+      <a href="{{ url_for('students_directory',
+                          page=students_pagination.next_num,
+                          course=selected_course,
+                          year=selected_year,
+                          joining_year=selected_joining_year,
+                          room_lab_name=selected_lab,
+                          faculty=selected_faculty,
+                          roll=selected_roll) }}"
+         class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">Next</a>
+    {% endif %}
+  </div>
+
   {% else %}
   <p class="text-gray-600 text-center mt-8">No students found matching your search criteria.</p>
   {% endif %}

@@ -1,0 +1,60 @@
+{% extends "login_home.html" %}
+{% block title %}Assignments{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4 space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-800">Active Workstation Assignments</h1>
+    <a href="{{ url_for('assignment_new') }}" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">+ New Assignment</a>
+  </div>
+
+  <form method="GET" class="flex gap-3 items-end">
+    <div>
+      <label class="block text-sm">Filter by Roll</label>
+      <input name="roll" value="{{ roll or '' }}" class="border rounded px-2 py-1" />
+    </div>
+    <div>
+      <label class="block text-sm">Filter by Serial</label>
+      <input name="serial" value="{{ serial or '' }}" class="border rounded px-2 py-1" />
+    </div>
+    <button class="px-3 py-2 bg-blue-600 text-white rounded">Filter</button>
+  </form>
+
+  <div class="overflow-auto border rounded">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-3 py-2 text-left">ID</th>
+          <th class="px-3 py-2 text-left">Roll</th>
+          <th class="px-3 py-2 text-left">Serial</th>
+          <th class="px-3 py-2 text-left">Model</th>
+          <th class="px-3 py-2 text-left">Issue</th>
+          <th class="px-3 py-2 text-left">Till</th>
+          <th class="px-3 py-2 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assignments %}
+        <tr class="border-t">
+          <td class="px-3 py-2">{{ a.id }}</td>
+          <td class="px-3 py-2">{{ a.student_roll }}</td>
+          <td class="px-3 py-2">{{ a.asset.serial if a.asset else '-' }}</td>
+          <td class="px-3 py-2">{{ a.asset.manufacturer if a.asset else '' }} {{ a.asset.model if a.asset else '' }}</td>
+          <td class="px-3 py-2">{{ a.issue_date or '-' }}</td>
+          <td class="px-3 py-2">{{ a.system_required_till or '-' }}</td>
+          <td class="px-3 py-2">
+            <form method="POST" action="{{ url_for('assignment_return', assign_id=a.id) }}"
+                  onsubmit="return confirm('Return this workstation?');" class="inline">
+              <button class="px-3 py-1 bg-red-600 text-white rounded">Return</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-6">
+    <a href="{{ url_for('assets_list') }}" class="underline text-blue-700">Back to Assets →</a>
+  </div>
+</div>
+{% endblock %}
