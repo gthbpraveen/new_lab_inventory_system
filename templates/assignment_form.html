@@ -1,72 +1,102 @@
 {% extends "login_home.html" %}
-{% block title %}New Workstation Assignment{% endblock %}
-
 {% block content %}
-<div class="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-  <h2 class="text-2xl font-bold text-gray-800 mb-6">Assign Workstation to Student</h2>
+<div class="container mx-auto px-6 py-6">
+  <h1 class="text-2xl font-bold text-indigo-800 mb-6">Assign Workstation</h1>
 
-  <form method="POST" action="{{ url_for('assignment_new') }}" class="space-y-6">
-    
-    <!-- Student Roll -->
+  <!-- Filter Form -->
+  <form method="get" class="flex flex-wrap items-end gap-4 bg-blue-50 p-4 rounded-lg mb-6">
+    <!-- Location -->
     <div>
-      <label for="student_roll" class="block text-sm font-medium text-gray-700">Student Roll No <span class="text-red-500">*</span></label>
-      <input type="text" id="student_roll" name="student_roll" 
-             value="{{ request.form.student_roll or '' }}"
-             required
-             placeholder="Enter roll number"
-             class="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+      <label for="location" class="block text-gray-700 font-medium mb-1">Location</label>
+      <select name="location" id="location" class="border rounded-md px-3 py-2">
+        <option value="">All</option>
+        {% for loc in locations %}
+          <option value="{{ loc }}" {% if location==loc %}selected{% endif %}>{{ loc }}</option>
+        {% endfor %}
+      </select>
     </div>
 
-    <!-- Asset Dropdown -->
+    <!-- Indenter -->
     <div>
-      <label for="workstation_id" class="block text-sm font-medium text-gray-700">Select Workstation <span class="text-red-500">*</span></label>
-      <select id="workstation_id" name="workstation_id" required
-              class="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-        <option value="">-- Select Available Asset --</option>
-        {% for asset in assets %}
-          <option value="{{ asset.id }}" {% if request.form.workstation_id == asset.id|string %}selected{% endif %}>
-            {{ asset.serial }} — {{ asset.model }} ({{ asset.manufacturer }})
+      <label for="indenter" class="block text-gray-700 font-medium mb-1">Indenter</label>
+      <select name="indenter" id="indenter" class="border rounded-md px-3 py-2">
+        <option value="">All</option>
+        {% for ind in indenters %}
+          <option value="{{ ind }}" {% if indenter==ind %}selected{% endif %}>{{ ind }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md shadow">
+      Filter
+    </button>
+  </form>
+
+  <!-- Assignment Form -->
+  <form method="post" class="bg-white shadow rounded-lg p-6">
+    <div class="mb-4">
+      <label for="workstation_id" class="block text-gray-700 font-medium mb-2">Available Workstations</label>
+      <select name="workstation_id" id="workstation_id" required class="border rounded-md px-3 py-2 w-full">
+        <option value="">Select a workstation</option>
+        {% for a in assets %}
+          <option value="{{ a.id }}">
+            [{{ a.serial }}] {{ a.manufacturer }} {{ a.model }} ({{ a.location }} - {{ a.indenter }})
           </option>
         {% endfor %}
       </select>
-      {% if assets|length == 0 %}
-        <p class="text-sm text-gray-500 mt-2">⚠️ No assets available in stock.</p>
-      {% endif %}
     </div>
 
-    <!-- Issue Date -->
-    <div>
-      <label for="issue_date" class="block text-sm font-medium text-gray-700">Issue Date <span class="text-red-500">*</span></label>
-      <input type="date" id="issue_date" name="issue_date"
-             value="{{ request.form.issue_date or '' }}"
-             required
-             class="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+  <div class="mb-4">
+  <label for="student_roll" class="block text-gray-700 font-medium mb-2">Student Roll</label>
+  <input type="text" 
+         name="student_roll" 
+         id="student_roll"
+         value="{{ prefill_roll or '' }}" 
+         class="border rounded-md px-3 py-2 w-full bg-gray-100" 
+         required>
+</div>
+
+
+    <div class="mb-4">
+      <label for="issue_date" class="block text-gray-700 font-medium mb-2">Issue Date</label>
+      <input type="date" name="issue_date" id="issue_date" required class="border rounded-md px-3 py-2 w-full">
     </div>
 
-    <!-- Required Till -->
-    <div>
-      <label for="system_required_till" class="block text-sm font-medium text-gray-700">Required Till <span class="text-red-500">*</span></label>
-      <input type="date" id="system_required_till" name="system_required_till"
-             value="{{ request.form.system_required_till or '' }}"
-             required
-             class="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+    <div class="mb-4">
+      <label for="system_required_till" class="block text-gray-700 font-medium mb-2">Required Till</label>
+      <input type="date" name="system_required_till" id="system_required_till" required class="border rounded-md px-3 py-2 w-full">
     </div>
 
-    <!-- Remarks -->
-    <div>
-      <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
-      <textarea id="remarks" name="remarks" rows="3"
-                class="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Optional remarks">{{ request.form.remarks or '' }}</textarea>
+    <div class="mb-4">
+      <label for="remarks" class="block text-gray-700 font-medium mb-2">Remarks</label>
+      <textarea name="remarks" id="remarks" rows="3" class="border rounded-md px-3 py-2 w-full"></textarea>
     </div>
 
-    <!-- Buttons -->
-    <div class="flex justify-end space-x-3">
-      <a href="{{ url_for('assignments_list') }}" 
-         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</a>
-      <button type="submit" 
-              class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Assign</button>
-    </div>
+    
+  <div class="flex items-center gap-3 mt-6">
+  <!-- Submit -->
+  <button type="submit" 
+          class="bg-green-600 text-white px-4 py-2 rounded-md shadow hover:bg-green-700">
+    Assign Asset
+  </button>
+
+  <!-- Back to Student Allotment -->
+  {% if prefill_roll %}
+    <a href="{{ url_for('allotment_options', roll=prefill_roll) }}"
+       class="bg-gray-500 text-white px-4 py-2 rounded-md shadow hover:bg-gray-600">
+      Back to Allotment Options
+    </a>
+  {% endif %}
+
+  <!-- Assignment List -->
+  <a href="{{ url_for('assignments_list') }}" 
+     class="bg-indigo-600 text-white px-4 py-2 rounded-md shadow hover:bg-indigo-700">
+    View Assignment List
+  </a>
+</div>
+
+
+
   </form>
 </div>
 {% endblock %}

@@ -6,7 +6,7 @@
   <div class="max-w-10xl mx-auto px-4 py-4">
     <header class="bg-pink-100 rounded-md shadow-sm p-4 text-center">
       <div class="flex flex-col items-center justify-center space-y-2">
-        <h1 class="text-xl sm:text-2xl font-semibold text-blue-700" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
+        <h1 class="text-xl sm:text-2xl font-semibold text-blue-700">
           Lab Wise Machine Allotment List
         </h1>
       </div>
@@ -23,7 +23,7 @@
           <div class="text-sm text-yellow-900">
             {% set stats = lab_stats.get(room) %}
             {% if stats %}
-              <span><strong>Total Cubicles:</strong> {{ stats.total }}</span> |
+              <span><strong>Total Systems:</strong> {{ stats.total }}</span> |
               <span><strong>Allotted:</strong> {{ stats.used }}</span> |
               <span><strong>Available:</strong> {{ stats.available }}</span>
               {% if stats.staff_incharge %}
@@ -40,39 +40,21 @@
             <thead class="bg-indigo-100">
               <tr>
                 <th class="py-2 px-4 border-b text-left">#</th>
-                <th class="py-2 px-4 border-b text-left">Name</th>
-                <th class="py-2 px-4 border-b text-left">Roll</th>
-                <th class="py-2 px-4 border-b text-left">Course</th>
-                <th class="py-2 px-4 border-b text-left">Year</th>
-                <th class="py-2 px-4 border-b text-left">Faculty</th>
-                <th class="py-2 px-4 border-b text-left">Email</th>
-                <th class="py-2 px-4 border-b text-left">Phone</th>
-                <th class="py-2 px-4 border-b text-left">Cubicle</th>
-                <th class="py-2 px-4 border-b text-left">Manufacturer</th>
-                <th class="py-2 px-4 border-b text-left">Other Mfr</th>
-                <th class="py-2 px-4 border-b text-left">Model</th>
-                <th class="py-2 px-4 border-b text-left">Serial</th>
-                <th class="py-2 px-4 border-b text-left">OS</th>
-                <th class="py-2 px-4 border-b text-left">Other OS</th>
-                <th class="py-2 px-4 border-b text-left">Processor</th>
-                <th class="py-2 px-4 border-b text-left">Cores</th>
-                <th class="py-2 px-4 border-b text-left">RAM</th>
-                <th class="py-2 px-4 border-b text-left">Other RAM</th>
-                <th class="py-2 px-4 border-b text-left">Storage</th>
-                <th class="py-2 px-4 border-b text-left">GPU</th>
-                <th class="py-2 px-4 border-b text-left">VRAM</th>
-                <th class="py-2 px-4 border-b text-left">Issue Date</th>
-                <th class="py-2 px-4 border-b text-left">Required Till</th>
-                <th class="py-2 px-4 border-b text-left">PO Date</th>
-                <th class="py-2 px-4 border-b text-left">Fund</th>
-                <th class="py-2 px-4 border-b text-left">KB Prov.</th>
-                <th class="py-2 px-4 border-b text-left">KB Details</th>
-                <th class="py-2 px-4 border-b text-left">Mouse Prov.</th>
-                <th class="py-2 px-4 border-b text-left">Mouse Details</th>
-                <th class="py-2 px-4 border-b text-left">Monitor Prov.</th>
-                <th class="py-2 px-4 border-b text-left">Mon Details</th>
-                <th class="py-2 px-4 border-b text-left">Mon Size</th>
-                <th class="py-2 px-4 border-b text-left">Mon Serial</th>
+                <th class="py-2 px-4 border-b">Student Name</th>
+                <th class="py-2 px-4 border-b">Roll</th>
+                <th class="py-2 px-4 border-b">Course</th>
+                <th class="py-2 px-4 border-b">Year</th>
+                <th class="py-2 px-4 border-b">Faculty</th>
+                <th class="py-2 px-4 border-b">Email</th>
+                <th class="py-2 px-4 border-b">Phone</th>
+                <th class="py-2 px-4 border-b">System ID</th>
+                <th class="py-2 px-4 border-b">Serial</th>
+                <th class="py-2 px-4 border-b">Manufacturer</th>
+                <th class="py-2 px-4 border-b">Model</th>
+                <th class="py-2 px-4 border-b">Indenter</th>
+                <th class="py-2 px-4 border-b">Issue Date</th>
+                <th class="py-2 px-4 border-b">Required Till</th>
+                <th class="py-2 px-4 border-b">Remarks</th>
               </tr>
             </thead>
             <tbody>
@@ -86,40 +68,14 @@
                 <td class="py-2 px-4 border-b">{{ r.faculty }}</td>
                 <td class="py-2 px-4 border-b">{{ r.email }}</td>
                 <td class="py-2 px-4 border-b">{{ r.phone }}</td>
-                <td class="py-2 px-4 border-b">{{ r.cubicle_no }}</td>
-                <td class="py-2 px-4 border-b">{{ r.manufacturer }}</td>
-                <td class="py-2 px-4 border-b">{{ r.otherManufacturer }}</td>
-                <td class="py-2 px-4 border-b">{{ r.model }}</td>
+                <td class="py-2 px-4 border-b">{{ r.asset_id }}</td>
                 <td class="py-2 px-4 border-b">{{ r.serial }}</td>
-                <td class="py-2 px-4 border-b">{{ r.os }}</td>
-                <td class="py-2 px-4 border-b">{{ r.otherOs }}</td>
-                <td class="py-2 px-4 border-b">{{ r.processor }}</td>
-                <td class="py-2 px-4 border-b">{{ r.cores }}</td>
-                <td class="py-2 px-4 border-b">{{ r.ram }}</td>
-                <td class="py-2 px-4 border-b">{{ r.otherRam }}</td>
-                <td class="py-2 px-4 border-b">
-                  {% if r.storage_type1 and r.storage_capacity1 %}
-                    {{ r.storage_type1 }} {{ r.storage_capacity1 }}
-                  {% endif %}
-                  {% if r.storage_type2 and r.storage_capacity2 %}
-                    <br>{{ r.storage_type2 }} {{ r.storage_capacity2 }}
-                  {% endif %}
-                </td>
-                <td class="py-2 px-4 border-b">{{ r.gpu }}</td>
-                <td class="py-2 px-4 border-b">{{ r.vram }}</td>
+                <td class="py-2 px-4 border-b">{{ r.manufacturer }}</td>
+                <td class="py-2 px-4 border-b">{{ r.model }}</td>
+                <td class="py-2 px-4 border-b">{{ r.indenter }}</td>
                 <td class="py-2 px-4 border-b">{{ r.issue_date }}</td>
                 <td class="py-2 px-4 border-b">{{ r.system_required_till }}</td>
-                <td class="py-2 px-4 border-b">{{ r.po_date }}</td>
-                <td class="py-2 px-4 border-b">{{ r.source_of_fund }}</td>
-
-                <td class="py-2 px-4 border-b">{{ r.keyboard_provided }}</td>
-                <td class="py-2 px-4 border-b">{{ r.keyboard_details }}</td>
-                <td class="py-2 px-4 border-b">{{ r.mouse_provided }}</td>
-                <td class="py-2 px-4 border-b">{{ r.mouse_details }}</td>
-                <td class="py-2 px-4 border-b">{{ r.monitor_provided }}</td>
-                <td class="py-2 px-4 border-b">{{ r.monitor_details }}</td>
-                <td class="py-2 px-4 border-b">{{ r.monitor_size }}</td>
-                <td class="py-2 px-4 border-b">{{ r.monitor_serial }}</td>
+                <td class="py-2 px-4 border-b">{{ r.remarks or "-" }}</td>
               </tr>
               {% endfor %}
             </tbody>

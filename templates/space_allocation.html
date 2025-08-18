@@ -9,10 +9,11 @@
     <div>
       <label for="roll" class="block text-gray-700 font-medium mb-1">Roll Number</label>
       <input id="roll" name="roll" 
-             value="{{ roll_prefill if roll_prefill else '' }}"
-             placeholder="Enter Roll Number"
-             {% if roll_prefill %}readonly{% endif %}
-             required class="p-2 border rounded w-full focus:ring focus:ring-blue-300 bg-gray-100" />
+       value="{{ roll_prefill if roll_prefill else '' }}"
+       placeholder="Enter Roll Number"
+       {% if roll_prefill %}readonly{% endif %}
+       required 
+       class="p-2 border rounded w-full focus:ring focus:ring-blue-300 bg-gray-100" />
     </div>
 
     <!-- Room Selection -->
@@ -70,12 +71,17 @@
     <input type="hidden" name="cubicle_id" id="cubicle_id" required>
 
     <!-- Submit -->
-    <div>
-      <button type="submit"
-              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        Allocate
-      </button>
-    </div>
+   <!-- Submit + Back -->
+<div class="flex items-center">
+  <button type="submit"
+          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+    Allocate
+  </button>
+  <a href="{{ url_for('allotment_options', roll=roll_prefill) }}"
+     class="inline-block bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 ml-3">
+    Back to Allotment Options
+  </a>
+</div>
   </form>
 
   {% if current_cubicle %}

@@ -53,8 +53,13 @@
     </table>
   </div>
 
-  <div class="mt-6">
+  <div class="mt-6 flex gap-4">
     <a href="{{ url_for('assets_list') }}" class="underline text-blue-700">Back to Assets →</a>
+
+    {% if roll %}
+      <a href="{{ url_for('allotment_options', roll=roll) }}" 
+         class="underline text-purple-700">Back to Allotment Options →</a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
