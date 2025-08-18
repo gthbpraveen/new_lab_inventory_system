@@ -4,145 +4,138 @@
 {% block content %}
 <div class="max-w-7xl mx-auto p-6">
 
-  <!-- Search Box -->
-  <!-- <form method="POST" class="flex gap-3 mb-6">
-    <input type="text" name="roll" placeholder="Enter Roll Number"
-           value="{{ roll or '' }}" required
-           class="flex-1 border rounded-lg px-4 py-2 focus:ring focus:ring-indigo-300"/>
-    <button type="submit"
-            class="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow hover:bg-indigo-700">
-      Search
-    </button>
-  </form> -->
-
- 
   {% if student %}
-<!-- Student Header -->
-<div class="bg-white shadow-xl rounded-2xl p-8 mb-8 border border-gray-200">
-  <div class="flex flex-col md:flex-row items-center justify-between gap-8">
-    
-    <!-- Left: Student Details -->
-    <div class="md:w-1/2 w-full text-left">
-      <h2 class="text-3xl font-extrabold text-indigo-800 tracking-wide">{{ student.name }}</h2>
-      <p class="mt-2 text-lg text-gray-700">
-        🎓 Roll: <span class="font-semibold text-gray-900">{{ student.roll }}</span><br>
-        📘 <span class="text-indigo-600 font-medium">{{ student.course }}</span>  
-        <span class="text-gray-500">(Year {{ student.year }})</span>
-      </p>
-    </div>
+  <!-- Student Header -->
+  <div class="bg-white/90 backdrop-blur shadow-xl rounded-2xl border border-gray-200 overflow-hidden mb-8">
+    <div class="bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-700 h-2"></div>
 
-    <!-- Right: Room & Cubicle Details -->
-    <div class="md:w-1/3 w-full">
-      {% if current_cubicle %}
-      <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 text-white rounded-xl p-6 shadow-lg text-center">
-        <p class="text-sm uppercase tracking-wide text-indigo-200">Current Allocation</p>
-        <p class="mt-2 text-2xl font-extrabold">
-          Cubicle {{ current_cubicle.number }}
-        </p>
-        <p class="mt-1 text-2xl font-medium text-indigo-100">
-          Room: {{ current_cubicle.room_lab.name }}
-        </p>
-      </div>
-      {% else %}
-      <div class="bg-gray-100 rounded-xl p-6 shadow-inner text-center">
-        <p class="text-gray-500 italic">❌ No cubicle assigned</p>
-      </div>
-      {% endif %}
-    </div>
+    <div class="p-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-8">
 
-  </div>
-</div>
-
-
-
-
-
-
-
-     <!-- <div class="bg-white rounded-xl shadow p-6 text-center">
-        <h3 class="text-xl font-bold text-indigo-800 mb-4">⚡ Quick Allotment Options</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <a href="{{ url_for('space_allocation', roll=roll) }}"
-             class="block bg-blue-600 text-white p-6 rounded-lg shadow hover:bg-blue-700 text-center transform hover:scale-105 transition">
-            <div class="text-4xl mb-2">🪑</div>
-            <h4 class="font-semibold text-lg">Allocate / Reassign Cubicle</h4>
-          </a>
-          
-          <a href="{{ url_for('assignments_list', roll=roll) }}"
-             class="block bg-green-600 text-white p-6 rounded-lg shadow hover:bg-purple-700 text-center transform hover:scale-105 transition">
-            <div class="text-4xl mb-2">👥</div>
-            <h4 class="font-semibold text-lg">Workstation Assignments</h4>
-          </a>
-
-          <a href="{{ url_for('assignments_list', roll=roll) }}"
-             class="block bg-purple-600 text-white p-6 rounded-lg shadow hover:bg-purple-700 text-center transform hover:scale-105 transition">
-            <div class="text-4xl mb-2">👥</div>
-            <h4 class="font-semibold text-lg">IT Equipment Assignments</h4>
-          </a>
+        <!-- Left: Student Details -->
+        <div class="md:w-1/2 w-full">
+          <div class="flex items-center gap-4">
+            <div class="h-14 w-14 rounded-full bg-indigo-100 flex items-center justify-center shadow">
+              <!-- User Icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M20 21a8 8 0 10-16 0"/>
+                <circle cx="12" cy="8" r="4" stroke-width="1.6"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-3xl font-extrabold text-indigo-800 tracking-wide">{{ student.name }}</h2>
+              <p class="mt-1 text-gray-700">
+                <span class="inline-flex items-center gap-2 mr-3">
+                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">Roll</span>
+                  <span class="font-semibold text-gray-900">{{ student.roll }}</span>
+                </span>
+                <span class="inline-flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">Course</span>
+                  <span class="text-indigo-700 font-medium">{{ student.course }}</span>
+                  <span class="text-gray-500">(Year {{ student.year }})</span>
+                </span>
+              </p>
+            </div>
+          </div>
         </div>
-      </div> -->
-<div class="bg-white rounded-xl shadow p-6 text-center">
-  <h3 class="text-xl font-bold text-indigo-800 mb-4">⚡ Quick Allotment Options</h3>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-    <!-- Cubicle -->
-    <a href="{{ url_for('space_allocation', roll=roll) }}"
-       class="block bg-blue-600 text-white p-6 rounded-lg shadow hover:bg-blue-700 text-center transform hover:scale-105 transition">
-      <div class="flex justify-center mb-2">
-        <!-- Chair Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18h12M9 14h6v4H9v-4zm0-10h6v6H9V4z"/>
-        </svg>
+        <!-- Right: Room & Cubicle Details -->
+        <div class="md:w-1/2 w-full">
+          {% if current_cubicle %}
+          <div class="relative overflow-hidden rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white shadow-lg">
+            <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10"></div>
+            <div class="absolute -left-10 -bottom-10 h-28 w-28 rounded-full bg-white/10"></div>
+
+            <div class="p-6 flex items-center justify-between gap-4">
+              <div>
+                <p class="text-xs uppercase tracking-wider text-indigo-200">Current Allocation</p>
+                <p class="mt-1 text-lg text-indigo-100">Room</p>
+                <p class="text-2xl font-bold">{{ current_cubicle.room_lab.name }}</p>
+              </div>
+              <!-- Big cubicle badge -->
+              <div class="shrink-0">
+                <div class="h-20 w-20 rounded-2xl bg-white text-indigo-700 flex flex-col items-center justify-center shadow-md">
+                  <span class="text-[10px] uppercase tracking-wider text-indigo-500">Cubicle</span>
+                  <span class="text-3xl leading-none font-extrabold">{{ (current_cubicle.number) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 text-center p-6">
+            <p class="text-gray-500 italic">No cubicle assigned</p>
+          </div>
+          {% endif %}
+        </div>
+
       </div>
-      <h4 class="font-semibold text-lg">Allocate / Reassign Cubicle</h4>
-    </a>
-
-    <!-- Workstation -->
-    <a href="{{ url_for('assignments_list', roll=roll) }}"
-       class="block bg-green-600 text-white p-6 rounded-lg shadow hover:bg-green-700 text-center transform hover:scale-105 transition">
-      <div class="flex justify-center mb-2">
-        <!-- Computer Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-        </svg>
-      </div>
-      <h4 class="font-semibold text-lg">Workstation Assignments</h4>
-    </a>
-
-    <!-- IT Equipment -->
-    <a href="{{ url_for('assignments_list', roll=roll) }}"
-       class="block bg-purple-600 text-white p-6 rounded-lg shadow hover:bg-purple-700 text-center transform hover:scale-105 transition">
-      <div class="flex justify-center mb-2">
-        <!-- Devices Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6m-3-3v6m-6-6h12M5 4h14v6H5z"/>
-        </svg>
-      </div>
-      <h4 class="font-semibold text-lg">IT Equipment Assignments</h4>
-    </a>
-
+    </div>
   </div>
-</div>
+
+  <!-- Quick Actions -->
+  <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
+    <h3 class="text-xl font-bold text-indigo-800 mb-4">⚡ Quick Allotment Options</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Cubicle -->
+      <a href="{{ url_for('space_allocation', roll=roll) }}"
+         class="group block rounded-xl border border-blue-100 bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 shadow hover:shadow-lg transition-transform transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-center mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-95" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18h12M8 12h8v6H8v-6zM8 4h8v6H8z"/>
+          </svg>
+        </div>
+        <h4 class="font-semibold text-lg">Allocate / Reassign Cubicle</h4>
+        <p class="mt-1 text-sm text-blue-100/90">Assign or move a student to a new cubicle</p>
+      </a>
+
+      <!-- Workstation -->
+      <a href="{{ url_for('assignments_list', roll=roll) }}"
+         class="group block rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white p-6 shadow hover:shadow-lg transition-transform transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-center mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-95" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <rect x="3" y="4" width="18" height="12" rx="2" ry="2" stroke-width="1.8"/>
+            <path d="M8 20h8" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h4 class="font-semibold text-lg">Workstation Assignments</h4>
+        <p class="mt-1 text-sm text-emerald-100/90">View or issue lab workstations</p>
+      </a>
+
+      <!-- IT Equipment -->
+      <a href="{{ url_for('assignments_list', roll=roll) }}"
+         class="group block rounded-xl border border-purple-100 bg-gradient-to-br from-purple-600 to-purple-700 text-white p-6 shadow hover:shadow-lg transition-transform transform hover:-translate-y-0.5">
+        <div class="flex items-center justify-center mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-95" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <rect x="2.5" y="6" width="19" height="12" rx="2" stroke-width="1.8"/>
+            <path d="M8 18v2h8v-2" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h4 class="font-semibold text-lg">IT Equipment Assignments</h4>
+        <p class="mt-1 text-sm text-purple-100/90">Manage devices & accessories</p>
+      </a>
+
+    </div>
+  </div>
 
   <!-- Tabs -->
-  <div class="border-b border-gray-200 mb-6">
-    <nav class="-mb-px flex space-x-6" id="tabs">
-      <button data-tab="profile" class="tab-link border-indigo-600 text-indigo-600 px-3 py-2 font-medium border-b-2">Profile</button>
-      <button data-tab="space" class="tab-link text-gray-500 hover:text-indigo-600 px-3 py-2 font-medium border-b-2 border-transparent">Space</button>
-      <button data-tab="workstations" class="tab-link text-gray-500 hover:text-indigo-600 px-3 py-2 font-medium border-b-2 border-transparent">Workstations</button>
-      <button data-tab="equipment" class="tab-link text-gray-500 hover:text-indigo-600 px-3 py-2 font-medium border-b-2 border-transparent">Equipment</button>
-      <!-- <button data-tab="options" class="tab-link text-gray-500 hover:text-indigo-600 px-3 py-2 font-medium border-b-2 border-transparent">⚡ Quick Options</button> -->
+  <div class="mt-8">
+    <nav class="flex flex-wrap gap-2">
+      <button data-tab="profile" class="tab-link px-4 py-2 rounded-full border border-indigo-200 text-indigo-700 bg-indigo-50 font-medium">Profile</button>
+      <button data-tab="space" class="tab-link px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50">Space</button>
+      <button data-tab="workstations" class="tab-link px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50">Workstations</button>
+      <button data-tab="equipment" class="tab-link px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50">Equipment</button>
     </nav>
   </div>
 
   <!-- Tab Contents -->
-  <div id="tab-contents">
+  <div id="tab-contents" class="mt-4">
 
     <!-- Profile -->
     <div id="profile" class="tab-content">
-      <div class="bg-white rounded-xl shadow p-6">
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
         <h3 class="text-xl font-bold text-indigo-800 mb-4">🎓 Student Information</h3>
-        <div class="grid grid-cols-2 gap-4 text-gray-700">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-800">
           <p><strong>Roll:</strong> {{ student.roll }}</p>
           <p><strong>Name:</strong> {{ student.name }}</p>
           <p><strong>Course:</strong> {{ student.course }}</p>
@@ -157,83 +150,84 @@
 
     <!-- Space -->
     <div id="space" class="tab-content hidden">
-      <div class="bg-white rounded-xl shadow p-6">
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
         <h3 class="text-xl font-bold text-indigo-800 mb-4">🏢 Space Allocation</h3>
         {% if current_cubicle %}
-          <p class="text-gray-700 mb-3">
-            Current: <strong>{{ current_cubicle.room_lab.name }}</strong>,
-            Cubicle <strong>{{ current_cubicle.number }}</strong>
-          </p>
+          <div class="rounded-lg bg-indigo-50 border border-indigo-100 p-4 text-indigo-900">
+            <span class="font-semibold">Current:</span>
+            <span class="ml-1">{{ current_cubicle.room_lab.name }}</span>,
+            <span class="ml-1">Cubicle <span class="font-semibold">{{ current_cubicle.number }}</span></span>
+          </div>
         {% else %}
           <p class="text-gray-500 mb-3">❌ No current space allocated</p>
         {% endif %}
         <a href="{{ url_for('space_allocation', roll=student.roll) }}"
-           class="inline-block bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 mb-4">
-          Manage Space
+           class="mt-4 inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+          <span>Manage Space</span>
         </a>
-       
       </div>
     </div>
 
     <!-- Workstations -->
     <div id="workstations" class="tab-content hidden">
-      <div class="bg-white rounded-xl shadow p-6">
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
         <h3 class="text-xl font-bold text-indigo-800 mb-4">💻 Workstation Assignments</h3>
         <h4 class="font-semibold text-gray-800 mb-2">Current</h4>
         {% if workstation_active %}
-           <table class="min-w-full border border-gray-300 text-center">
-      <thead class="bg-gray-100">
-              <tr class="bg-gray-100 text-center">
-                <th class="px-4 py-2 border">Serial</th>
-                <th class="px-4 py-2 border">Model</th>
-                <th class="px-4 py-2 border">Issue Date</th>
-                <th class="px-4 py-2 border">Required Till</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for ws in workstation_active %}
-              <tr class="border-t">
-                <td class="px-4 py-2 border">{{ ws.asset.serial }}</td>
-                <td class="px-4 py-2 border">{{ ws.asset.manufacturer }} {{ ws.asset.model }}</td>
-                <td class="px-4 py-2 border">{{ ws.issue_date }}</td>
-                <td class="px-4 py-2 border">{{ ws.system_required_till }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full text-center">
+              <thead class="bg-gray-50 text-gray-700">
+                <tr>
+                  <th class="px-4 py-2 border-b">Serial</th>
+                  <th class="px-4 py-2 border-b">Model</th>
+                  <th class="px-4 py-2 border-b">Issue Date</th>
+                  <th class="px-4 py-2 border-b">Required Till</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {% for ws in workstation_active %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-2">{{ ws.asset.serial }}</td>
+                  <td class="px-4 py-2">{{ ws.asset.manufacturer }} {{ ws.asset.model }}</td>
+                  <td class="px-4 py-2">{{ ws.issue_date }}</td>
+                  <td class="px-4 py-2">{{ ws.system_required_till }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         {% else %}
           <p class="text-gray-500 mb-4">No active workstations</p>
         {% endif %}
 
-    <div class="mt-8">
-  <h3 class="text-xl font-semibold text-gray-800 mb-4">Workstation Assignment History</h3>
-  <div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="min-w-full border border-gray-300 text-center">
-  <thead class="bg-gray-100">
-    <tr>
-      <th class="px-4 py-2 border">Serial</th>
-      <th class="px-4 py-2 border">Model</th>
-      <th class="px-4 py-2 border">Issue Date</th>
-      <th class="px-4 py-2 border">Required Till</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for ws in workstation_active %}
-    <tr class="border-t">
-      <td class="px-4 py-2 border text-center">{{ ws.asset.serial }}</td>
-      <td class="px-4 py-2 border text-center">{{ ws.asset.manufacturer }} {{ ws.asset.model }}</td>
-      <td class="px-4 py-2 border text-center">{{ ws.issue_date }}</td>
-      <td class="px-4 py-2 border text-center">{{ ws.system_required_till }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-  </div>
-</div>
+        <div class="mt-8">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Workstation Assignment History</h3>
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full text-center">
+              <thead class="bg-gray-50 text-gray-700">
+                <tr>
+                  <th class="px-4 py-2 border-b">Serial</th>
+                  <th class="px-4 py-2 border-b">Model</th>
+                  <th class="px-4 py-2 border-b">Issue Date</th>
+                  <th class="px-4 py-2 border-b">Required Till</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {% for ws in workstation_active %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-2">{{ ws.asset.serial }}</td>
+                  <td class="px-4 py-2">{{ ws.asset.manufacturer }} {{ ws.asset.model }}</td>
+                  <td class="px-4 py-2">{{ ws.issue_date }}</td>
+                  <td class="px-4 py-2">{{ ws.system_required_till }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         <a href="{{ url_for('assignment_new', roll=student.roll) }}"
-           class="mt-4 inline-block bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+           class="mt-6 inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
           Assign New Workstation
         </a>
       </div>
@@ -241,105 +235,112 @@
 
     <!-- Equipment -->
     <div id="equipment" class="tab-content hidden">
-      <div class="bg-white rounded-xl shadow p-6">
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
         <h3 class="text-xl font-bold text-indigo-800 mb-4">🖥️ IT Equipment</h3>
         <h4 class="font-semibold text-gray-800 mb-2">Current</h4>
         {% if equipment_active %}
-          <table class="min-w-full border border-gray-300 text-center">
-  <thead class="bg-gray-100">
-    <tr>
-      <th class="px-4 py-2 border">Serial</th>
-      <th class="px-4 py-2 border">Model</th>
-      <th class="px-4 py-2 border">Issue Date</th>
-      <th class="px-4 py-2 border">Expected Return</th>
-      <th class="px-4 py-2 border">Actual Return</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for a in student.workstation_assignments %}
-    <tr class="hover:bg-gray-50">
-      <td class="px-4 py-2 border text-center">{{ a.asset.serial }}</td>
-      <td class="px-4 py-2 border text-center">{{ a.asset.model }}</td>
-      <td class="px-4 py-2 border text-center">{{ a.issue_date }}</td>
-      <td class="px-4 py-2 border text-center">{{ a.system_required_till }}</td>
-      <td class="px-4 py-2 border text-center">
-        {% if a.end_date %}
-          {{ a.end_date }}
-        {% else %}
-          <span class="text-red-600 font-semibold">Not Returned</span>
-        {% endif %}
-      </td>
-    </tr>
-    {% else %}
-    <tr>
-      <td colspan="5" class="text-center text-gray-500 py-3">No workstation assignments found.</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full text-center">
+              <thead class="bg-gray-50 text-gray-700">
+                <tr>
+                  <th class="px-4 py-2 border-b">Serial</th>
+                  <th class="px-4 py-2 border-b">Model</th>
+                  <th class="px-4 py-2 border-b">Issue Date</th>
+                  <th class="px-4 py-2 border-b">Expected Return</th>
+                  <th class="px-4 py-2 border-b">Actual Return</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {% for a in student.workstation_assignments %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-2">{{ a.asset.serial }}</td>
+                  <td class="px-4 py-2">{{ a.asset.model }}</td>
+                  <td class="px-4 py-2">{{ a.issue_date }}</td>
+                  <td class="px-4 py-2">{{ a.system_required_till }}</td>
+                  <td class="px-4 py-2">
+                    {% if a.end_date %}
+                      {{ a.end_date }}
+                    {% else %}
+                      <span class="text-red-600 font-semibold">Not Returned</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="5" class="text-center text-gray-500 py-3">No workstation assignments found.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         {% else %}
           <p class="text-gray-500 mb-4">No active equipment</p>
         {% endif %}
 
-        <h4 class="font-semibold text-gray-800 mb-2">History</h4>
         {% if equipment_history %}
-          <table class="table-auto w-full border text-gray-700">
-            <thead>
-              <tr class="bg-gray-100">
-                <th class="p-2">Type</th>
-                <th>Details</th>
-                <th>Issue Date</th>
-                <th>Return Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for eq in equipment_history %}
-              <tr class="border-t">
-                <td class="p-2">{{ eq.type }}</td>
-                <td>{{ eq.details }}</td>
-                <td>{{ eq.issue_date }}</td>
-                <td>{{ eq.return_date or "Not Returned" }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <h4 class="font-semibold text-gray-800 mt-6 mb-2">History</h4>
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full text-center">
+              <thead class="bg-gray-50 text-gray-700">
+                <tr>
+                  <th class="px-4 py-2 border-b">Type</th>
+                  <th class="px-4 py-2 border-b">Details</th>
+                  <th class="px-4 py-2 border-b">Issue Date</th>
+                  <th class="px-4 py-2 border-b">Return Date</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {% for eq in equipment_history %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-2">{{ eq.type }}</td>
+                  <td class="px-4 py-2">{{ eq.details }}</td>
+                  <td class="px-4 py-2">{{ eq.issue_date }}</td>
+                  <td class="px-4 py-2">{{ eq.return_date or "Not Returned" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         {% else %}
           <p class="text-gray-500">No equipment history</p>
         {% endif %}
       </div>
     </div>
 
-  
-
   </div>
+
+  <!-- Bottom actions -->
+  <div class="mt-10 flex justify-center gap-4">
+    <a href="/allotted_roll_check" class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-5 py-2.5 rounded-lg shadow-sm transition">
+      <span class="text-lg">←</span><span>Back to Search</span>
+    </a>
+    <a href="/login_home" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow transition">
+      <span>🏠</span><span>Dashboard</span>
+    </a>
+  </div>
+
   {% endif %}
 </div>
-<div>
-<div class="mt-8 flex justify-center gap-6">
-  <a href="/allotted_roll_check"
-     class="inline-block bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded-lg shadow-md transition">
-    ⬅️ Back to Search
-  </a>
-  <a href="/login_home"
-     class="inline-block bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded-lg shadow-md transition">
-    ⬅️ Back to Dashboard
-  </a>
-</div>
-</div>
+
 <!-- Tabs Script -->
 <script>
   const tabLinks = document.querySelectorAll(".tab-link");
   const tabContents = document.querySelectorAll(".tab-content");
 
-  tabLinks.forEach(link => {
-    link.addEventListener("click", () => {
-      const tab = link.dataset.tab;
-      tabLinks.forEach(l => l.classList.remove("border-indigo-600", "text-indigo-600"));
-      link.classList.add("border-indigo-600", "text-indigo-600");
-      tabContents.forEach(c => c.classList.add("hidden"));
-      document.getElementById(tab).classList.remove("hidden");
+  function setActiveTab(tab) {
+    tabLinks.forEach(l => {
+      l.classList.remove("bg-indigo-50","border-indigo-200","text-indigo-700","font-medium");
+      l.classList.add("border-gray-200","text-gray-600");
+      if (l.dataset.tab === tab) {
+        l.classList.remove("border-gray-200","text-gray-600");
+        l.classList.add("bg-indigo-50","border-indigo-200","text-indigo-700","font-medium");
+      }
     });
-  });
+    tabContents.forEach(c => c.classList.toggle("hidden", c.id !== tab));
+  }
+
+  tabLinks.forEach(link => link.addEventListener("click", () => setActiveTab(link.dataset.tab)));
+  // default
+  setActiveTab("profile");
 </script>
 {% endblock %}
