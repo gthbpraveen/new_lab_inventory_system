@@ -1,98 +1,86 @@
 {% extends "login_home.html" %}
-{% block title %}Assign Equipment{% endblock %}
+{% block title %}Assign IT Equipment{% endblock %}
 
 {% block content %}
-<section class="py-10 px-6 max-w-3xl mx-auto">
+<section class="py-10 px-6 max-w-4xl mx-auto">
   <div class="bg-white p-6 shadow rounded border border-gray-300">
-    <h2 class="text-2xl font-semibold text-indigo-700 mb-4">Assign Equipment</h2>
+    <h2 class="text-2xl font-semibold text-indigo-700 mb-6">Assign IT Equipment</h2>
 
-    <p class="mb-4"><strong>Equipment:</strong> {{ equipment.name }} ({{ equipment.serial_number }})</p>
+    <!-- 🔍 Roll Search -->
+    <form method="GET" class="mb-6 flex gap-3">
+      <input type="text" name="roll" value="{{ request.args.get('roll','') }}"
+             placeholder="Enter Roll Number" 
+             class="flex-1 px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+      <button type="submit"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">
+        Search
+      </button>
+    </form>
 
+    {% if student %}
+    <!-- ✅ Student Found -->
+    <div class="mb-8 border rounded-lg p-4 bg-gray-50">
+      <h3 class="text-lg font-bold text-gray-800 mb-2">🎓 Student Details</h3>
+      <p><strong>Roll:</strong> {{ student.roll }}</p>
+      <p><strong>Name:</strong> {{ student.name }}</p>
+      <p><strong>Course:</strong> {{ student.course }} (Year {{ student.year }})</p>
+      <p><strong>Email:</strong> {{ student.email }}</p>
+      <p><strong>Phone:</strong> {{ student.phone or "—" }}</p>
+    </div>
+
+    <!-- 🎯 Equipment Filter -->
     <form method="POST">
-      <div class="mb-4">
-        <label for="course" class="block text-sm font-medium text-gray-700 mb-1">Select Course:</label>
-        <select id="course" name="course" 
-                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="">Select Course</option>
-          <option value="B.Tech">B.Tech</option>
-          <option value="M.Tech TA">M.Tech TA</option>
-          <option value="M.Tech RA">M.Tech RA</option>
-          <option value="Ph.D.">Ph.D.</option>
-          <option value="Intern">Intern</option>
+      <input type="hidden" name="assigned_to_roll" value="{{ student.roll }}">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <select id="category" name="category"
+                  class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500">
+            <option value="">-- Select Category --</option>
+            {% for c in categories %}
+              <option value="{{ c }}" {% if request.args.get('category') == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="room" class="block text-sm font-medium text-gray-700 mb-1">Room Number</label>
+          <select id="room" name="room"
+                  class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500">
+            <option value="">-- Select Room --</option>
+            {% for r in rooms %}
+              <option value="{{ r }}" {% if request.args.get('room') == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- 📋 Available Equipment -->
+      <div class="mb-6">
+        <label for="equipment_id" class="block text-sm font-medium text-gray-700 mb-2">Available Equipment</label>
+        <select id="equipment_id" name="equipment_id"
+                class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500">
+          <option value="">-- Select Equipment --</option>
+          {% for eq in available_equipment %}
+            <option value="{{ eq.id }}">
+              {{ eq.name }} ({{ eq.serial_number }}) - {{ eq.category }} | Room {{ eq.room }}
+            </option>
+          {% endfor %}
         </select>
       </div>
 
-      <div class="mb-4">
-        <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Year of Study:</label>
-        <select id="year" name="year" 
-                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="">Select Year</option>
-          <option value="I">I</option>
-          <option value="II">II</option>
-          <option value="III">III</option>
-          <option value="IV">IV</option>
-          <option value="V">V</option>
-        </select>
-      </div>
-
-      <div class="mb-4">
-        <label for="assigned_to_roll" class="block text-sm font-medium text-gray-700 mb-1">Select Student:</label>
-        <select name="assigned_to_roll" id="assigned_to_roll"
-                class="w-full border border-gray-300 rounded px-4 py-2">
-          <option value="">-- Unassign Equipment --</option>
-          <!-- Will be dynamically filled by JavaScript -->
-        </select>
-      </div>
-
-      <div class="mt-6">
-        <button type="submit"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">
-          Save Assignment
+      <div>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">
+          Assign Equipment
         </button>
         <a href="{{ url_for('equipment_list') }}" class="ml-4 text-indigo-600 hover:underline">Cancel</a>
       </div>
     </form>
+
+    {% elif request.args.get('roll') %}
+      <p class="text-red-600 font-semibold">❌ No student found with that roll.</p>
+    {% endif %}
   </div>
 </section>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const courseSelect = document.getElementById('course');
-    const yearSelect = document.getElementById('year');
-    const studentSelect = document.getElementById('assigned_to_roll');
-
-    function fetchStudents() {
-      const course = courseSelect.value;
-      const year = yearSelect.value;
-
-      if (course && year) {
-        fetch(`/get_students_by_course_year?course=${course}&year=${year}`)
-          .then(res => res.json())
-          .then(data => {
-            studentSelect.innerHTML = '<option value="">-- Unassign Equipment --</option>';
-            data.forEach(student => {
-              const option = document.createElement('option');
-              option.value = student.roll;
-              option.textContent = `${student.name} (${student.email})`;
-              {% if equipment.assigned_to_roll %}
-              if (student.roll === "{{ equipment.assigned_to_roll }}") {
-                option.selected = true;
-              }
-              {% endif %}
-              studentSelect.appendChild(option);
-            });
-          });
-      } else {
-        studentSelect.innerHTML = '<option value="">-- Unassign Equipment --</option>';
-      }
-    }
-
-    courseSelect.addEventListener('change', fetchStudents);
-    yearSelect.addEventListener('change', fetchStudents);
-
-    {% if equipment.assigned_to_roll %}
-      fetchStudents();
-    {% endif %}
-  });
-</script>
 {% endblock %}

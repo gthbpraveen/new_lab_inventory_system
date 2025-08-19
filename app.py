@@ -935,8 +935,8 @@ def cse_labs():
     floor_color = {
         '1': ('First Floor', 'blue'),
         '2': ('Second Floor', 'green'),
-        '3': ('Third Floor', 'orange'),
-        '4': ('Fourth Floor', 'red'),
+        '3': ('Third Floor', 'blue'),
+        '4': ('Fourth Floor', 'green'),
     }
 
     # Optional: descriptive tags and blurbs per lab
@@ -1014,7 +1014,6 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from datetime import date
 from models import db, Equipment
-
 @app.route("/equipment_entry", methods=["GET", "POST"])
 @login_required
 def equipment_entry():
@@ -1057,7 +1056,7 @@ def equipment_entry():
                 status=status,
                 po_date=po_date,
                 intender_name=intender_name,
-                quantity=1,  # each entry represents one unit
+                quantity=1,  # each entry = one unit
                 department_code=department_code,
                 assigned_to_roll=assigned_to_roll if assigned_to_roll else None
             )
@@ -1067,9 +1066,9 @@ def equipment_entry():
         flash(f"{quantity} equipment entries added successfully.", "success")
         return redirect(url_for("equipment_list"))
 
-    students = Workstation.query.all()
+    # ✅ FIX: get students not "Workstation"
+    students = Student.query.all()
     return render_template("equipment_entry.html", students=students)
-
 
 
 
@@ -3048,6 +3047,77 @@ def space_release(cubicle_id):
     flash(f"Released cubicle {cubicle.number} from roll {roll}", "success")
     return redirect(url_for("space_allocation", roll=roll))
 
+# @app.route("/labs/<lab_code>/allotments")
+# @login_required
+# def lab_allotments(lab_code):
+#     lab = RoomLab.query.filter_by(name=lab_code).first_or_404()
+
+#     # 1️⃣ Students assigned to cubicles (even if no workstation assigned)
+#     cubicle_records = (
+#         db.session.query(
+#             Student.name, Student.roll, Student.course, Student.year,
+#             Student.faculty, Student.email, Student.phone,
+#             Cubicle.id.label("cubicle_id"),
+#             Cubicle.number.label("cubicle_number")     # ✅ FIXED
+#         )
+#         .join(Cubicle, Cubicle.student_roll == Student.roll)
+#         .join(RoomLab, RoomLab.id == Cubicle.room_lab_id)
+#         .filter(RoomLab.name == lab_code)
+#         .all()
+#     )
+
+#     # 2️⃣ Students with workstation (machine) allotments
+#     machine_records = (
+#        db.session.query(
+#             WorkstationAssignment.id.label("assignment_id"),
+#             WorkstationAssignment.is_active,
+#             WorkstationAssignment.issue_date,
+#             WorkstationAssignment.system_required_till,
+#             WorkstationAssignment.remarks,
+#             Student.name, Student.roll, Student.course, Student.year,
+#             Student.faculty, Student.email, Student.phone,
+#             Cubicle.number.label("cubicle_number"),
+#             WorkstationAsset.id.label("asset_id"),
+#             WorkstationAsset.serial,
+#             WorkstationAsset.manufacturer,
+#             WorkstationAsset.model,
+#             WorkstationAsset.indenter
+#         )
+#         .join(WorkstationAssignment, WorkstationAssignment.student_roll == Student.roll)
+#         .join(WorkstationAsset, WorkstationAsset.id == WorkstationAssignment.workstation_id)
+#         .join(Cubicle, Cubicle.student_roll == Student.roll)
+#         .join(RoomLab, RoomLab.id == Cubicle.room_lab_id)
+#         .filter(RoomLab.name == lab_code)
+#         .filter(WorkstationAssignment.is_active == True)   # ✅ only active assignments
+#         .all()
+#     )
+
+
+
+#     # Stats
+#     total = db.session.query(Cubicle).filter(Cubicle.room_lab_id == lab.id).count()
+#     used = (
+#         db.session.query(Cubicle)
+#         .join(Student, Student.roll == Cubicle.student_roll)
+#         .join(WorkstationAssignment, WorkstationAssignment.student_roll == Student.roll)
+#         .filter(Cubicle.room_lab_id == lab.id, WorkstationAssignment.is_active == True)
+#         .count()
+#     )
+
+#     stats = {
+#         "total": total,
+#         "used": used,
+#         "available": total - used,
+#         "staff_incharge": lab.staff_incharge
+#     }
+
+#     return render_template(
+#         "lab_allotments.html",
+#         lab=lab,
+#         cubicle_records=cubicle_records,
+#         machine_records=machine_records,
+#         stats=stats
+#     )
 @app.route("/labs/<lab_code>/allotments")
 @login_required
 def lab_allotments(lab_code):
@@ -3059,7 +3129,7 @@ def lab_allotments(lab_code):
             Student.name, Student.roll, Student.course, Student.year,
             Student.faculty, Student.email, Student.phone,
             Cubicle.id.label("cubicle_id"),
-            Cubicle.number.label("cubicle_number")     # ✅ FIXED
+            Cubicle.number.label("cubicle_number")
         )
         .join(Cubicle, Cubicle.student_roll == Student.roll)
         .join(RoomLab, RoomLab.id == Cubicle.room_lab_id)
@@ -3089,26 +3159,20 @@ def lab_allotments(lab_code):
         .join(Cubicle, Cubicle.student_roll == Student.roll)
         .join(RoomLab, RoomLab.id == Cubicle.room_lab_id)
         .filter(RoomLab.name == lab_code)
-        .filter(WorkstationAssignment.is_active == True)   # ✅ only active assignments
+        .filter(WorkstationAssignment.is_active == True)
         .all()
     )
 
-
-
-    # Stats
-    total = db.session.query(Cubicle).filter(Cubicle.room_lab_id == lab.id).count()
-    used = (
-        db.session.query(Cubicle)
-        .join(Student, Student.roll == Cubicle.student_roll)
-        .join(WorkstationAssignment, WorkstationAssignment.student_roll == Student.roll)
-        .filter(Cubicle.room_lab_id == lab.id, WorkstationAssignment.is_active == True)
-        .count()
-    )
+    # 🔹 Stats
+    total_cubicles = db.session.query(Cubicle).filter(Cubicle.room_lab_id == lab.id).count()
+    cubicle_assigned = len(cubicle_records)
+    workstation_assigned = len(machine_records)
 
     stats = {
-        "total": total,
-        "used": used,
-        "available": total - used,
+        "total_cubicles": total_cubicles,
+        "cubicle_assigned": cubicle_assigned,
+        "available_cubicles": total_cubicles - cubicle_assigned,
+        "workstations_assigned": workstation_assigned,
         "staff_incharge": lab.staff_incharge
     }
 

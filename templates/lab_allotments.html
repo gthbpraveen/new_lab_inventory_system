@@ -17,13 +17,14 @@
       Room: {{ lab.name }}
     </h2>
     <div class="text-sm text-yellow-900">
-      <span><strong>Total Systems:</strong> {{ stats.total }}</span> |
-      <span><strong>Allotted:</strong> {{ stats.used }}</span> |
-      <span><strong>Available:</strong> {{ stats.available }}</span>
-      {% if stats.staff_incharge %}
-        | <span><strong>Staff In-charge:</strong> {{ stats.staff_incharge }}</span>
-      {% endif %}
-    </div>
+  <span><strong>Total Cubicles:</strong> {{ stats.total_cubicles }}</span> |
+  <span><strong>Cubicles Allotted:</strong> {{ stats.cubicle_assigned }}</span> |
+  <span><strong>Available Cubicles:</strong> {{ stats.available_cubicles }}</span> |
+  <span><strong>Workstations Allotted:</strong> {{ stats.workstations_assigned }}</span>
+  {% if stats.staff_incharge %}
+    | <span><strong>Staff In-charge:</strong> {{ stats.staff_incharge }}</span>
+  {% endif %}
+</div>
   </div>
 
   <!-- 1️⃣ Cubicle Allotments -->
