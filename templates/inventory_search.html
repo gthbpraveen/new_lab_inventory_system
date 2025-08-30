@@ -31,11 +31,8 @@
       <select name="status" class="w-full mt-1 px-3 py-2 border rounded">
         <option value="">All</option>
         <option>Available</option>
-        <option>In Use</option>
-        <option>Spare</option>
-        <option>Under Repair</option>
-        <option>Damaged</option>
-        <option>Scrap</option>
+        <option>Issued</option>
+        <option>Scrapped</option>
         <option>Retired</option>
       </select>
     </div>
@@ -77,6 +74,8 @@
           <td class="py-2 px-4 border">{{ item.status }}</td>
           <td class="py-2 px-4 border">{{ item.location }}</td>
           <td class="py-2 px-4 border">{{ item.intender_name }}</td>
+          <td class="py-2 px-4 border">{{ item.intender_name }}</td>
+          
         </tr>
         {% endfor %}
       </tbody>

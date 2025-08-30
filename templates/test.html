@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CSELABS - Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #fffffc;
+    }
+
+    .page-transition {
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    .nav-link {
+      position: relative;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -2px;
+      left: 0;
+      background-color: #3b82f6;
+      transition: width 0.3s ease;
+    }
+
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="min-h-screen flex flex-col">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 w-full">
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+          <div class="flex items-center space-x-4">
+            <img src="https://iith.ac.in/assets/images/logo.png" class="h-10 w-auto" alt="IITH Logo"/>
+            <span class="text-base sm:text-lg md:text-xl lg:text-1xl font-bold text-gray-800">
+              Department of Computer Science and Engineering
+            </span>
+          </div>
+          <!-- Desktop Menu -->
+<div class="hidden md:flex space-x-1">
+  <a href="/login_home" class="nav-link {% if request.path == '/login_home' %}active{% endif %} text-gray-800 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Home</a>
+  
+  <a href="/cse_labs" class="nav-link {% if request.path == '/cse_labs' %}active{% endif %} text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Labs</a>
+  
+  <a href="/inventory" class="nav-link {% if request.path == '/inventory' %}active{% endif %} text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Inventory</a>
+  
+  <a href="/search" class="nav-link {% if request.path == '/search' %}active{% endif %} text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Search</a>
+  
+  <a href="/utilization" class="nav-link {% if request.path == '/utilization' %}active{% endif %} text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Overall Labs utilization</a>
+  
+  <a href="/logout" class="nav-link {% if request.path == '/logout' %}active{% endif %} text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Logout</a>
+</div>
+
+          <div class="md:hidden">
+            <button id="mobile-menu-button" class="text-gray-500 hover:text-blue-600 focus:outline-none">
+              <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
+                   viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden mt-2 space-y-2">
+          <a href="/login_home" class="block nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Home</a>
+          <a href="/cse_labs" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Cse-Labs</a>
+          <a href="/inventory" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Inventory</a>
+          <a href="/search" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Search</a>
+          <a href="/utilization" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Labs utilization</a>
+          <a href="/logout" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Logout</a>
+        </div>
+      </div>
+    </nav>
+
+    <script>
+      document.getElementById('mobile-menu-button').addEventListener('click', () => {
+        const menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
+      });
+    </script>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div id="flash-message" class="mx-auto max-w-2xl mt-4 px-4">
+          <div class="flex items-start justify-between bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-md shadow-md relative">
+            <div class="flex items-start">
+              <svg class="w-5 h-5 mr-3 text-yellow-500 mt-1" fill="none" stroke="currentColor" stroke-width="2"
+                   viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 1010 10A10 10 0 0012 2z"/>
+              </svg>
+              <span class="text-sm font-medium">{{ messages[0] }}</span>
+            </div>
+            <button onclick="document.getElementById('flash-message').remove()" class="ml-4 text-yellow-800 hover:text-red-600 font-bold text-lg leading-none">&times;</button>
+          </div>
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Page content -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+      {% block content %}
+      <div class="py-12 bg-gradient-to-r from-sky-800 via-white-600 to-sky-600 text-white py-16 min-h-[calc(100vh-200px)]">
+        <div class="max-w-6xl mx-auto px-4">
+          <h2 class="text-2xl font-bold text-center text-white mb-10">
+            Dear {{ current_user.email.split('@')[0] | capitalize }}, Welcome to CSE Lab Portal
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% set tools = [
+              {"name": "CSE Labs", "icon": "💻💻", "url": "/cse_labs"},
+              {"name": "Inventory", "icon": "📦", "url": "/inventory"},
+              {"name": "Search", "icon": "🔍", "url": "/search"},
+              {"name": "Students-Directory", "icon": "🔍", "url": "/students_directory"}, 
+              {"name": "Lab Utilization", "icon": "📊", "url": "/utilization"},
+              {"name": "Software Utility", "icon": "💻", "url": "/os_related"},
+              {"name": "Slurm Facility", "icon": "⚙️", "url": "/slurm/check"},
+             
+            ] %}
+            {% if current_user.is_authenticated and current_user.email == 'admin@cse.iith.ac.in' %}
+              {% set tools = tools + [
+               { "name": "Approve Users", "icon": "👤✔️", "url": "/admin/approve" },
+                {"name": "Registered Users", "icon": "👥", "url": "/registered_users"}
+              ] %}
+            {% endif %}
+            {% set tools = tools + [{"name": "User Settings", "icon": "🛠️", "url": "/user/settings"}] %}
+            {% for tool in tools %}
+              <a href="{{ tool.url }}" class="backdrop-blur-lg bg-white/20 border border-white/20 rounded-xl shadow-lg p-6 text-center hover:scale-105 transform transition duration-300 hover:shadow-2xl">
+                <div class="text-5xl mb-4">{{ tool.icon }}</div>
+                <h3 class="text-xl text-white font-semibold">{{ tool.name }}</h3>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endblock %}
+    </main>
+
+    <!-- Optional Footer -->
+    <footer class="bg-white text-center py-4 text-gray-500 text-sm">
+      © {{ current_year or "2025" }} CSE Department, IITH. All rights reserved.
+    </footer>
+  </div>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSELABS - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #fffffc;
+        }
+        
+        .page-transition {
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .nav-link {
+            position: relative;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #e92a79;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex flex-col">
+        <!-- Navigation Bar -->
+        <nav class="bg-white shadow-md sticky top-0 z-50 w-full">
+            <div class="px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-20">
+                    <div class="flex items-center space-x-4">
+                        <img src="https://iith.ac.in/assets/images/logo.png" class="h-10 w-auto" alt="IITH Logo"/>
+                        <span class="text-base sm:text-lg md:text-xl lg:text-1xl font-bold text-gray-800">
+                            Department of Computer Science and Engineering
+                        </span>
+                    </div>
+                    <div class="hidden md:flex space-x-2">
+                        <a href="/" class="nav-link  text-gray-800 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Home</a>
+                        <a href="/cse_labs" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Cse-Labs</a>
+                        <a href="/contact_us" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Contact Us</a>
+                        <a href="/login" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Login</a>
+                    </div>
+                    <div class="md:hidden">
+                        <button id="mobile-menu-button" class="text-gray-500 hover:text-blue-600 focus:outline-none">
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <!-- Responsive Menu Placeholder -->
+                <div id="mobile-menu" class="md:hidden hidden mt-2 space-y-2">
+                    <a href="/" class="block nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Home</a>
+                    <a href="/cse_labs" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Cse-Labs</a>
+                    <a href="/contact_us" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Contact Us</a>
+                    <a href="/login" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Login</a>
+                </div>
+            </div>
+        </nav>
+
+        <script>
+          document.getElementById('mobile-menu-button').addEventListener('click', () => {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+          });
+        </script>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div id="alert-box" class="max-w-md mx-auto mb-4 bg-red-50 text-red-800 border border-orange-200 rounded-lg px-4 py-3 flex items-start justify-between shadow-sm">
+              <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
+                </svg>
+                <span class="text-sm">{{ messages[0] }}</span>
+              </div>
+              <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 transition">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10l-4.95-4.95A1 1 0 115.05 3.636L10 8.586z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

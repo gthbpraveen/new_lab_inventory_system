@@ -16,8 +16,8 @@
           <option value="">All Statuses</option>
           <option value="Available" {% if status_filter == 'Available' %}selected{% endif %}>Available</option>
           <option value="Issued" {% if status_filter == 'Issued' %}selected{% endif %}>Issued</option>
-          <option value="Repaired" {% if status_filter == 'Repaired' %}selected{% endif %}>Repaired</option>
-          <option value="Scrap" {% if status_filter == 'Scrap' %}selected{% endif %}>Scrap</option>
+          <option value="Retired" {% if status_filter == 'Retired' %}selected{% endif %}>Retired</option>
+          <option value="Scrapped" {% if status_filter == 'Scrapped' %}selected{% endif %}>Scrapped</option>
         </select>
 
         <button type="submit"
@@ -85,17 +85,25 @@
           {% endif %}
         </td>
         <td class="p-3">
-          {% if eq.status.lower() in ['available', 'issued'] %}
-            <a href="{{ url_for('assign_equipment', equipment_id=eq.id) }}"
-               class="text-indigo-600 hover:underline text-sm">Assign / Change</a>
-          {% elif eq.status.lower() == 'repaired' %}
-            <span class="text-gray-500 text-sm">Repaired</span>
-          {% elif eq.status.lower() == 'scrap' %}
-            <span class="text-gray-500 text-sm">Scrap</span>
-          {% else %}
-            <span class="text-gray-500 text-sm">{{ eq.status }}</span>
-          {% endif %}
-        </td>
+  {% if eq.status.lower() in ['available', 'issued'] %}
+    {% if eq.assigned_to_roll %}
+      <!-- Already assigned: go to student assignment page -->
+      <a href="{{ url_for('it_equipment_assign', roll=eq.assigned_to_roll) }}"
+         class="text-indigo-600 hover:underline text-sm">Assign / Change</a>
+    {% else %}
+      <!-- Not assigned yet: go to new route to assign by equipment -->
+      <a href="{{ url_for('allotted_roll_check',roll=eq.assigned_to_roll,equipment_id=eq.id) }}"
+         class="text-indigo-600 hover:underline text-sm">Assign</a>
+    {% endif %}
+  {% elif eq.status.lower() == 'retired' %}
+    <span class="text-gray-500 text-sm">Retired</span>
+  {% elif eq.status.lower() == 'scrapped' %}
+    <span class="text-gray-500 text-sm">Scrapped</span>
+  {% else %}
+    <span class="text-gray-500 text-sm">{{ eq.status }}</span>
+  {% endif %}
+</td>
+
         <td class="p-3">
           <div class="flex items-center gap-2 text-sm">
             <a href="{{ url_for('edit_equipment', id=eq.id) }}"

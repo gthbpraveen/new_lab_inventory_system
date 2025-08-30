@@ -4,68 +4,85 @@
 {% block content %}
 <!-- Home Page -->
 <div id="home-page" class="page-transition">
-    <div class="relative py-16 overflow-hidden">
-        <!-- Background Image Layer -->
-       <div class="absolute inset-3 bg-cover bg-center opacity-1" style="background-image: url('/static/images/bui1.jpg');
-background-size: cover;
-background-position: center;
-background-repeat: no-repeat;"></div>
 
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <!-- Background Image with Parallax -->
+        <div class="absolute inset-0 bg-fixed bg-cover bg-center"
+             style="background-image: url('/static/images/bui1.jpg');">
+        </div>
 
         <!-- Gradient Overlay -->
-        <div class="absolute inset-0 bg-gradient-to-r from-red-600 to-indigo-700 opacity-60"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-sky-900/70 via-indigo-900/70 to-purple-900/70"></div>
 
-        <div class="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="max-w-3xl mx-auto text-center text-white">
-                <h1 class="text-4xl font-extrabold sm:text-5xl md:text-6xl">
-                    Lab & Inventory Management System
-                </h1>
-                <p class="mt-6 text-xl text-blue-100">
-                    Streamline lab operations, manage systems, and track inventory efficiently.
-                </p>
-                <div class="mt-10 flex flex-wrap justify-center gap-4">
-                    <a href="/login" class="px-8 py-3 text-base font-semibold rounded-md text-orange-700 bg-white hover:bg-orange-100 transition duration-300 shadow">
-                        Get Started
-                    </a>
-                    <a href="/contact_us" class="px-8 py-3 text-base font-medium rounded-md text-white bg-indigo-700 hover:bg-indigo-800 transition duration-300 shadow">
-                        Contact Us
-                    </a>
-                    <a href="/about" class="px-8 py-3 text-base font-medium rounded-md text-white bg-orange-700 hover:bg-orange-800 transition duration-300 shadow">
-                        About Us
-                    </a>
-                </div>
+        <!-- Hero Content -->
+        <div class="relative z-10 text-center text-white px-6 sm:px-8">
+            <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold drop-shadow-lg animate-fadeIn">
+                Lab & Inventory Management System
+            </h1>
+            <p class="mt-6 text-xl md:text-2xl text-blue-100 max-w-2xl mx-auto animate-slideUp">
+                Streamline lab operations, manage systems, and track inventory efficiently.
+            </p>
+            <div class="mt-10 flex flex-wrap justify-center gap-4 animate-fadeInUp">
+                <a href="/login" class="px-8 py-3 text-base font-semibold rounded-2xl text-orange-700 bg-white hover:bg-orange-200 transition duration-300 shadow-lg hover:scale-105">
+                    🚀 Get Started
+                </a>
+                <a href="/contact_us" class="px-8 py-3 text-base font-medium rounded-2xl text-white bg-indigo-700 hover:bg-indigo-800 transition duration-300 shadow-lg hover:scale-105">
+                    📩 Contact Us
+                </a>
+                <a href="/about" class="px-8 py-3 text-base font-medium rounded-2xl text-white bg-orange-700 hover:bg-orange-800 transition duration-300 shadow-lg hover:scale-105">
+                    ℹ️ About Us
+                </a>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Features Section -->
-    <div class="py-12 bg-white">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">Key Features</h2>
-                <p class="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
+    <section class="py-20 bg-gradient-to-b from-white to-gray-100">
+        <div class="container mx-auto px-6 lg:px-12">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900">
+                    ✨ Key Features
+                </h2>
+                <p class="mt-4 max-w-3xl text-lg md:text-xl text-gray-600 mx-auto">
                     Manage lab resources, schedules, and equipment from one centralized portal.
                 </p>
             </div>
-            <div class="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                <div class="bg-gray-100 rounded-lg p-6 shadow hover:shadow-lg transition">
-                    <h3 class="text-lg font-semibold mb-2 text-indigo-800">Live System Monitoring</h3>
+
+            <!-- Features Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                <!-- Card -->
+                <div class="p-8 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-2 transition duration-300">
+                    <h3 class="text-xl font-bold mb-4 text-indigo-700">📡 Live System Monitoring</h3>
                     <p class="text-gray-700">Track system status, availability, and real-time usage across labs.</p>
                 </div>
-                <div class="bg-gray-100 rounded-lg p-6 shadow hover:shadow-lg transition">
-                    <h3 class="text-lg font-semibold mb-2 text-indigo-800">Lab Inventory Tracking</h3>
+
+                <div class="p-8 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-2 transition duration-300">
+                    <h3 class="text-xl font-bold mb-4 text-indigo-700">📦 Lab Inventory Tracking</h3>
                     <p class="text-gray-700">Maintain and audit assets, peripherals, consumables, and more.</p>
                 </div>
-                <div class="bg-gray-100 rounded-lg p-6 shadow hover:shadow-lg transition">
-                    <h3 class="text-lg font-semibold mb-2 text-indigo-800">Staff and Student Access Control</h3>
+
+                <div class="p-8 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-2 transition duration-300">
+                    <h3 class="text-xl font-bold mb-4 text-indigo-700">🔐 Staff & Student Access Control</h3>
                     <p class="text-gray-700">Assign systems, manage bookings, and control access rights.</p>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 </div>
- <!-- Optional Footer -->
-    <footer class="bg-white text-center py-4 text-gray-500 text-sm">
-      © {{ current_year or "2025" }} CSE Department, IITH. All rights reserved.
-    </footer>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-center py-6 text-gray-400 text-sm">
+  © {{ current_year or "2025" }} CSE Department, IITH. All rights reserved.
+</footer>
+
+<!-- Animations -->
+<style>
+@keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+@keyframes slideUp { from {opacity:0; transform:translateY(30px);} to {opacity:1; transform:translateY(0);} }
+
+.animate-fadeIn { animation: fadeIn 1.5s ease-in-out; }
+.animate-slideUp { animation: slideUp 1.5s ease-in-out; }
+.animate-fadeInUp { animation: slideUp 2s ease-in-out; }
+</style>
 {% endblock %}

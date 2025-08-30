@@ -1018,6 +1018,8 @@ from models import db, Equipment
 @login_required
 def equipment_entry():
     if request.method == "POST":
+        print(request.form.to_dict())  # 🔍 debug
+
         name = request.form["name"]
         category = request.form["category"]
         manufacturer = request.form["manufacturer"]
@@ -1029,7 +1031,12 @@ def equipment_entry():
         purchase_date = request.form["purchase_date"]
         status = request.form["status"]
         po_date = request.form["po_date"]
-        intender_name = request.form["intender_name"]
+
+        intender_name = request.form.get("intender_name")  # ✅ safe
+        # if not intender_name:
+        #     flash("Please select an indenter (Faculty/Staff).", "danger")
+        #     return redirect(url_for("equipment_entry"))
+
         quantity = request.form.get("quantity", type=int)
         assigned_to_roll = request.form.get("assigned_to_roll")
 
@@ -1056,7 +1063,7 @@ def equipment_entry():
                 status=status,
                 po_date=po_date,
                 intender_name=intender_name,
-                quantity=1,  # each entry = one unit
+                quantity=1,
                 department_code=department_code,
                 assigned_to_roll=assigned_to_roll if assigned_to_roll else None
             )
@@ -1066,10 +1073,8 @@ def equipment_entry():
         flash(f"{quantity} equipment entries added successfully.", "success")
         return redirect(url_for("equipment_list"))
 
-    # ✅ FIX: get students not "Workstation"
     students = Student.query.all()
     return render_template("equipment_entry.html", students=students)
-
 
 
 from flask import send_file
@@ -2312,50 +2317,102 @@ def workstation_allocation(roll=None):
     )
 
 
+# routes.py (or app.py)
+from datetime import datetime
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from sqlalchemy import or_
+from models import db, Student, Equipment, EquipmentHistory
 
 # --- IT Equipment Allocation (allow multiple per student) ---
-@app.route("/it_equipment/<roll>", methods=["GET", "POST"])
-@app.route("/it_equipment", methods=["GET", "POST"])
-def it_equipment(roll=None):
-    roll_prefill = (roll or request.args.get("roll", "")).strip() or None
+@app.route("/it_equipment_assign/<roll>", methods=["GET", "POST"])
+@login_required
+def it_equipment_assign(roll):
+    student = Student.query.filter_by(roll=roll).first_or_404()
 
-    if request.method == "POST":
-        roll_post = request.form['assigned_to_roll'].strip()
+    # ---------- Assign equipment ----------
+    if request.method == "POST" and "equipment_id" in request.form:
+        equipment_id = request.form.get("equipment_id", type=int)
+        issue_date = request.form.get("issue_date")          # optional in this view
+        expected_return = request.form.get("expected_return")  # optional in this view
 
-        # ensure student exists for assignment
-        student = Student.query.get(roll_post)
-        if not student:
-            flash("Student does not exist. Please add them first.", "warning")
-            return redirect(url_for("student_info"))
+        eq = Equipment.query.get_or_404(equipment_id)
 
-        eq = Equipment(
-            name=request.form["name"],
-            category=request.form["category"],
-            manufacturer=request.form.get("manufacturer"),
-            model=request.form.get("model"),
-            serial_number=request.form["serial_number"],
-            invoice_number=request.form.get("invoice_number"),
-            cost_per_unit=(request.form.get("cost_per_unit") or None),
-            location=request.form.get("location"),
-            po_date=request.form.get("po_date"),
-            purchase_date=request.form.get("purchase_date"),
-            warranty_expiry=request.form.get("warranty_expiry"),
-            status="Assigned",
-            intender_name=request.form.get("intender_name"),
-            remarks=request.form.get("remarks"),
-            quantity=(request.form.get("quantity") or None),
-            department_code=request.form.get("department_code"),
-            mac_address=request.form.get("mac_address"),
-            assigned_to_roll=roll_post,
-            assigned_by="System",
-            assigned_date=datetime.utcnow()
-        )
-        db.session.add(eq)
-        db.session.commit()
-        flash("IT equipment assigned successfully.", "success")
-        return redirect(url_for("it_equipment", roll=roll_post))
+        if eq.assigned_to_roll:
+            flash("Equipment already assigned.", "danger")
+        elif (eq.status or "").lower() in ("scrapped", "retired"):
+            flash("This equipment cannot be assigned (scrapped/retired).", "danger")
+        else:
+            # Mark as issued
+            eq.assigned_to_roll = student.roll
+            eq.assigned_by = getattr(current_user, "email", None)
+            eq.assigned_date = datetime.utcnow()
+            eq.status = "Issued"
 
-    return render_template("it_equipment.html", roll_prefill=roll_prefill)
+            # History entry (optional but recommended)
+            hist = EquipmentHistory(
+                equipment_id=eq.id,
+                assigned_to_roll=student.roll,
+                assigned_by=eq.assigned_by,
+                assigned_date=eq.assigned_date,
+                status_snapshot=eq.status,
+            )
+            db.session.add(hist)
+            db.session.commit()
+
+            flash(f"Assigned {eq.serial_number} to {student.name}.", "success")
+
+        # Preserve filters after assignment
+        return redirect(url_for(
+            "it_equipment_assign",
+            roll=roll,
+            location=request.args.get("location", ""),
+            intender_name=request.args.get("intender_name", "")
+        ))
+
+    # ---------- Filters (independent) ----------
+    location = (request.args.get("location") or "").strip()
+    intender_name = (request.args.get("intender_name") or "").strip()
+
+    # Base query with optional filters applied
+    base_q = Equipment.query
+    if location:
+        base_q = base_q.filter(Equipment.location == location)
+    if intender_name:
+        base_q = base_q.filter(Equipment.intender_name == intender_name)
+
+    # Results by status
+    available_equipment = base_q.filter(
+        Equipment.assigned_to_roll.is_(None),
+        or_(Equipment.status.is_(None), Equipment.status == "Available")
+    ).order_by(Equipment.manufacturer, Equipment.model).all()
+
+    issued_equipment = base_q.filter(
+        Equipment.assigned_to_roll.isnot(None)
+    ).order_by(Equipment.manufacturer, Equipment.model).all()
+
+    scrapped_equipment = base_q.filter(Equipment.status == "Scrapped") \
+        .order_by(Equipment.manufacturer, Equipment.model).all()
+
+    retired_equipment = base_q.filter(Equipment.status == "Retired") \
+        .order_by(Equipment.manufacturer, Equipment.model).all()
+
+    # Student’s current assignments (history panel)
+    student_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll) \
+        .order_by(Equipment.assigned_date.desc().nullslast()) \
+        .all()
+
+    return render_template(
+        "it_equipment_assign.html",
+        student=student,
+        # lists for the four tables
+        available_equipment=available_equipment,
+        issued_equipment=issued_equipment,
+        scrapped_equipment=scrapped_equipment,
+        retired_equipment=retired_equipment,
+        # history panel
+        student_equipment=student_equipment,
+    )
 
 
 # ------------------------

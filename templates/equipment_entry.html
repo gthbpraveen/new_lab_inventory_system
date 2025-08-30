@@ -51,32 +51,82 @@
   <div><label>Invoice Number</label><input type="text" name="invoice_number" class="input"></div>
   <div><label>Cost per Unit</label><input type="number" name="cost_per_unit" step="0.01" class="input"></div>
   <div><label>Warranty Expiry</label><input type="date" name="warranty_expiry" class="input"></div>
-  <div><label>Location</label><input type="text" name="location" required class="input"></div>
+
+  <div>
+    <label class="block mb-2">Location</label>
+    <select id="location" name="location" required
+      class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-yellow-500">
+      <option value="">-- Select Location --</option>
+
+      <optgroup label="Labs">
+        {% set lab_list = [
+          'CS-107','CS-108','CS-109',
+          'CS-207','CS-208','CS-209',
+          'CS-317','CS-318','CS-319','CS-320',
+          'CS-411','CS-412'
+        ] %}
+        {% for l in lab_list %}
+          <option value="{{l}}" {% if asset and asset.location==l %}selected{% endif %}>{{l}}</option>
+        {% endfor %}
+      </optgroup>
+
+      <optgroup label="Other Locations">
+        {% set other_locations = [
+          'CSE Office','CSE Store','Institute Datacenter','SmartRack'
+        ] %}
+        {% for o in other_locations %}
+          <option value="{{o}}" {% if asset and asset.location==o %}selected{% endif %}>{{o}}</option>
+        {% endfor %}
+      </optgroup>
+    </select>
+  </div>
+
   <div><label>Purchase Date</label><input type="date" name="purchase_date" required class="input"></div>
   <div><label>PO Date</label><input type="date" name="po_date" required class="input"></div>
-  <div><label>Intender Name</label><input type="text" name="intender_name" required class="input"></div>
+
+  <div>
+    <label class="block mb-2">Select Faculty / Staff</label>
+    <select id="intender_name" name="intender_name" required
+      class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-green-500">
+      <option value="">-- Select Faculty / Staff --</option>
+
+      <optgroup label="Faculty">
+        {% set faculty_list = [
+          'Prof. Antony Franklin','Dr. Ashish Mishra','Prof. Bheemarjuna Reddy Tamma',
+          'Prof. C. Krishna Mohan','Dr. J. Saketha Nath','Dr. Jyothi Vedurada',
+          'Dr. Kotaro Kataoka','Prof. M. V. Panduranga Rao','Dr. Manish Singh',
+          'Dr. Maria Francis','Prof. Maunendra Sankar Desarkar','Dr. N. R. Aravind',
+          'Dr. Nitin Saurabh','Dr. Praveen Tammana','Dr. Rajesh Kedia',
+          'Dr. Rakesh Venkat','Dr. Ramakrishna Upadrasta','Dr. Rameshwar Pratap',
+          'Dr. Rogers Mathew','Prof. Sathya Peri','Dr. Saurabh Kumar',
+          'Dr. Shirshendu Das','Dr. Sobhan Babu','Dr. Srijith P. K.',
+          'Prof. Subrahmanyam Kalyanasundaram','Prof. Vineeth N. Balasubramanian'
+        ] %}
+        {% for f in faculty_list %}
+          <option value="{{f}}" {% if asset and asset.intender_name==f %}selected{% endif %}>{{f}}</option>
+        {% endfor %}
+      </optgroup>
+
+      <optgroup label="Staff">
+        {% set staff_list = [
+          'G Praveen Kumar','Shiva Kumar Reddy','Sunitha M',
+          'Nikith Reddy','Vijay Chakravarthy','Syam N'
+        ] %}
+        {% for s in staff_list %}
+          <option value="{{s}}" {% if asset and asset.intender_name==s %}selected{% endif %}>{{s}}</option>
+        {% endfor %}
+      </optgroup>
+    </select>
+  </div>
 
   <div>
     <label>Status</label>
     <select name="status" required class="input">
       <option value="">-- Select Status --</option>
       <option value="Available">Available</option>
-      <option value="In Use">In Use</option>
-      <option value="Spare">Spare</option>
-      <option value="Under Repair">Under Repair</option>
-      <option value="Damaged">Damaged</option>
-      <option value="Scrap">Scrap</option>
+      <option value="Issued">Issued</option>
+      <option value="Scrapped">Scrapped</option>
       <option value="Retired">Retired</option>
-    </select>
-  </div>
-
-  <div>
-    <label class="block font-semibold text-sm mb-1">Assign to Student</label>
-    <select name="assigned_to_roll" class="w-full border p-2 rounded mb-4">
-      <option value="">-- Not Assigned --</option>
-      {% for student in students %}
-        <option value="{{ student.roll }}">{{ student.roll }} - {{ student.name }}</option>
-      {% endfor %}
     </select>
   </div>
 
