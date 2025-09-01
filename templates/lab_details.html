@@ -16,7 +16,7 @@
 
       <!-- Image -->
       <div class="flex justify-center">
-        <img src="{{ url_for('static', filename='mylab/' ~ lab_code ~ '.jpg') }}"
+        <img src="{{ url_for('static', filename='mylab/' ~ lab_code ~ '.png') }}"
              alt="{{ lab_code }} Lab Image"
              class="rounded-xl border border-gray-200 w-full max-w-md hover:scale-105 transition duration-300"
              style="max-height: 350px;">
@@ -29,11 +29,12 @@
             <tr><td class="py-3 font-semibold text-indigo-700">Total Capacity</td><td class="py-3">{{ capacity }}</td></tr>
             <tr><td class="py-3 font-semibold text-indigo-700">Available Seating</td><td class="py-3">{{ available_seating }}</td></tr>
             <tr><td class="py-3 font-semibold text-indigo-700">Used Seating</td><td class="py-3">{{ used_seating }}</td></tr>
-            <tr><td class="py-3 font-semibold text-indigo-700">Faculty In-Charge</td><td class="py-3">{{ faculty }}</td></tr>
+            <tr><td class="py-3 font-semibold text-indigo-700">Staff In-Charge</td><td class="py-3">{{ faculty }}</td></tr>
             <tr><td class="py-3 font-semibold text-indigo-700">Meeting Rooms</td><td class="py-3">{{ meeting_rooms }}</td></tr>
             <tr><td class="py-3 font-semibold text-indigo-700">Whiteboards</td><td class="py-3">{{ whiteboards }}</td></tr>
             <tr><td class="py-3 font-semibold text-indigo-700">Printers</td><td class="py-3">{{ printers }}</td></tr>
             <tr><td class="py-3 font-semibold text-indigo-700">Projectors</td><td class="py-3">{{ projectors }}</td></tr>
+            <tr><td class="py-3 font-semibold text-indigo-700">Lockers</td><td class="py-3">{{ lockers }}</td></tr>
           </tbody>
         </table>
 

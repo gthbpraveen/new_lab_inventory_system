@@ -32,10 +32,12 @@
         <td class="px-4 py-2 border">{{ eq.location }}</td>
         <td class="px-4 py-2 border">{{ eq.intender_name }}</td>
         <td class="px-4 py-2 border">
-          <form method="post">
+          <form method="post" id="returnForm-{{ eq.id }}">
             <input type="hidden" name="return_equipment_id" value="{{ eq.id }}">
-            <button type="submit"
-                    class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
+            <button type="button"
+                    class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                    data-equipment="{{ eq.serial_number }}"
+                    onclick="openConfirmModal({{ eq.id }}, '{{ eq.serial_number }}')">
               Return
             </button>
           </form>
@@ -179,4 +181,43 @@
   </div>
 
 </div>
+<div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-lg p-6 max-w-md w-full">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Confirm Return</h3>
+    <p class="text-gray-600 mb-6">
+      Are you sure you want to return <span id="equipmentName" class="font-bold"></span>?
+    </p>
+    <div class="flex justify-end space-x-3">
+      <button onclick="closeConfirmModal()"
+              class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+        Cancel
+      </button>
+      <button id="confirmBtn"
+              class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+        Yes, Return
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+  let selectedFormId = null;
+
+  function openConfirmModal(equipmentId, serial) {
+    selectedFormId = "returnForm-" + equipmentId;
+    document.getElementById("equipmentName").textContent = serial;
+    document.getElementById("confirmModal").classList.remove("hidden");
+    document.getElementById("confirmModal").classList.add("flex");
+  }
+
+  function closeConfirmModal() {
+    document.getElementById("confirmModal").classList.add("hidden");
+    document.getElementById("confirmModal").classList.remove("flex");
+  }
+
+  document.getElementById("confirmBtn").addEventListener("click", function () {
+    if (selectedFormId) {
+      document.getElementById(selectedFormId).submit();
+    }
+  });
+</script>
 {% endblock %}

@@ -23,9 +23,10 @@
       <label for="status" class="block text-gray-700 font-medium mb-1">Status</label>
       <select name="status" id="status" class="border rounded-md px-3 py-2">
         <option value="">All</option>
-        <option value="in_stock" {% if status=="in_stock" %}selected{% endif %}>In Stock</option>
-        <option value="assigned" {% if status=="assigned" %}selected{% endif %}>Assigned</option>
-        <option value="retired" {% if status=="retired" %}selected{% endif %}>Retired</option>
+        <option value="Available" {% if status=="Available" %}selected{% endif %}>Available</option>
+        <option value="Issued" {% if status=="Issued" %}selected{% endif %}>Issued</option>
+        <option value="Retired" {% if status=="Retired" %}selected{% endif %}>Retired</option>
+        <option value="Scrapped" {% if status=="Scrapped" %}selected{% endif %}>Scrapped</option>
       </select>
     </div>
 
@@ -102,14 +103,14 @@
                  class="text-indigo-600 hover:underline">Edit</a>
 
               <!-- Retire / Unretire -->
-              {% if a.status == "retired" %}
+              {% if a.status == "Retired" %}
                 <form action="{{ url_for('asset_unretire', asset_id=a.id) }}" method="post" class="inline">
                   <button type="submit" class="text-yellow-600 hover:underline"
                           onclick="return confirm('Un-retire this asset?')">
                     Unretire
                   </button>
                 </form>
-              {% elif a.status != "assigned" %}
+              {% elif a.status != "Issued" %}
                 <form action="{{ url_for('asset_retire', asset_id=a.id) }}" method="post" class="inline">
                   <button type="submit" class="text-yellow-600 hover:underline"
                           onclick="return confirm('Retire this asset?')">

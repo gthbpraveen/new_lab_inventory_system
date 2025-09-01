@@ -310,14 +310,14 @@ def index():
                         eq.assigned_to_roll = roll
                         eq.assigned_by = "System"
                         eq.assigned_date = datetime.now()
-                        eq.status = "Assigned"
+                        eq.status = "Issued"
 
                         history = EquipmentHistory(
                             equipment_id=eq.id,
                             assigned_to_roll=roll,
                             assigned_by="System",
                             assigned_date=datetime.now(),
-                            status_snapshot="Assigned"
+                            status_snapshot="Issued"
                         )
                         db.session.add(history)
             success = "Equipment assigned successfully."
@@ -1323,24 +1323,25 @@ def lab_details(lab_code):
 
     # Infra meta (extend as needed)
     infra_meta = {
-        "CS-107": {"meeting_rooms": 1, "whiteboards": 4, "printers": 1, "projectors": 1},
-        "CS-108": {"meeting_rooms": 1, "whiteboards": 3, "printers": 1, "projectors": 1},
-        "CS-109": {"meeting_rooms": 2, "whiteboards": 6, "printers": 2, "projectors": 2},
-        "CS-207": {"meeting_rooms": 1, "whiteboards": 3, "printers": 1, "projectors": 1},
-        "CS-208": {"meeting_rooms": 1, "whiteboards": 3, "printers": 1, "projectors": 1},
-        "CS-209": {"meeting_rooms": 3, "whiteboards": 8, "printers": 2, "projectors": 2},
-        "CS-317": {"meeting_rooms": 1, "whiteboards": 2, "printers": 1, "projectors": 1},
-        "CS-318": {"meeting_rooms": 1, "whiteboards": 2, "printers": 1, "projectors": 1},
-        "CS-319": {"meeting_rooms": 1, "whiteboards": 2, "printers": 1, "projectors": 1},
-        "CS-320": {"meeting_rooms": 1, "whiteboards": 2, "printers": 1, "projectors": 1},
-        "CS-411": {"meeting_rooms": 2, "whiteboards": 3, "printers": 1, "projectors": 2},
-        "CS-412": {"meeting_rooms": 2, "whiteboards": 3, "printers": 1, "projectors": 2},
+        "CS-107": {"meeting_rooms": 1, "whiteboards": 1, "printers": 0, "projectors": 0, "lockers": 0},
+        "CS-108": {"meeting_rooms": 1, "whiteboards": 2, "printers": 1, "projectors": 0, "lockers": 0},
+        "CS-109": {"meeting_rooms": 2, "whiteboards": 1, "printers": 0, "projectors": 0, "lockers": 0},
+        "CS-207": {"meeting_rooms": 2, "whiteboards": 1, "printers": 1, "projectors": 0, "lockers": 0},
+        "CS-208": {"meeting_rooms": 0, "whiteboards": 0, "printers": 0, "projectors": 0, "lockers": 0},
+        "CS-209": {"meeting_rooms": 0, "whiteboards": 0, "printers": 0, "projectors": 0, "lockers": 0},
+        "CS-317": {"meeting_rooms": 0, "whiteboards": 2, "printers": 1, "projectors": 0, "lockers": 0},
+        "CS-318": {"meeting_rooms": 0, "whiteboards": 1, "printers": 1, "projectors": 0, "lockers": 32},
+        "CS-319": {"meeting_rooms": 3, "whiteboards": 0, "printers": 1, "projectors": 0, "lockers": 30},
+        "CS-320": {"meeting_rooms": 1, "whiteboards": 3, "printers": 2, "projectors": 1, "lockers": 0},
+        "CS-411": {"meeting_rooms": 0, "whiteboards": 0, "printers": 0, "projectors": 0, "lockers": 0},
+        "CS-412": {"meeting_rooms": 0, "whiteboards": 2, "printers": 0, "projectors": 0, "lockers": 32},
     }
     meta = infra_meta.get(lab_name, {})
     meeting_rooms = meta.get("meeting_rooms", 0)
     whiteboards = meta.get("whiteboards", 0)
     printers = meta.get("printers", 0)
     projectors = meta.get("projectors", 0)
+    lockers = meta.get("lockers", 0)
 
     # ✅ Stats
     used_valid = sum(1 for s in seats if s["occupied"])
@@ -1358,6 +1359,7 @@ def lab_details(lab_code):
         whiteboards=whiteboards,
         printers=printers,
         projectors=projectors,
+        lockers=lockers,
         seats=seats
     )
 
@@ -2323,14 +2325,62 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from sqlalchemy import or_
 from models import db, Student, Equipment, EquipmentHistory
+# --- IT Equipment Assignment + Return ---
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from datetime import datetime
+from sqlalchemy import or_
 
-# --- IT Equipment Assignment (only available equipment) ---
 @app.route("/it_equipment_assign/<roll>", methods=["GET", "POST"])
 @login_required
 def it_equipment_assign(roll):
     student = Student.query.filter_by(roll=roll).first_or_404()
 
-    # ---------- Assign equipment ----------
+    # ---------- Return Equipment ----------
+    if request.method == "POST" and "return_equipment_id" in request.form:
+        equipment_id = request.form.get("return_equipment_id", type=int)
+
+        eq = Equipment.query.get_or_404(equipment_id)
+
+        if not eq.assigned_to_roll:
+            flash("This equipment is not currently assigned.", "warning")
+        else:
+            # Mark as returned
+            eq.assigned_to_roll = None
+            eq.status = "Available"
+
+            # Update last history record if open
+            last_hist = EquipmentHistory.query.filter_by(
+                equipment_id=eq.id,
+                assigned_to_roll=student.roll
+            ).order_by(EquipmentHistory.id.desc()).first()
+
+            if last_hist and last_hist.unassigned_date is None:
+                last_hist.unassigned_date = datetime.utcnow()
+                last_hist.status_snapshot = "Returned"
+            else:
+                # fallback: insert a new history row
+                hist = EquipmentHistory(
+                    equipment_id=eq.id,
+                    assigned_to_roll=student.roll,
+                    assigned_by=getattr(current_user, "email", None),
+                    assigned_date=eq.assigned_date,
+                    unassigned_date=datetime.utcnow(),
+                    status_snapshot="Returned",
+                )
+                db.session.add(hist)
+
+            db.session.commit()
+            flash(f"Returned {eq.serial_number} successfully.", "success")
+
+        return redirect(url_for(
+            "it_equipment_assign",
+            roll=roll,
+            location=request.args.get("location", ""),
+            intender_name=request.args.get("intender_name", "")
+        ))
+
+    # ---------- Assign Equipment ----------
     if request.method == "POST" and "equipment_id" in request.form:
         equipment_id = request.form.get("equipment_id", type=int)
         issue_date = request.form.get("issue_date")          # optional
@@ -2362,7 +2412,6 @@ def it_equipment_assign(roll):
 
             flash(f"Assigned {eq.serial_number} to {student.name}.", "success")
 
-        # Preserve filters after assignment
         return redirect(url_for(
             "it_equipment_assign",
             roll=roll,
@@ -2398,6 +2447,36 @@ def it_equipment_assign(roll):
         available_equipment=available_equipment,
         student_equipment=student_equipment,
     )
+
+    # ---------- Filters ----------
+    location = (request.args.get("location") or "").strip()
+    intender_name = (request.args.get("intender_name") or "").strip()
+
+    # Base query with optional filters applied
+    base_q = Equipment.query
+    if location:
+        base_q = base_q.filter(Equipment.location == location)
+    if intender_name:
+        base_q = base_q.filter(Equipment.intender_name == intender_name)
+
+    # ✅ Only Available equipment
+    available_equipment = base_q.filter(
+        Equipment.assigned_to_roll.is_(None),
+        or_(Equipment.status.is_(None), Equipment.status == "Available")
+    ).order_by(Equipment.manufacturer, Equipment.model).all()
+
+    # Student’s current assignments (history panel)
+    student_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll) \
+        .order_by(Equipment.assigned_date.desc().nullslast()) \
+        .all()
+
+    return render_template(
+        "it_equipment_assign.html",
+        student=student,
+        available_equipment=available_equipment,
+        student_equipment=student_equipment,
+    )
+
 
 
 
@@ -2636,7 +2715,7 @@ def workstation_delete(ws_id):
         # free asset
         asset = db.session.get(WorkstationAsset, asg.workstation_id)
         if asset:
-            asset.status = "in_stock"
+            asset.status = "Available"
         db.session.commit()
         flash("Workstation returned successfully.", "success")
     except Exception as e:
@@ -2757,7 +2836,7 @@ def asset_new():
             # NEW FIELDS
             location=f.get("location") or None,
             indenter=f.get("indenter") or None,
-            status="in_stock",
+            status="Available",
         )
         try:
             db.session.add(a)
@@ -2820,11 +2899,11 @@ def asset_edit(asset_id):
 @app.route("/assets/<int:asset_id>/retire", methods=["POST"])
 def asset_retire(asset_id):
     a = WorkstationAsset.query.get_or_404(asset_id)
-    # Allow retire from in_stock only; prevent retire if assigned
-    if a.status == "assigned":
+    # Allow retire from Available only; prevent retire if assigned
+    if a.status == "Issued":
         flash("Cannot retire an assigned asset. Return it first.", "warning")
         return redirect(url_for("assets_list"))
-    a.status = "retired"
+    a.status = "Retired"
     db.session.commit()
     flash("Asset retired.", "success")
     return redirect(url_for("assets_list"))
@@ -2832,10 +2911,10 @@ def asset_retire(asset_id):
 @app.route("/assets/<int:asset_id>/unretire", methods=["POST"])
 def asset_unretire(asset_id):
     a = WorkstationAsset.query.get_or_404(asset_id)
-    if a.status == "retired":
-        a.status = "in_stock"
+    if a.status == "Retired":
+        a.status = "Avaible"
         db.session.commit()
-        flash("Asset un-retired and now in stock.", "success")
+        flash("Asset un-retired and now Available.", "success")
     return redirect(url_for("assets_list"))
 
 
@@ -2875,8 +2954,8 @@ def assignments_list():
 
 # @app.route("/assignments/new", methods=["GET", "POST"])
 # def assignment_new():
-#     # Limit assets to 'in_stock'
-#     in_stock_assets = WorkstationAsset.query.filter_by(status="in_stock").order_by(WorkstationAsset.id.desc()).all()
+#     # Limit assets to 'Available'
+#     Available_assets = WorkstationAsset.query.filter_by(status="Available").order_by(WorkstationAsset.id.desc()).all()
 
 #     if request.method == "POST":
 #         f = request.form
@@ -2889,22 +2968,22 @@ def assignments_list():
 #         # validate
 #         if not roll or not asset_id or not issue_date or not till:
 #             flash("Roll, asset, issue date and required till are mandatory.", "warning")
-#             return render_template("assignment_form.html", assets=in_stock_assets)
+#             return render_template("assignment_form.html", assets=Available_assets)
 
 #         # st = Student.query.get(roll)
 #         # if not st:
 #         #     flash("Student not found. Register student first.", "warning")
-#         #     return render_template("assignment_form.html", assets=in_stock_assets)
+#         #     return render_template("assignment_form.html", assets=Available_assets)
 #         st = Student.query.filter_by(roll=roll).first()
 #         if not st:
 #             flash("Student not found. Register student first.", "warning")
-#             return render_template("assignment_form.html", assets=in_stock_assets)
+#             return render_template("assignment_form.html", assets=Available_assets)
 
 
 #         a = WorkstationAsset.query.get(asset_id)
-#         if not a or a.status != "in_stock":
+#         if not a or a.status != "Available":
 #             flash("Selected asset is not available for assignment.", "warning")
-#             return render_template("assignment_form.html", assets=in_stock_assets)
+#             return render_template("assignment_form.html", assets=Available_assets)
 
 #         # create assignment
 #         assign = WorkstationAssignment(
@@ -2925,7 +3004,7 @@ def assignments_list():
 #             db.session.rollback()
 #             flash(f"Error assigning workstation: {e}", "danger")
 
-#     return render_template("assignment_form.html", assets=in_stock_assets)
+#     return render_template("assignment_form.html", assets=Available_assets)
 @app.route("/assignments/new", methods=["GET", "POST"])
 def assignment_new():
     # --- Filters ---
@@ -2934,15 +3013,15 @@ def assignment_new():
     prefill_roll = request.args.get("student_roll", "").strip()
     prefill_lab = request.args.get("lab", "").strip()   # optional, if you want to show lab context
 
-    # Base query: only in_stock assets
-    q = WorkstationAsset.query.filter_by(status="in_stock")
+    # Base query: only Available assets
+    q = WorkstationAsset.query.filter_by(status="Available")
 
     if location:
         q = q.filter(WorkstationAsset.location == location)
     if indenter:
         q = q.filter(WorkstationAsset.indenter == indenter)
 
-    in_stock_assets = q.order_by(WorkstationAsset.id.desc()).all()
+    Available_assets = q.order_by(WorkstationAsset.id.desc()).all()
 
     # Distinct values for dropdowns
     locations = [l[0] for l in db.session.query(WorkstationAsset.location).distinct().all() if l[0]]
@@ -2960,7 +3039,7 @@ def assignment_new():
         if not roll or not asset_id or not issue_date or not till:
             flash("Roll, asset, issue date and required till are mandatory.", "warning")
             return render_template("assignment_form.html", 
-                                   assets=in_stock_assets,
+                                   assets=Available_assets,
                                    locations=locations,
                                    indenters=indenters,
                                    location=location,
@@ -2972,7 +3051,7 @@ def assignment_new():
         if not st:
             flash("Student not found. Register student first.", "warning")
             return render_template("assignment_form.html", 
-                                   assets=in_stock_assets,
+                                   assets=Available_assets,
                                    locations=locations,
                                    indenters=indenters,
                                    location=location,
@@ -2981,10 +3060,10 @@ def assignment_new():
                                    prefill_lab=prefill_lab)
 
         a = WorkstationAsset.query.get(asset_id)
-        if not a or a.status != "in_stock":
+        if not a or a.status != "Available":
             flash("Selected asset is not available for assignment.", "warning")
             return render_template("assignment_form.html", 
-                                   assets=in_stock_assets,
+                                   assets=Available_assets,
                                    locations=locations,
                                    indenters=indenters,
                                    location=location,
@@ -3003,7 +3082,7 @@ def assignment_new():
         )
         try:
             db.session.add(assign)
-            a.status = "assigned"
+            a.status = "Issued"
             db.session.commit()
             flash("Workstation assigned.", "success")
             return redirect(url_for("assignments_list"))
@@ -3012,7 +3091,7 @@ def assignment_new():
             flash(f"Error assigning workstation: {e}", "danger")
 
     return render_template("assignment_form.html",
-                           assets=in_stock_assets,
+                           assets=Available_assets,
                            locations=locations,
                            indenters=indenters,
                            location=location,
@@ -3031,8 +3110,8 @@ def assignment_return(assign_id):
     try:
         assign.is_active = False
         assign.end_date = date.today().isoformat()
-        if assign.asset and assign.asset.status == "assigned":
-            assign.asset.status = "in_stock"
+        if assign.asset and assign.asset.status == "Issued":
+            assign.asset.status = "Available"
         db.session.commit()
         flash("Workstation returned.", "success")
     except Exception as e:
