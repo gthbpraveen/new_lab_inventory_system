@@ -61,10 +61,10 @@
             </span>
           </div>
           <div class="hidden md:flex space-x-1">
-            <a href="/login_home" class="nav-link active text-gray-800 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Home</a>
+            <a href="/login_home" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Home</a>
             <a href="/cse_labs" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Labs</a>
             <a href="/inventory" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Inventory</a>
-            <a href="/search" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Search</a>
+            <a href="/student_dashboard" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Search</a>
             <a href="/utilization" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Labs utilization</a>
             <a href="/logout" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Logout</a>
           </div>
@@ -82,7 +82,7 @@
           <a href="/login_home" class="block nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Home</a>
           <a href="/cse_labs" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Cse-Labs</a>
           <a href="/inventory" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Inventory</a>
-          <a href="/search" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Search</a>
+          <a href="/student_dashboard" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Search</a>
           <a href="/utilization" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Labs utilization</a>
           <a href="/logout" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Logout</a>
         </div>
@@ -127,11 +127,11 @@
             {% set tools = [
               {"name": "CSE Labs", "icon": "💻💻", "url": "/cse_labs"},
               {"name": "Inventory", "icon": "📦", "url": "/inventory"},
-              {"name": "Search", "icon": "🔍", "url": "/search"},
+              {"name": "Search", "icon": "🔍", "url": "/student_dashboard"},
               {"name": "Students-Directory", "icon": "🔍", "url": "/students_directory"}, 
               {"name": "Lab Utilization", "icon": "📊", "url": "/utilization"},
               {"name": "Software Utility", "icon": "💻", "url": "/os_related"},
-              {"name": "Slurm Facility", "icon": "⚙️", "url": "/slurm/check"},
+              {"name": "Slurm Facility", "icon": "⚙️", "url": "/slurm_facility"},
              
             ] %}
             {% if current_user.is_authenticated and current_user.email == 'admin@cse.iith.ac.in' %}

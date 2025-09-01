@@ -258,6 +258,19 @@ class WorkstationAssignment(db.Model):
         return f"<WSAssign asset={self.workstation_id} roll={self.student_roll} active={self.is_active}>"
 
 
+
+class SlurmAccount(db.Model):
+    __tablename__ = "slurm_account"
+    id = db.Column(db.Integer, primary_key=True)
+    roll = db.Column(
+        db.String(20),
+        db.ForeignKey("student.roll"),   # ✅ Correct FK
+        nullable=False,
+        unique=True
+    )
+    status = db.Column(db.String(20), nullable=False, default="active")
+
+
 # -------------------------
 # Defaults & Seed helper
 # -------------------------

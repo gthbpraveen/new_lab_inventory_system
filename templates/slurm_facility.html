@@ -2,35 +2,54 @@
 {% block title %}Slurm Facility{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-indigo-100 to-blue-200 py-16 px-4">
-  <div class="max-w-xl mx-auto bg-white/30 backdrop-blur-md shadow-lg border border-white/20 rounded-xl p-8 text-center">
+<div class="min-h-screen bg-gradient-to-br from-indigo-100 via-blue-200 to-purple-200 py-16 px-4 flex items-center justify-center">
+  <div class="w-full max-w-2xl bg-white/40 backdrop-blur-lg shadow-2xl rounded-2xl p-10 border border-white/30">
 
-    <h2 class="text-3xl font-bold text-indigo-800 mb-6">Slurm Facility Lookup</h2>
-    <p class="text-gray-700 mb-6">Enter your Roll Number to check for a registered Slurm account.</p>
+    <!-- Heading -->
+    <h2 class="text-3xl font-bold text-indigo-900 text-center mb-6">
+      🔍 Slurm Facility Lookup
+    </h2>
+    <p class="text-gray-600 text-center mb-10">
+      Enter a roll number below to check the Slurm facility access status.
+    </p>
 
-    <form method="POST" action="/slurm/check" class="space-y-4">
-      <input type="text" name="roll" placeholder="Enter Roll Number" required
-             class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400">
-      <button type="submit"
-              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg shadow-md transition duration-300">
-        Search
-      </button>
-      
+    <!-- Form -->
+    <form method="POST" action="/slurm_facility" class="space-y-6">
+      <div>
+        <label for="roll_number" class="block text-left text-sm font-medium text-gray-700 mb-2">
+          Roll Number
+        </label>
+        <input type="text" id="roll_number" name="roll_number"
+          placeholder="e.g., CS21B1012"
+          required
+          class="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-800"
+        >
+      </div>
+
+      <div class="flex justify-center">
+        <button type="submit"
+          class="px-8 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-semibold rounded-xl shadow-lg hover:from-indigo-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-300">
+          Search
+        </button>
+      </div>
     </form>
 
-    {% if result is defined %}
-      <div class="mt-8">
-        {% if result.found == True %}
-          <div class="bg-green-100 text-green-800 font-medium px-4 py-3 rounded shadow">
-            ✅ Slurm account found for <strong>{{ result.roll }}</strong>
-          </div>
-        {% elif result.found == False %}
-          <div class="bg-red-100 text-red-800 font-medium px-4 py-3 rounded shadow">
-            ❌ No Slurm account found for <strong>{{ result.roll }}</strong>
+    <!-- Result Section -->
+    {% if result %}
+      <div class="mt-10 text-center">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Result</h3>
+        {% if result.error %}
+          <p class="text-red-600 font-medium text-lg">⚠️ {{ result.error }}</p>
+        {% elif result.found %}
+          <div class="bg-green-100 text-green-800 px-6 py-4 rounded-xl shadow-md inline-block">
+            ✅ Found: <span class="font-semibold">{{ result.roll }}</span>
+            <br>
+            Status: <span class="font-bold">{{ result.status }}</span>
           </div>
         {% else %}
-          <div class="bg-yellow-100 text-yellow-800 font-medium px-4 py-3 rounded shadow">
-            ⚠️ Unable to connect to the server. Please try again later.
+          <div class="bg-red-100 text-red-700 px-6 py-4 rounded-xl shadow-md inline-block">
+            ❌ No Slurm account found for roll:
+            <span class="font-semibold">{{ result.roll }}</span>
           </div>
         {% endif %}
       </div>

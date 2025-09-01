@@ -449,29 +449,87 @@ def records():
         lab_stats=lab_stats
     )
 
+# routes.py (or inside app.py depending on your structure)
+from flask import render_template, request
+from flask_login import login_required
+from models import db, Student, Equipment, WorkstationAssignment
 
-from flask_login import login_required, current_user
+# Optional: If you have a SlurmAccount model
+# from models import SlurmAccount  
 
-@app.route("/search", methods=["GET", "POST"])
-@login_required
-def search():
+
+
+from models import SlurmAccount, Student   # import models
+
+@app.route("/slurm_facility", methods=["GET", "POST"])
+def slurm_facility():
     result = None
-    message = None
 
     if request.method == "POST":
-        roll = request.form.get("roll").strip()
+        roll_number = request.form.get("roll_number", "").strip()
 
-        # Check if the workstation is allocated
-        result = Workstation.query.filter_by(roll=roll).first()
-
-        if result:
-            # Redirect to detailed student info page
-            return redirect(url_for('student_details', roll=roll))
+        if not roll_number:
+            result = {"roll": None, "found": None, "error": "Roll number is required!"}
         else:
-            # Show not found message
-            message = f"❌ No machine has been allocated for Roll Number: {roll}"
+            account = SlurmAccount.query.filter_by(roll=roll_number).first()
+            if account:
+                result = {"roll": account.roll, "found": True, "status": account.status}
+            else:
+                result = {"roll": roll_number, "found": False}
 
-    return render_template("search.html", result=result, message=message, layout="login_home.html")
+    return render_template("slurm_facility.html", result=result)
+
+@app.route("/student_dashboard", methods=["GET", "POST"])
+@login_required
+def student_dashboard():
+    student = None
+    message = None
+    slurm_exists = False
+    slurm_status = None
+    student_equipment_history = []
+
+    if request.method == "POST":
+        roll = request.form.get("roll", "").strip()
+
+        if not roll:
+            message = "⚠️ Please enter a roll number."
+        else:
+            # Fetch student record
+            student = Student.query.filter_by(roll=roll).first()
+
+            if not student:
+                message = f"❌ Student with roll {roll} not found."
+            else:
+                # Load active assignment if exists
+                if student.active_assignment:
+                    _ = student.active_assignment.asset  
+
+                # Fetch student’s equipment history
+                student_equipment_history = (
+                    db.session.query(EquipmentHistory, Equipment)
+                    .join(Equipment, Equipment.id == EquipmentHistory.equipment_id)
+                    .filter(EquipmentHistory.assigned_to_roll == student.roll)
+                    .order_by(EquipmentHistory.assigned_date.desc())
+                    .all()
+                )
+
+                # ✅ Check Slurm account existence
+                slurm = SlurmAccount.query.filter(
+                    SlurmAccount.roll.ilike(student.roll)
+                ).first()
+
+                if slurm:
+                    slurm_exists = True
+                    slurm_status = slurm.status  # e.g., 'active' or 'inactive'
+
+    return render_template(
+        "student_dashboard.html",
+        student=student,
+        message=message,
+        slurm_exists=slurm_exists,
+        slurm_status=slurm_status,
+        student_equipment_history=student_equipment_history,
+    )
 
 
 
@@ -1446,21 +1504,25 @@ def lab_details(lab_code):
 #     )
 
 
-@app.route("/student/<string:roll>", methods=["GET", "POST"])
-@login_required
-def student_details(roll):
-    student = Workstation.query.filter_by(roll=roll).first_or_404()
 
-    # Equipment assigned to this student
-    assigned_equipment = Equipment.query.filter_by(assigned_to_roll=roll).all()
 
-    # Unassigned equipment for dropdown
-    unassigned_equipment = Equipment.query.filter_by(assigned_to_roll=None).all()
 
-    return render_template("student_details.html",
-                           student=student,
-                           assigned_equipment=assigned_equipment,
-                           unassigned_equipment=unassigned_equipment)
+
+
+
+
+
+
+
+
+
+
+
+from flask import render_template, make_response
+from flask_login import login_required
+from weasyprint import HTML
+from models import WorkstationAsset, Equipment, SlurmAccount
+
 
 
 from datetime import datetime
@@ -1496,21 +1558,7 @@ def assign_equipment_to_student(roll):
 
 
 
-@app.route("/slurm/check", methods=["GET", "POST"])
-def slurm_check():
-    result = None
-    if request.method == "POST":
-        roll = request.form.get("roll")
-        status = check_user_on_remote(roll)  # ✅ THIS CALLS THE FUNCTION
 
-        if status is True:
-            result = {"roll": roll, "found": True}
-        elif status is False:
-            result = {"roll": roll, "found": False}
-        else:
-            result = {"roll": roll, "found": None}  # SSH or other error
-
-    return render_template("slurm_facility.html", result=result)
 
 
 import paramiko
@@ -1735,24 +1783,13 @@ from weasyprint import HTML
 from flask import render_template, make_response
 import pdfkit
 
-@app.route('/generate_equipment_pdf/<int:student_id>')
-def generate_equipment_pdf(student_id):
-    student = Workstation.query.get_or_404(student_id)
-    # assigned_equipment = Equipment.query.filter_by(assigned_to=student_id).all()
-    # assigned_equipment = Equipment.query.filter_by(assigned_to_id=student_id).all()
-    assigned_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll).all()
+from flask import make_response, render_template
+from weasyprint import HTML
+from models import WorkstationAsset, Equipment, SlurmAccount
 
-    # Use the same template that renders the HTML view
-    rendered = render_template('pdf_student.html', student=student, assigned_equipment=assigned_equipment)
 
-    # Convert to PDF using WeasyPrint
-    from weasyprint import HTML
-    pdf_file = HTML(string=rendered).write_pdf()
 
-    response = make_response(pdf_file)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=Student_{student.roll}_Details.pdf'
-    return response
+
 
 from flask import request, render_template, redirect, flash
 from google_calendar import create_event
@@ -3348,6 +3385,98 @@ def lab_allotments(lab_code):
         stats=stats
     )
 
+
+    
+@app.route("/student/<string:roll>", methods=["GET", "POST"])
+@login_required
+def student_details(roll):
+    # Fetch student record
+    student = Student.query.filter_by(roll=roll).first_or_404()
+
+    # Equipment assigned to this student
+    assigned_equipment = Equipment.query.filter_by(assigned_to_roll=roll).all()
+
+    # Unassigned equipment (for dropdown if needed)
+    unassigned_equipment = Equipment.query.filter_by(assigned_to_roll=None).all()
+
+    # Slurm account status
+    slurm_account = SlurmAccount.query.filter_by(roll=roll).first()
+    slurm_status = slurm_account.status if slurm_account else None
+    slurm_exists = bool(slurm_account)
+
+    return render_template(
+        "student_details.html",
+        student=student,
+        assigned_equipment=assigned_equipment,
+        unassigned_equipment=unassigned_equipment,
+        slurm_exists=slurm_exists,
+        slurm_status=slurm_status
+    )
+
+
+from flask import make_response, render_template
+from weasyprint import HTML
+from flask_login import login_required
+from models import Student, Equipment, SlurmAccount
+
+@app.route("/student_details/<roll>")
+@login_required
+def generate_student_pdf(roll):
+    # 1️⃣ Fetch student record
+    student = Student.query.filter_by(roll=roll).first_or_404()
+    workstation_assignments=student.workstation_assignments
+
+    # 2️⃣ Workstation assignments (already via relationship)
+    workstation_assignments_sorted = sorted(
+    student.workstation_assignments,
+    key=lambda x: not x.is_active  # Active=True first
+    )
+
+    # 3️⃣ Assigned equipment (current)
+    assigned_equipment = student.assigned_equipment
+
+    # 4️⃣ Equipment history (query full objects)
+    equipment_history = EquipmentHistory.query.filter_by(assigned_to_roll=student.roll).all()
+    equipment_history_sorted = sorted(
+    equipment_history,
+    key=lambda h: h.unassigned_date is not None  # Active first (unassigned_date=None)
+    )
+# Attach equipment object and staff incharge dynamically
+    for h in equipment_history:
+        h.equipment_obj = Equipment.query.get(h.equipment_id)  # actual Equipment object
+    # staff in-charge of the lab where the equipment belongs
+        if h.equipment_obj and h.equipment_obj.assigned_to_roll:
+            cubicle = Cubicle.query.filter_by(student_roll=h.equipment_obj.assigned_to_roll).first()
+            h.staff_incharge = cubicle.room_lab.staff_incharge if cubicle else '—'
+        else:
+        # fallback: if equipment has location mapped to lab
+            h.staff_incharge = '—'
+
+
+    # 5️⃣ Slurm account info
+    slurm = SlurmAccount.query.filter_by(roll=roll).first()
+    slurm_exists = bool(slurm)
+    slurm_status = slurm.status if slurm else None
+
+    # 6️⃣ Render HTML
+    rendered = render_template(
+        "student_details.html",  # your PDF-specific template
+        student=student,
+        workstation_assignments=workstation_assignments_sorted,
+        assigned_equipment=assigned_equipment,
+        equipment_history=equipment_history_sorted,
+        slurm_exists=slurm_exists,
+        slurm_status=slurm_status
+    )
+
+    # 7️⃣ Generate PDF using WeasyPrint
+    pdf = HTML(string=rendered).write_pdf()
+
+    # 8️⃣ Return PDF as response (inline view)
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename={student.roll}_report.pdf'
+    return response
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0",debug=True, port=5009)

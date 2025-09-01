@@ -1,0 +1,182 @@
+{% extends "login_home.html" %}
+{% block title %}Student Allocation Dashboard{% endblock %}
+{% block content %}
+
+<div class="min-h-screen py-10 bg-gradient-to-br from-sky-800 via-sky-200 to-sky-800 text-gray-900">
+  <div class="max-w-5xl mx-auto bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8">
+
+    <!-- 🔍 Search Form -->
+    <h1 class="text-3xl font-extrabold text-center text-sky-900 mb-6">Student Allocation Search</h1>
+    <form method="POST" class="flex gap-4 mb-8">
+      <input type="text" id="roll" name="roll" placeholder="Enter Roll Number" required
+        class="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+      <button type="submit"
+        class="bg-sky-700 hover:bg-sky-900 text-white font-semibold px-6 py-2 rounded-lg shadow transition">
+        🔍 Search
+      </button>
+    </form>
+
+    <!-- 🚨 Not Found -->
+    {% if message %}
+    <div class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded-lg shadow-md mb-6">
+      ⚠️ {{ message }}
+    </div>
+    {% endif %}
+
+    {% if student %}
+    <!-- 🎓 Student Found -->
+    <div class="space-y-10 animate-fade-in">
+
+      <!-- 👤 Student Profile -->
+      <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-sky-600">
+        <h2 class="text-xl font-bold text-sky-800 mb-4">👤 Student Profile</h2>
+        <div class="grid grid-cols-2 gap-4 text-gray-700">
+          <div><strong>Roll:</strong> {{ student.roll }}</div>
+          <div><strong>Name:</strong> {{ student.name }}</div>
+          <div><strong>Course:</strong> {{ student.course }}</div>
+          <div><strong>Year:</strong> {{ student.year }}</div>
+          <div><strong>Joining Year:</strong> {{ student.joining_year }}</div>
+          <div><strong>Faculty:</strong> {{ student.faculty }}</div>
+          <div><strong>Email:</strong> {{ student.email }}</div>
+          <div><strong>Phone:</strong> {{ student.phone }}</div>
+        </div>
+      </div>
+
+      <!-- 🪑 Cubicle Allocation -->
+      <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-600">
+        <h2 class="text-xl font-bold text-green-800 mb-4">🪑 Cubicle Allocation</h2>
+        {% if student.cubicle %}
+          <p><strong>Room:</strong> {{ student.cubicle.room_lab.name }}</p>
+          <p><strong>Cubicle No:</strong> {{ student.cubicle.number }}</p>
+        {% else %}
+          <p class="text-red-600">❌ No cubicle assigned</p>
+        {% endif %}
+      </div>
+
+
+
+      <!-- 💻 Workstation Allocation -->
+ <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-600">
+  <h2 class="text-xl font-bold text-purple-800 mb-4">💻 Workstation Allocation</h2>
+  {% if student.workstation_assignments %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border border-gray-300 rounded-lg">
+        <thead class="bg-gray-100 text-gray-800">
+          <tr>
+            <th class="px-4 py-2">Asset Serial</th>
+            <th class="px-4 py-2">Issue Date</th>
+            <th class="px-4 py-2">Required Till</th>
+            <th class="px-4 py-2">Return Date</th>
+            <th class="px-4 py-2">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for ws in student.workstation_assignments %}
+          <tr>
+            <td class="px-4 py-2">{{ ws.asset.serial }}</td>
+            <td class="px-4 py-2">{{ ws.issue_date }}</td>
+            <td class="px-4 py-2">{{ ws.system_required_till }}</td>
+            <td class="px-4 py-2">{{ ws.end_date or "-" }}</td>
+            <td class="px-4 py-2">
+              {% if ws.end_date %}
+                ✅ Returned
+              {% else %}
+                🟢 Active
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-red-600">❌ No workstation records found</p>
+  {% endif %}
+</div> 
+
+
+<!-- 🖥️ IT Equipment Allocation -->
+<div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-indigo-600">
+  <h2 class="text-xl font-bold text-indigo-800 mb-4">🖥️ IT Equipment Allocation</h2>
+  {% if student_equipment_history %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border border-gray-300 rounded-lg">
+        <thead class="bg-gray-100 text-gray-800">
+          <tr>
+            <th class="px-4 py-2">Name</th>
+            <th class="px-4 py-2">Category</th>
+            <th class="px-4 py-2">Serial</th>
+            <th class="px-4 py-2">Assigned Date</th>
+            <th class="px-4 py-2">Return Date</th>
+            <th class="px-4 py-2">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for hist, eq in student_equipment_history %}
+          <tr>
+            <td class="px-4 py-2">{{ eq.name }}</td>
+            <td class="px-4 py-2">{{ eq.category }}</td>
+            <td class="px-4 py-2">{{ eq.serial_number }}</td>
+            <td class="px-4 py-2">{{ hist.assigned_date or "-" }}</td>
+            <td class="px-4 py-2">{{ hist.unassigned_date or "-" }}</td>
+            <td class="px-4 py-2">
+              {% if hist.unassigned_date %}
+                ✅ Returned
+              {% else %}
+                🟢 Active
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-red-600">❌ No IT equipment records found</p>
+  {% endif %}
+</div>
+ 
+
+<!-- ⚡ Slurm Account -->
+<div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-600">
+  <h2 class="text-xl font-bold text-yellow-800 mb-4">⚡ Slurm Account</h2>
+  {% if slurm_exists %}
+    <p class="text-green-700 font-semibold">✅ Slurm account exists for {{ student.roll }}</p>
+    <p>Status: <strong>{{ slurm_status }}</strong></p>
+  {% else %}
+    <p class="text-red-600">❌ No Slurm account found</p>
+  {% endif %}
+</div>
+
+
+
+      <!-- 📄 Download PDF -->
+       <div class="text-center">
+<a href="{{ url_for('generate_student_pdf', roll=student.roll) }}" 
+   target="_blank"
+   class="bg-sky-600 hover:bg-sky-800 text-white px-6 py-2 rounded-lg shadow-md font-semibold">
+  📄 Download PDF Report
+</a>
+
+
+      </div> 
+    </div>
+    {% endif %}
+
+    <div class="mt-8 text-center">
+      <a href="/login_home" class="text-sky-700 font-medium hover:underline">← Back to Home</a>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.6s ease-in-out;
+}
+</style>
+
+{% endblock %}
