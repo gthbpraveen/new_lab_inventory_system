@@ -8,36 +8,46 @@
     IT Equipment Assignment for {{ student.name }} ({{ student.roll }})
   </h2>
 
-  <!-- Assigned Equipment History -->
-  <div class="mb-8 bg-white rounded-xl shadow p-4 border border-gray-200">
-    <h3 class="text-xl font-semibold text-gray-800 mb-3">Currently Assigned</h3>
-    {% if student_equipment %}
-    <table class="min-w-full text-center border">
-      <thead class="bg-gray-100 text-gray-700">
-        <tr>
-          <th class="px-4 py-2 border-b">Category</th>
-          <th class="px-4 py-2 border-b">Serial</th>
-          <th class="px-4 py-2 border-b">Model</th>
-          <th class="px-4 py-2 border-b">Location</th>
-          <th class="px-4 py-2 border-b">Intender</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for eq in student_equipment %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-2 border">{{ eq.category }}</td>
-          <td class="px-4 py-2 border">{{ eq.serial_number }}</td>
-          <td class="px-4 py-2 border">{{ eq.manufacturer }} {{ eq.model }}</td>
-          <td class="px-4 py-2 border">{{ eq.location }}</td>
-          <td class="px-4 py-2 border">{{ eq.intender_name }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p class="text-gray-500">No equipment currently assigned.</p>
-    {% endif %}
-  </div>
+<!-- Assigned Equipment History -->
+<div class="mb-8 bg-white rounded-xl shadow p-4 border border-gray-200">
+  <h3 class="text-xl font-semibold text-gray-800 mb-3">Currently Assigned</h3>
+  {% if student_equipment %}
+  <table class="min-w-full text-center border">
+    <thead class="bg-gray-100 text-gray-700">
+      <tr>
+        <th class="px-4 py-2 border-b">Category</th>
+        <th class="px-4 py-2 border-b">Serial</th>
+        <th class="px-4 py-2 border-b">Model</th>
+        <th class="px-4 py-2 border-b">Location</th>
+        <th class="px-4 py-2 border-b">Intender</th>
+        <th class="px-4 py-2 border-b">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for eq in student_equipment %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-2 border">{{ eq.category }}</td>
+        <td class="px-4 py-2 border">{{ eq.serial_number }}</td>
+        <td class="px-4 py-2 border">{{ eq.manufacturer }} {{ eq.model }}</td>
+        <td class="px-4 py-2 border">{{ eq.location }}</td>
+        <td class="px-4 py-2 border">{{ eq.intender_name }}</td>
+        <td class="px-4 py-2 border">
+          <form method="post">
+            <input type="hidden" name="return_equipment_id" value="{{ eq.id }}">
+            <button type="submit"
+                    class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
+              Return
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-gray-500">No equipment currently assigned.</p>
+  {% endif %}
+</div>
 
   <!-- Filter Form -->
   <form method="get" class="mb-6 grid grid-cols-2 gap-6 bg-white p-4 rounded-xl shadow border border-gray-200">
@@ -118,60 +128,50 @@
   </form>
 
   <!-- Equipment by Status (Shown Only After Filter) -->
-  {% if request.args.get('location') or request.args.get('intender_name') %}
-    {% for status, eq_list in {
-        'Available': available_equipment,
-        'Issued': issued_equipment,
-        'Scrapped': scrapped_equipment,
-        'Retired': retired_equipment
-    }.items() %}
-    <div class="bg-white rounded-xl shadow p-4 border border-gray-200 mb-6">
-      <h3 class="text-xl font-semibold text-gray-800 mb-3">{{ status }} Equipment</h3>
-      {% if eq_list %}
-      <table class="min-w-full text-center border">
-        <thead class="bg-gray-100 text-gray-700">
-          <tr>
-            <th class="px-4 py-2 border-b">Category</th>
-            <th class="px-4 py-2 border-b">Serial</th>
-            <th class="px-4 py-2 border-b">Model</th>
-            <th class="px-4 py-2 border-b">Location</th>
-            <th class="px-4 py-2 border-b">Intender</th>
-            {% if status == 'Available' %}
-            <th class="px-4 py-2 border-b">Action</th>
-            {% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for eq in eq_list %}
-          <tr>
-            <td class="px-4 py-2 border">{{ eq.category }}</td>
-            <td class="px-4 py-2 border">{{ eq.serial_number }}</td>
-            <td class="px-4 py-2 border">{{ eq.manufacturer }} {{ eq.model }}</td>
-            <td class="px-4 py-2 border">{{ eq.location }}</td>
-            <td class="px-4 py-2 border">{{ eq.intender_name }}</td>
-            {% if status == 'Available' %}
-            <td class="px-4 py-2 border">
-              <form method="post">
-                <input type="hidden" name="equipment_id" value="{{ eq.id }}">
-                <input type="date" name="issue_date" class="border px-2 py-1 rounded">
-                <input type="date" name="expected_return" class="border px-2 py-1 rounded">
-                <button type="submit"
-                        class="ml-2 bg-green-600 text-white px-3 py-1 rounded">
-                  Assign
-                </button>
-              </form>
-            </td>
-            {% endif %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% else %}
-      <p class="text-gray-500">No {{ status.lower() }} equipment found.</p>
-      {% endif %}
-    </div>
-    {% endfor %}
-  {% endif %}
+<!-- Equipment by Status (Only Available after search) -->
+{% if request.args.get('location') or request.args.get('intender_name') %}
+  <div class="bg-white rounded-xl shadow p-4 border border-gray-200 mb-6">
+    <h3 class="text-xl font-semibold text-gray-800 mb-3">Available Equipment</h3>
+    {% if available_equipment %}
+    <table class="min-w-full text-center border">
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="px-4 py-2 border-b">Category</th>
+          <th class="px-4 py-2 border-b">Serial</th>
+          <th class="px-4 py-2 border-b">Model</th>
+          <th class="px-4 py-2 border-b">Location</th>
+          <th class="px-4 py-2 border-b">Intender</th>
+          <th class="px-4 py-2 border-b">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for eq in available_equipment %}
+        <tr>
+          <td class="px-4 py-2 border">{{ eq.category }}</td>
+          <td class="px-4 py-2 border">{{ eq.serial_number }}</td>
+          <td class="px-4 py-2 border">{{ eq.manufacturer }} {{ eq.model }}</td>
+          <td class="px-4 py-2 border">{{ eq.location }}</td>
+          <td class="px-4 py-2 border">{{ eq.intender_name }}</td>
+          <td class="px-4 py-2 border">
+            <form method="post">
+              <input type="hidden" name="equipment_id" value="{{ eq.id }}">
+              <input type="date" name="issue_date" class="border px-2 py-1 rounded">
+              <input type="date" name="expected_return" class="border px-2 py-1 rounded">
+              <button type="submit"
+                      class="ml-2 bg-green-600 text-white px-3 py-1 rounded">
+                Assign
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="text-gray-500">No available equipment found.</p>
+    {% endif %}
+  </div>
+{% endif %}
 
   <div class="mt-6">
     <a href="{{ url_for('allotment_options', roll=student.roll) }}"

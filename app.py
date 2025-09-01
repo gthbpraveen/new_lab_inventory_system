@@ -2324,7 +2324,7 @@ from flask_login import login_required, current_user
 from sqlalchemy import or_
 from models import db, Student, Equipment, EquipmentHistory
 
-# --- IT Equipment Allocation (allow multiple per student) ---
+# --- IT Equipment Assignment (only available equipment) ---
 @app.route("/it_equipment_assign/<roll>", methods=["GET", "POST"])
 @login_required
 def it_equipment_assign(roll):
@@ -2333,8 +2333,8 @@ def it_equipment_assign(roll):
     # ---------- Assign equipment ----------
     if request.method == "POST" and "equipment_id" in request.form:
         equipment_id = request.form.get("equipment_id", type=int)
-        issue_date = request.form.get("issue_date")          # optional in this view
-        expected_return = request.form.get("expected_return")  # optional in this view
+        issue_date = request.form.get("issue_date")          # optional
+        expected_return = request.form.get("expected_return")  # optional
 
         eq = Equipment.query.get_or_404(equipment_id)
 
@@ -2349,7 +2349,7 @@ def it_equipment_assign(roll):
             eq.assigned_date = datetime.utcnow()
             eq.status = "Issued"
 
-            # History entry (optional but recommended)
+            # History entry
             hist = EquipmentHistory(
                 equipment_id=eq.id,
                 assigned_to_roll=student.roll,
@@ -2370,11 +2370,46 @@ def it_equipment_assign(roll):
             intender_name=request.args.get("intender_name", "")
         ))
 
-    # ---------- Filters (independent) ----------
+    # ---------- Filters ----------
     location = (request.args.get("location") or "").strip()
     intender_name = (request.args.get("intender_name") or "").strip()
 
     # Base query with optional filters applied
+    base_q = Equipment.query
+    if location:
+        base_q = base_q.filter(Equipment.location == location)
+    if intender_name:
+        base_q = base_q.filter(Equipment.intender_name == intender_name)
+
+    # ✅ Only Available equipment
+    available_equipment = base_q.filter(
+        Equipment.assigned_to_roll.is_(None),
+        or_(Equipment.status.is_(None), Equipment.status == "Available")
+    ).order_by(Equipment.manufacturer, Equipment.model).all()
+
+    # Student’s current assignments (history panel)
+    student_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll) \
+        .order_by(Equipment.assigned_date.desc().nullslast()) \
+        .all()
+
+    return render_template(
+        "it_equipment_assign.html",
+        student=student,
+        available_equipment=available_equipment,
+        student_equipment=student_equipment,
+    )
+
+
+
+# --- IT Equipment by Location + Intender ---
+@app.route("/it_equipment_by_location_faculty_staff", methods=["GET"])
+@login_required
+def it_equipment_by_location_faculty_staff():
+    # Filters
+    location = (request.args.get("location") or "").strip()
+    intender_name = (request.args.get("intender_name") or "").strip()
+
+    # Base query with optional filters
     base_q = Equipment.query
     if location:
         base_q = base_q.filter(Equipment.location == location)
@@ -2397,21 +2432,14 @@ def it_equipment_assign(roll):
     retired_equipment = base_q.filter(Equipment.status == "Retired") \
         .order_by(Equipment.manufacturer, Equipment.model).all()
 
-    # Student’s current assignments (history panel)
-    student_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll) \
-        .order_by(Equipment.assigned_date.desc().nullslast()) \
-        .all()
-
     return render_template(
-        "it_equipment_assign.html",
-        student=student,
-        # lists for the four tables
+        "it_equipment_by_location_faculty_staff.html",
+        location=location,
+        intender_name=intender_name,
         available_equipment=available_equipment,
         issued_equipment=issued_equipment,
         scrapped_equipment=scrapped_equipment,
         retired_equipment=retired_equipment,
-        # history panel
-        student_equipment=student_equipment,
     )
 
 
