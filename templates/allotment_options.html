@@ -167,147 +167,193 @@
         </a>
       </div>
     </div>
+<!-- Workstations -->
+<div id="workstations" class="tab-content hidden">
+  <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
+    <h3 class="text-xl font-bold text-indigo-800 mb-4">💻 Workstation Assignments</h3>
 
-    <!-- Workstations -->
-    <div id="workstations" class="tab-content hidden">
-      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
-        <h3 class="text-xl font-bold text-indigo-800 mb-4">💻 Workstation Assignments</h3>
-        <h4 class="font-semibold text-gray-800 mb-2">Current</h4>
-        {% if workstation_active %}
-          <div class="overflow-x-auto rounded-lg border border-gray-200">
-            <table class="min-w-full text-center">
-              <thead class="bg-gray-50 text-gray-700">
-                <tr>
-                  <th class="px-4 py-2 border-b">Serial</th>
-                  <th class="px-4 py-2 border-b">Model</th>
-                  <th class="px-4 py-2 border-b">Issue Date</th>
-                  <th class="px-4 py-2 border-b">Required Till</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                {% for ws in workstation_active %}
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-2">{{ ws.asset.serial }}</td>
-                  <td class="px-4 py-2">{{ ws.asset.manufacturer }} {{ ws.asset.model }}</td>
-                  <td class="px-4 py-2">{{ ws.issue_date }}</td>
-                  <td class="px-4 py-2">{{ ws.system_required_till }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="text-gray-500 mb-4">No active workstations</p>
-        {% endif %}
-
-        <div class="mt-8">
-          <h3 class="text-xl font-semibold text-gray-800 mb-4">Workstation Assignment History</h3>
-          <div class="overflow-x-auto rounded-lg border border-gray-200">
-            <table class="min-w-full text-center">
-              <thead class="bg-gray-50 text-gray-700">
-                <tr>
-                  <th class="px-4 py-2 border-b">Serial</th>
-                  <th class="px-4 py-2 border-b">Model</th>
-                  <th class="px-4 py-2 border-b">Issue Date</th>
-                  <th class="px-4 py-2 border-b">Required Till</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                {% for ws in workstation_active %}
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-2">{{ ws.asset.serial }}</td>
-                  <td class="px-4 py-2">{{ ws.asset.manufacturer }} {{ ws.asset.model }}</td>
-                  <td class="px-4 py-2">{{ ws.issue_date }}</td>
-                  <td class="px-4 py-2">{{ ws.system_required_till }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <a href="{{ url_for('assignment_new', roll=student.roll) }}"
-           class="mt-6 inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
-          Assign New Workstation
-        </a>
+    <!-- Current Workstations -->
+    <h4 class="font-semibold text-gray-800 mb-2">Current</h4>
+    {% if workstation_active %}
+      <div class="overflow-x-auto rounded-lg border border-gray-200">
+        <table class="min-w-full text-center">
+          <thead class="bg-gray-50 text-gray-700">
+            <tr>
+              <th class="px-4 py-2 border-b">Name</th>
+              <th class="px-4 py-2 border-b">Category</th>
+              <th class="px-4 py-2 border-b">Serial</th>
+              <th class="px-4 py-2 border-b">Status</th>
+              <th class="px-4 py-2 border-b">Assigned Date</th>
+              <th class="px-4 py-2 border-b">Return Date</th>
+              <th class="px-4 py-2 border-b">Assigned By</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for ws in workstation_active %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2">{{ ws.asset.manufacturer or ws.asset.otherManufacturer }}</td>
+              <td class="px-4 py-2">{{ ws.asset.model }}</td>
+              <td class="px-4 py-2">{{ ws.asset.serial }}</td>
+              <td class="px-4 py-2"><span class="text-green-600 font-semibold">Active</span></td>
+              <td class="px-4 py-2">{{ ws.issue_date[:10] if ws.issue_date else '—' }}</td>
+              <td class="px-4 py-2">{{ ws.system_required_till[:10] if ws.system_required_till else '—' }}</td>
+              <td class="px-4 py-2">{{ ws.student.cubicle.room_lab.staff_incharge if ws.student and ws.student.cubicle else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-gray-500 py-3">No active workstations</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-    </div>
+    {% else %}
+      <p class="text-gray-500 mb-4">No active workstations</p>
+    {% endif %}
 
-    <!-- Equipment -->
-    <div id="equipment" class="tab-content hidden">
-      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
-        <h3 class="text-xl font-bold text-indigo-800 mb-4">🖥️ IT Equipment</h3>
-        <h4 class="font-semibold text-gray-800 mb-2">Current</h4>
-        {% if equipment_active %}
-          <div class="overflow-x-auto rounded-lg border border-gray-200">
-            <table class="min-w-full text-center">
-              <thead class="bg-gray-50 text-gray-700">
-                <tr>
-                  <th class="px-4 py-2 border-b">Serial</th>
-                  <th class="px-4 py-2 border-b">Model</th>
-                  <th class="px-4 py-2 border-b">Issue Date</th>
-                  <th class="px-4 py-2 border-b">Expected Return</th>
-                  <th class="px-4 py-2 border-b">Actual Return</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                {% for a in student.workstation_assignments %}
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-2">{{ a.asset.serial }}</td>
-                  <td class="px-4 py-2">{{ a.asset.model }}</td>
-                  <td class="px-4 py-2">{{ a.issue_date }}</td>
-                  <td class="px-4 py-2">{{ a.system_required_till }}</td>
-                  <td class="px-4 py-2">
-                    {% if a.end_date %}
-                      {{ a.end_date }}
-                    {% else %}
-                      <span class="text-red-600 font-semibold">Not Returned</span>
-                    {% endif %}
-                  </td>
-                </tr>
+    <!-- Workstation History -->
+    <h4 class="font-semibold text-gray-800 mt-6 mb-2">History</h4>
+    {% if workstation_history %}
+      <div class="overflow-x-auto rounded-lg border border-gray-200">
+        <table class="min-w-full text-center">
+          <thead class="bg-gray-50 text-gray-700">
+            <tr>
+              <th class="px-4 py-2 border-b">Name</th>
+              <th class="px-4 py-2 border-b">Category</th>
+              <th class="px-4 py-2 border-b">Serial</th>
+              <th class="px-4 py-2 border-b">Status</th>
+              <th class="px-4 py-2 border-b">Assigned Date</th>
+              <th class="px-4 py-2 border-b">Return Date</th>
+              <th class="px-4 py-2 border-b">Assigned By</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for ws in workstation_history %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2">{{ ws.asset.manufacturer or ws.asset.otherManufacturer }}</td>
+              <td class="px-4 py-2">{{ ws.asset.model }}</td>
+              <td class="px-4 py-2">{{ ws.asset.serial }}</td>
+              <td class="px-4 py-2">
+                {% if ws.is_active %}
+                  <span class="text-green-600 font-semibold">Active</span>
                 {% else %}
-                <tr>
-                  <td colspan="5" class="text-center text-gray-500 py-3">No workstation assignments found.</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="text-gray-500 mb-4">No active equipment</p>
-        {% endif %}
-
-        {% if equipment_history %}
-          <h4 class="font-semibold text-gray-800 mt-6 mb-2">History</h4>
-          <div class="overflow-x-auto rounded-lg border border-gray-200">
-            <table class="min-w-full text-center">
-              <thead class="bg-gray-50 text-gray-700">
-                <tr>
-                  <th class="px-4 py-2 border-b">Type</th>
-                  <th class="px-4 py-2 border-b">Details</th>
-                  <th class="px-4 py-2 border-b">Issue Date</th>
-                  <th class="px-4 py-2 border-b">Return Date</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                {% for eq in equipment_history %}
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-2">{{ eq.type }}</td>
-                  <td class="px-4 py-2">{{ eq.details }}</td>
-                  <td class="px-4 py-2">{{ eq.issue_date }}</td>
-                  <td class="px-4 py-2">{{ eq.return_date or "Not Returned" }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="text-gray-500">No equipment history</p>
-        {% endif %}
+                  <span class="text-red-600 font-semibold">Returned</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2">{{ ws.issue_date[:10] if ws.issue_date else '—' }}</td>
+              <td class="px-4 py-2">{{ ws.end_date[:10] if ws.end_date else '—' }}</td>
+              <td class="px-4 py-2">{{ ws.student.cubicle.room_lab.staff_incharge if ws.student and ws.student.cubicle else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-gray-500 py-3">No workstation history found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-    </div>
+    {% else %}
+      <p class="text-gray-500">No workstation history</p>
+    {% endif %}
 
+    <a href="{{ url_for('assignment_new', roll=student.roll) }}"
+       class="mt-6 inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+      Assign New Workstation
+    </a>
   </div>
+</div>
+
+<!-- Equipment -->
+<div id="equipment" class="tab-content hidden">
+  <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
+    <h3 class="text-xl font-bold text-indigo-800 mb-4">🖥️ IT Equipment</h3>
+
+    <!-- Current Equipment -->
+    <h4 class="font-semibold text-gray-800 mb-2">Current</h4>
+    {% if equipment_active %}
+      <div class="overflow-x-auto rounded-lg border border-gray-200">
+        <table class="min-w-full text-center">
+          <thead class="bg-gray-50 text-gray-700">
+            <tr>
+              <th class="px-4 py-2 border-b">Name</th>
+              <th class="px-4 py-2 border-b">Category</th>
+              <th class="px-4 py-2 border-b">Serial</th>
+              <th class="px-4 py-2 border-b">Status</th>
+              <th class="px-4 py-2 border-b">Assigned Date</th>
+              <th class="px-4 py-2 border-b">Return Date</th>
+              <th class="px-4 py-2 border-b">Assigned By</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for eq in equipment_active %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2">{{ eq.name }}</td>
+              <td class="px-4 py-2">{{ eq.category }}</td>
+              <td class="px-4 py-2">{{ eq.serial_number }}</td>
+              <td class="px-4 py-2"><span class="text-green-600 font-semibold">Active</span></td>
+              <td class="px-4 py-2">{{ eq.assigned_date or '—' }}</td>
+              <td class="px-4 py-2">{{ eq.expected_return_date or '—' }}</td>
+              <td class="px-4 py-2">{{ eq.assigned_by or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-gray-500 py-3">No active equipment found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-gray-500 mb-4">No active equipment</p>
+    {% endif %}
+
+    <!-- Equipment History -->
+    <h4 class="font-semibold text-gray-800 mt-6 mb-2">History</h4>
+    {% if equipment_history %}
+      <div class="overflow-x-auto rounded-lg border border-gray-200">
+        <table class="min-w-full text-center">
+          <thead class="bg-gray-50 text-gray-700">
+            <tr>
+              <th class="px-4 py-2 border-b">Name</th>
+              <th class="px-4 py-2 border-b">Category</th>
+              <th class="px-4 py-2 border-b">Serial</th>
+              <th class="px-4 py-2 border-b">Status</th>
+              <th class="px-4 py-2 border-b">Assigned Date</th>
+              <th class="px-4 py-2 border-b">Return Date</th>
+              <th class="px-4 py-2 border-b">Assigned By</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for eq in equipment_history %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2">{{ eq.equipment_obj.name if eq.equipment_obj else '—' }}</td>
+              <td class="px-4 py-2">{{ eq.equipment_obj.category if eq.equipment_obj else '—' }}</td>
+              <td class="px-4 py-2">{{ eq.equipment_obj.serial_number if eq.equipment_obj else '—' }}</td>
+              <td class="px-4 py-2">
+                {% if not eq.unassigned_date %}
+                  <span class="text-green-600 font-semibold">Active</span>
+                {% else %}
+                  <span class="text-red-600 font-semibold">Returned</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2">{{ eq.assigned_date or '—' }}</td>
+              <td class="px-4 py-2">{{ eq.unassigned_date or '—' }}</td>
+              <td class="px-4 py-2">{{ eq.staff_incharge or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-gray-500 py-3">No equipment history found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-gray-500">No equipment history</p>
+    {% endif %}
+  </div>
+</div>
+>
 
   <!-- Bottom actions -->
   <div class="mt-10 flex justify-center gap-4">

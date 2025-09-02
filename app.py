@@ -2681,6 +2681,7 @@ def allotted_roll_check():
 #     )
 # Hub Page: Allotment Options
 @app.route("/allotment_options/<roll>")
+@login_required
 def allotment_options(roll):
     student = Student.query.get(roll)
     if not student:
@@ -2690,16 +2691,14 @@ def allotment_options(roll):
     # --- Current Cubicle ---
     current_cubicle = Cubicle.query.filter_by(student_roll=roll).first()
 
-    # --- Cubicle History (⚠️ You don’t have a history table yet) ---
-    # For now, we’ll just return the current cubicle in a list.
-    cubicle_history = []
-    if current_cubicle:
-        cubicle_history.append(current_cubicle)
+    # --- Cubicle History (optional, for now just current) ---
+    cubicle_history = [current_cubicle] if current_cubicle else []
 
     # --- Workstations ---
     workstation_active = (
         WorkstationAssignment.query
         .filter_by(student_roll=roll, is_active=True)
+        .order_by(WorkstationAssignment.issue_date.desc())
         .all()
     )
     workstation_history = (
@@ -2715,12 +2714,19 @@ def allotment_options(roll):
         .filter_by(assigned_to_roll=roll)
         .all()
     )
+    # attach Equipment object for each history entry
     equipment_history = (
         EquipmentHistory.query
         .filter_by(assigned_to_roll=roll)
         .order_by(EquipmentHistory.assigned_date.desc())
         .all()
     )
+    for eq in equipment_history:
+        eq.equipment_obj = Equipment.query.get(eq.equipment_id)
+        # optional: get lab staff incharge
+        student_assigned = Student.query.filter_by(roll=eq.assigned_to_roll).first()
+        cubicle = student_assigned.cubicle if student_assigned else None
+        eq.staff_incharge = cubicle.room_lab.staff_incharge if cubicle else "—"
 
     return render_template(
         "allotment_options.html",
@@ -3424,6 +3430,8 @@ from models import Student, Equipment, SlurmAccount
 def generate_student_pdf(roll):
     # 1️⃣ Fetch student record
     student = Student.query.filter_by(roll=roll).first_or_404()
+    
+    
     workstation_assignments=student.workstation_assignments
 
     # 2️⃣ Workstation assignments (already via relationship)
