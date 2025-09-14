@@ -38,7 +38,7 @@
     margin-bottom: 1.25rem;
   }
 
-  .form-group input {
+  .form-group input, .form-group select {
     width: 100%;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
@@ -48,7 +48,7 @@
     font-size: 1rem;
   }
 
-  .form-group input:focus {
+  .form-group input:focus, .form-group select:focus {
     outline: none;
     border-color: #4f46e5;
     background: rgba(255, 255, 255, 0.6);
@@ -108,7 +108,7 @@
     <!-- Register Card -->
     <div class="glass-card">
       <h2 class="text-xl font-semibold text-center text-indigo-700 mb-2">Create Your Account</h2>
-      <p class="text-sm text-center mb-4">Use your @cse.iith.ac.in email to register</p>
+      <p class="text-sm text-center mb-4">Use your @iith.ac.in/@cse.iith.ac.in email to register</p>
 
       <!-- Flash messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -124,6 +124,15 @@
       <form method="POST" action="/register">
         <div class="form-group">
           <input name="email" type="email" placeholder="Enter your official email" required>
+        </div>
+        <div class="form-group">
+          <select name="role" required>
+            <option value="" disabled selected>Select your role</option>
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+          </select>
         </div>
         <div class="form-group">
           <input name="password" type="password" placeholder="Choose a password" required>

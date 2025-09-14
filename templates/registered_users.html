@@ -36,7 +36,7 @@
             {{ user.approved_at.strftime('%Y-%m-%d %H:%M') if user.approved_at else "N/A" }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-            {{ "Admin" if user.email == "admin@cse.iith.ac.in" else "Normal User" }}
+            {{ "Super Admin" if user.email == "admin@cse.iith.ac.in" else user.role }}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-sm">
   {% if user.email != 'admin@cse.iith.ac.in' %}

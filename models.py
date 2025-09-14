@@ -10,10 +10,25 @@ db = SQLAlchemy()
 # -------------------------
 # Auth / Users (unchanged)
 # -------------------------
+# class User(db.Model, UserMixin):
+#     id = db.Column(db.Integer, primary_key=True)
+#     email = db.Column(db.String(150), unique=True, nullable=False, index=True)
+#     password = db.Column(db.String(150), nullable=False)
+#     is_approved = db.Column(db.Boolean, default=False)
+#     reset_token = db.Column(db.String(100), nullable=True)
+#     reset_token_expiry = db.Column(db.DateTime, nullable=True)
+#     registered_at = db.Column(db.DateTime, default=datetime.utcnow)
+#     approved_at = db.Column(db.DateTime, nullable=True)
+#     is_active = db.Column(db.Boolean, default=True)
+
+#     def __repr__(self) -> str:
+#         return f"<User {self.email}>"
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False, index=True)
     password = db.Column(db.String(150), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default="student")  # admin, staff, faculty, student
     is_approved = db.Column(db.Boolean, default=False)
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
@@ -22,8 +37,7 @@ class User(db.Model, UserMixin):
     is_active = db.Column(db.Boolean, default=True)
 
     def __repr__(self) -> str:
-        return f"<User {self.email}>"
-
+        return f"<User {self.email} ({self.role})>"
 
 # -------------------------
 # Rooms & Seating
@@ -69,8 +83,12 @@ class Student(db.Model):
     year = db.Column(db.String(10))
     joining_year = db.Column(db.String(10))
     faculty = db.Column(db.String(100))
-    email = db.Column(db.String(100))
+    email = db.Column(db.String(100), unique=True)
     phone = db.Column(db.String(20))
+
+    # 🔑 Link to User table
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user = db.relationship("User", backref=db.backref("student", uselist=False))
 
     # Seat (one cubicle at a time)
     cubicle = db.relationship("Cubicle", backref="student", uselist=False)

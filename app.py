@@ -70,12 +70,36 @@ def send_to_google_sheet(data):
     except Exception as e:
         print("❌ Error sending to Google Sheet:", e)
 
+from functools import wraps
+from flask import flash, redirect, url_for
+from flask_login import current_user, login_required
+
+def roles_required(*roles):
+    """
+    Restrict access to users with given roles.
+    Example: @roles_required("admin", "staff")
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        @login_required
+        def wrapped_view(*args, **kwargs):
+            if current_user.role not in roles:
+                flash("🚫 You are not authorized to access this page.", "danger")
+                return redirect(url_for("login_home"))
+            return view_func(*args, **kwargs)
+        return wrapped_view
+    return decorator
+
+
+
+
 
 @app.route("/")
 def home():
     return render_template("home.html")
 
 @app.route("/login_home")
+@roles_required("admin", "staff", "faculty","student")
 @login_required
 def login_home():
     return render_template("login_home.html")
@@ -531,6 +555,16 @@ def student_dashboard():
         student_equipment_history=student_equipment_history,
     )
 
+@app.route("/student_profile_dashboard/<roll>")
+@login_required
+def student_profile_dashboard(roll):
+    # Only allow self-access for students
+    if current_user.role == "student" and current_user.student.roll != roll:
+        flash("Access denied.", "danger")
+        return redirect(url_for("login_home"))
+
+    student = Student.query.get_or_404(roll)
+    return render_template("student_profile_dashboard.html", student=student)
 
 
 from flask import render_template
@@ -542,6 +576,7 @@ from collections import defaultdict
 from models import Student
 
 @app.route("/utilization")
+@roles_required("admin", "staff", "faculty")
 def utilization():
     rooms = RoomLab.query.all()
     merged_data = {}
@@ -721,6 +756,8 @@ def alloted_machines():
             "id": a.id,  # assignment id (for actions like return)
             "name": (db.session.get(Student, roll).name if db.session.get(Student, roll) else ""),
             "roll": roll,
+            "course": (db.session.get(Student, roll).course if db.session.get(Student, roll) else ""),
+            "year": (db.session.get(Student, roll).year if db.session.get(Student, roll) else ""),
             "room_lab_name": room_name or "-",
             "cubicle_no": cub_no or "-",
             "processor": asset.processor if asset else "",
@@ -747,16 +784,64 @@ from werkzeug.security import generate_password_hash
 from models import User, db
 
 
+# @app.route("/register", methods=["GET", "POST"])
+# def register():
+#     if request.method == "POST":
+#         email = request.form["email"]
+#         password = request.form["password"]
+#         confirm_password = request.form["confirm_password"]
+
+#         # Validation
+#         if not email.endswith("@cse.iith.ac.in"):
+#             flash("Only @cse.iith.ac.in emails are allowed.", "danger")
+#             return redirect("/register")
+
+#         if len(password) < 6:
+#             flash("Password must be at least 6 characters long.", "danger")
+#             return redirect("/register")
+
+#         if password != confirm_password:
+#             flash("Passwords do not match.", "danger")
+#             return redirect("/register")
+
+#         # Check for duplicate
+#         existing_user = User.query.filter_by(email=email).first()
+#         if existing_user:
+#             flash("⚠️ Email already registered. Please login.", "warning")
+#             return redirect("/login")
+
+#         is_admin = email.lower() == "admin@cse.iith.ac.in"
+
+#         new_user = User(
+#             email=email,
+#             password=generate_password_hash(password),
+#             is_approved=is_admin,
+#             approved_at=datetime.utcnow() if is_admin else None,
+#             registered_at=datetime.utcnow()
+#         )
+#         db.session.add(new_user)
+#         db.session.commit()
+
+#         flash("✅ Registered!" + (" You're auto-approved as Admin." if is_admin else " Please wait for admin approval."))
+#         return redirect("/login")
+
+#     return render_template("register.html")
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        email = request.form["email"]
+        email = request.form["email"].strip().lower()
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
+        role = request.form.get("role")  # new field
 
-        # Validation
-        if not email.endswith("@cse.iith.ac.in"):
-            flash("Only @cse.iith.ac.in emails are allowed.", "danger")
+        # Validation: only IITH emails
+        if not (email.endswith("@cse.iith.ac.in") or email.endswith("@iith.ac.in")):
+            flash("Only @cse.iith.ac.in or @iith.ac.in emails are allowed.", "danger")
+            return redirect("/register")
+
+        if not role:
+            flash("Please select a role.", "danger")
             return redirect("/register")
 
         if len(password) < 6:
@@ -773,22 +858,27 @@ def register():
             flash("⚠️ Email already registered. Please login.", "warning")
             return redirect("/login")
 
-        is_admin = email.lower() == "admin@cse.iith.ac.in"
+        # Role logic
+        is_admin = (role == "admin" and email == "admin@cse.iith.ac.in")
 
         new_user = User(
             email=email,
             password=generate_password_hash(password),
-            is_approved=is_admin,
+            role=role,
+            is_approved=is_admin,  # only Admin auto-approved
             approved_at=datetime.utcnow() if is_admin else None,
             registered_at=datetime.utcnow()
         )
         db.session.add(new_user)
         db.session.commit()
 
-        flash("✅ Registered!" + (" You're auto-approved as Admin." if is_admin else " Please wait for admin approval."))
+        flash("✅ Registered as {}!".format(role.capitalize()) +
+              (" You're auto-approved as Admin." if is_admin else " Please wait for admin approval."),
+              "success")
         return redirect("/login")
 
     return render_template("register.html")
+
 
 from flask_login import login_required, current_user
 from flask import render_template
@@ -2064,19 +2154,76 @@ from datetime import datetime
 # ------------------------
 # 1. Student Info
 # ------------------------
+# @app.route("/student_info", methods=["GET", "POST"])
+# def student_info():
+#     prefill_roll = (request.args.get("roll") or "").strip()
+
+#     if request.method == "POST":
+#         roll = request.form['roll'].strip()
+
+#         # Duplicate check
+#         if Student.query.get(roll):
+#             flash("Student already exists!", "warning")
+#             return redirect(url_for("student_info", roll=roll))
+
+#         # Create new student
+#         student = Student(
+#             roll=roll,
+#             name=request.form['name'],
+#             course=request.form['course'],
+#             year=request.form['year'],
+#             joining_year=request.form['joining_year'],
+#             faculty=request.form['faculty'],
+#             email=request.form['email'],
+#             phone=request.form.get('phone')
+#         )
+#         db.session.add(student)
+#         db.session.commit()
+#         flash("Student information saved.", "success")
+
+#         # ✅ Directly go to hub page now
+#         return redirect(url_for("allotment_options", roll=roll))
+
+#     return render_template("student_info.html", prefill_roll=prefill_roll)
+
+from werkzeug.security import generate_password_hash
+import random, string
+
+def random_password(length=8):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
 @app.route("/student_info", methods=["GET", "POST"])
 def student_info():
     prefill_roll = (request.args.get("roll") or "").strip()
 
     if request.method == "POST":
         roll = request.form['roll'].strip()
+        email = request.form['email'].strip()
 
         # Duplicate check
         if Student.query.get(roll):
             flash("Student already exists!", "warning")
             return redirect(url_for("student_info", roll=roll))
 
-        # Create new student
+        # ✅ Create User for this student (if not already present)
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            user = existing_user
+        else:
+            temp_pw = random_password()
+            user = User(
+                email=email,
+                password=generate_password_hash(temp_pw),
+                role="student",
+                is_approved=False,  # Admin must approve later
+                registered_at=datetime.utcnow()
+            )
+            db.session.add(user)
+            db.session.flush()  # get user.id before commit
+            flash(f"Temporary password for {email}: {temp_pw}", "info")
+
+        # ✅ Create Student and link with User
         student = Student(
             roll=roll,
             name=request.form['name'],
@@ -2084,14 +2231,14 @@ def student_info():
             year=request.form['year'],
             joining_year=request.form['joining_year'],
             faculty=request.form['faculty'],
-            email=request.form['email'],
-            phone=request.form.get('phone')
+            email=email,
+            phone=request.form.get('phone'),
+            user_id=user.id
         )
         db.session.add(student)
         db.session.commit()
-        flash("Student information saved.", "success")
 
-        # ✅ Directly go to hub page now
+        flash("Student information saved and linked to User.", "success")
         return redirect(url_for("allotment_options", roll=roll))
 
     return render_template("student_info.html", prefill_roll=prefill_roll)
@@ -3327,6 +3474,7 @@ def space_release(cubicle_id):
 #     )
 @app.route("/labs/<lab_code>/allotments")
 @login_required
+@roles_required('admin', 'staff' , 'faculty')
 def lab_allotments(lab_code):
     lab = RoomLab.query.filter_by(name=lab_code).first_or_404()
 
@@ -3395,6 +3543,7 @@ def lab_allotments(lab_code):
     
 @app.route("/student/<string:roll>", methods=["GET", "POST"])
 @login_required
+@roles_required('admin', 'staff' , 'faculty')
 def student_details(roll):
     # Fetch student record
     student = Student.query.filter_by(roll=roll).first_or_404()

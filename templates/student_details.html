@@ -59,12 +59,28 @@
       color: #f07676;
       font-weight: bold;
     }
+    .st
+    {
+      background-color: #00155ae1;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-weight: bold;
+      text-transform: capitalize;
+      text-decoration: double;
+      color: rgb(242, 243, 243);
+    }
+    .width {
+      width: 26%;
+    }
 
   </style>
 </head>
 <body>
-
-  <h1> {{ student.name }} Lab and Inventory Report</h1>
+  <div class="st">
+  <h1> {{ student.name }} - Roll : {{ student.roll }} <br>
+     Lab Allocation and Inventory Report 
+  </h1>
+</div>
    <br>
   <!-- 👤 Student Profile -->
   <div class="card">
@@ -84,7 +100,7 @@
     <h2>🪑 Cubicle</h2>
     {% if student.cubicle %}
     <table>
-      <tr><th>Lab</th><td>{{ student.cubicle.room_lab.name }}</td></tr>
+      <tr><th class="width">Lab</th><td>{{ student.cubicle.room_lab.name }}</td></tr>
       <tr><th>Cubicle No</th><td>{{ student.cubicle.number }}</td></tr>
       <tr><th>Faculty</th><td>{{ student.faculty }}</td></tr>
       <tr><th>Staff In-Charge</th><td>{{ student.cubicle.room_lab.staff_incharge }}</td></tr>
@@ -185,6 +201,12 @@
       <p class="status-returned">❌ Not Found</p>
     {% endif %}
   </div>
+<br>
+<br>
+
+<div style="text-align: right;">
+  Staff In-Charge: {{ student.cubicle.room_lab.staff_incharge if student.cubicle else '—' }}
+</div>
 
 </body>
 </html>

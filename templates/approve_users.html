@@ -90,7 +90,7 @@
     {% if users %}
  {% for user in users %}
   <div class="bg-white p-4 rounded shadow mb-4">
-    <p><strong>{{ user.email }}</strong></p>
+    <p><strong>{{ user.email }}  <br>Category: {{user.role}}</strong></p>
     <form method="POST" class="flex space-x-2 mt-2">
       <input type="hidden" name="user_id" value="{{ user.id }}">
       <button name="action" value="approve" class="bg-green-500 text-white px-3 py-1 rounded">Approve</button>

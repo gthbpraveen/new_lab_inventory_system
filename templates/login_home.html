@@ -12,7 +12,7 @@
 
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #fffffc;
+      background-color: #96ccd6;
     }
 
     .page-transition {
@@ -48,10 +48,11 @@
   </style>
 </head>
 
-<body>
+<body class="min-h-screen flex flex-col bg-white-700 page-transition">
+  <div class="flex-grow"> 
   <div class="min-h-screen flex flex-col">
     <!-- Navigation Bar -->
-    <nav class="bg-white shadow-md sticky top-0 z-50 w-full">
+    <nav class="bg-white shadow-md sticky top-0 z-50 w-full bg-gray-50">
       <div class="px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
           <div class="flex items-center space-x-4">
@@ -60,7 +61,7 @@
               Department of Computer Science and Engineering
             </span>
           </div>
-          <div class="hidden md:flex space-x-1">
+          <div class="hidden md:flex space">
             <a href="/login_home" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Home</a>
             <a href="/cse_labs" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Labs</a>
             <a href="/inventory" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Inventory</a>
@@ -114,44 +115,66 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Page content -->
-    <main class="flex-grow container mx-auto px-4 py-6">
-      {% block content %}
-      <div class="py-12 bg-gradient-to-r from-sky-800 via-white-600 to-sky-600 text-white py-16 min-h-[calc(100vh-200px)]">
-        <div class="max-w-6xl mx-auto px-4">
-          <h2 class="text-2xl font-bold text-center text-white mb-10">
-            Dear {{ current_user.email.split('@')[0] | capitalize }}, Welcome to CSE Lab Portal
-          </h2>
+ 
+ <main class="flex-grow px-6 py-12 bg-gradient-to-r from-sky-100 via-sky-100 to-sky-100 text-black min-h-[calc(100vh-200px)]">
+  {% block content %}
+    <h2 class="text-2xl font-bold text-center mb-10">
+      Dear {{ current_user.email.split('@')[0] | capitalize }}, Welcome to CSE Lab Portal
+    </h2>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% set tools = [
-              {"name": "CSE Labs", "icon": "💻💻", "url": "/cse_labs"},
-              {"name": "Inventory", "icon": "📦", "url": "/inventory"},
-              {"name": "Search", "icon": "🔍", "url": "/student_dashboard"},
-              {"name": "Students-Directory", "icon": "🔍", "url": "/students_directory"}, 
-              {"name": "Lab Utilization", "icon": "📊", "url": "/utilization"},
-              {"name": "Software Utility", "icon": "💻", "url": "/os_related"},
-              {"name": "Slurm Facility", "icon": "⚙️", "url": "/slurm_facility"},
-             
-            ] %}
-            {% if current_user.is_authenticated and current_user.email == 'admin@cse.iith.ac.in' %}
-              {% set tools = tools + [
-               { "name": "Approve Users", "icon": "👤✔️", "url": "/admin/approve" },
-                {"name": "Registered Users", "icon": "👥", "url": "/registered_users"}
-              ] %}
-            {% endif %}
-            {% set tools = tools + [{"name": "User Settings", "icon": "🛠️", "url": "/user/settings"}] %}
-            {% for tool in tools %}
-              <a href="{{ tool.url }}" class="backdrop-blur-lg bg-white/20 border border-white/20 rounded-xl shadow-lg p-6 text-center hover:scale-105 transform transition duration-300 hover:shadow-2xl">
-                <div class="text-5xl mb-4">{{ tool.icon }}</div>
-                <h3 class="text-xl text-white font-semibold">{{ tool.name }}</h3>
-              </a>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-      {% endblock %}
-    </main>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+    {% set tools = [] %}
+
+{% if current_user.is_authenticated %}
+  {% if current_user.role == "student" %}
+    {% set tools = [
+      {"name": "My Dashboard", "icon": "📖", "url": "/student_profile_dashboard/" ~ current_user.student.roll},
+      {"name": "Labs", "icon": "💻💻", "url": "/cse_labs"},
+      {"name": "User Settings", "icon": "🛠️", "url": "/user/settings"},
+      {"name": "List of workstations", "icon": "🖥️", "url": "/assets"},
+      {"name": "List of IT equipment", "icon": "🖥️", "url": "/equipment_list"},
+      {"name": "Allotment Options", "icon": "🖥️", "url": "/allotment_options/" ~ current_user.student.roll}
+    ] %}
+
+  {% elif current_user.role in ["faculty", "staff"] %}
+    {% set tools = [
+      {"name": "CSE Labs", "icon": "💻💻", "url": "/cse_labs"},
+      {"name": "Inventory", "icon": "📦", "url": "/inventory"},
+      {"name": "Search", "icon": "🔍", "url": "/student_dashboard"},
+      {"name": "Students-Directory", "icon": "📖", "url": "/students_directory"},
+      {"name": "Lab Utilization", "icon": "📊", "url": "/utilization"},
+      {"name": "Software Utility", "icon": "💻", "url": "/os_related"},
+      {"name": "Slurm Facility", "icon": "⚙️", "url": "/slurm_facility"},
+      {"name": "User Settings", "icon": "🛠️", "url": "/user/settings"}
+    ] %}
+
+  {% elif current_user.role == "admin" %}
+    {% set tools = [
+      {"name": "CSE Labs", "icon": "💻💻", "url": "/cse_labs"},
+      {"name": "Inventory", "icon": "📦", "url": "/inventory"},
+      {"name": "Search", "icon": "🔍", "url": "/student_dashboard"},
+      {"name": "Students-Directory", "icon": "📖", "url": "/students_directory"},
+      {"name": "Lab Utilization", "icon": "📊", "url": "/utilization"},
+      {"name": "Software Utility", "icon": "💻", "url": "/os_related"},
+      {"name": "Slurm Facility", "icon": "⚙️", "url": "/slurm_facility"},
+      {"name": "Approve Users", "icon": "👤✔️", "url": "/admin/approve"},
+      {"name": "Registered Users", "icon": "👥", "url": "/registered_users"},
+      {"name": "User Settings", "icon": "🛠️", "url": "/user/settings"}
+    ] %}
+  {% endif %}
+{% endif %}
+
+      
+      {% for tool in tools %}
+        <a href="{{ tool.url }}" 
+           class="backdrop-blur-lg bg-gradient-to-r from-blue-800 via-blue-800 to-blue-900 border border-white/20 rounded-xl shadow-lg p-6 text-center hover:scale-105 transform transition duration-300 hover:shadow-2xl">
+          <div class="text-2xl mb-4">{{ tool.icon }}</div>
+          <h3 class="text-xl text-white font-semibold">{{ tool.name }}</h3>
+        </a>
+      {% endfor %}
+    </div>
+  {% endblock %}
+</main>
 
     <!-- Optional Footer -->
     <footer class="bg-white text-center py-4 text-gray-500 text-sm">

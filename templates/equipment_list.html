@@ -7,10 +7,13 @@
     <div class="bg-white shadow rounded-lg p-6 border border-gray-300">
       <div class="flex items-center justify-between mb-6">
   <h2 class="text-3xl font-bold text-indigo-700">Equipment List</h2>
+  {% if current_user.role != "student" %}
   <a href="{{ url_for('equipment_entry') }}" 
      class="bg-green-600 text-white px-4 py-2 rounded-md shadow hover:bg-green-700">
     + Add Asset
   </a>
+  {% endif %}
+
 </div>
 
 
@@ -36,35 +39,40 @@
       <!-- Equipment Table -->
       <div class="overflow-x-auto">
         <table class="w-full text-sm text-left border border-gray-300 min-w-[1200px]">
-          <thead class="bg-gray-100 text-gray-700">
-            <tr>
-              <th class="p-3 border">Dept Code</th>
-              <th class="p-3 border">Name</th>
-              <th class="p-3 border">Category</th>
-              <th class="p-3 border">Manufacturer</th>
-              <th class="p-3 border">Model</th>
-              <th class="p-3 border">Serial No</th>
-              <th class="p-3 border">Invoice No</th>
-              <th class="p-3 border">Cost/Unit</th>
-              <th class="p-3 border">Warranty Expiry</th>
-              <th class="p-3 border">Location</th>
-              <th class="p-3 border">Purchase Date</th>
-              <th class="p-3 border">Status</th>
-              <th class="p-3 border">PO Date</th>
-              <th class="p-3 border">Intender</th>
-              <th class="p-3 border">Qty</th>
-              
-              <th class="p-3 border">Assigned To</th>
-              <th class="p-3 border">Assign / Change</th>
-              <th class="p-3 border">Edit / Delete</th>
-              <th class="p-3 border">view history</th>
-            </tr>
-          </thead>
-   <tbody>
+       <thead class="bg-gray-100 text-gray-700">
+  <tr>
+    <th class="p-3 border">Dept Code</th>
+    <th class="p-3 border">Name</th>
+    <th class="p-3 border">Category</th>
+    <th class="p-3 border">Manufacturer</th>
+    <th class="p-3 border">Model</th>
+    <th class="p-3 border">Serial No</th>
+    <th class="p-3 border">Invoice No</th>
+    <th class="p-3 border">Cost/Unit</th>
+    <th class="p-3 border">Warranty Expiry</th>
+    <th class="p-3 border">Location</th>
+    <th class="p-3 border">Purchase Date</th>
+    <th class="p-3 border">Status</th>
+    <th class="p-3 border">PO Date</th>
+    <th class="p-3 border">Intender</th>
+    <th class="p-3 border">Qty</th>
+    <th class="p-3 border">Assigned To</th>
+    {% if current_user.role != "student" %}
+      <th class="p-3 border">Assign / Change</th>
+      <th class="p-3 border">Edit / Delete</th>
+      <th class="p-3 border">View History</th>
+    {% endif %}
+  </tr>
+</thead>
+
+<tbody>
   {% if grouped_equipment %}
     {% for category, items in grouped_equipment.items() %}
       <tr class="bg-indigo-100">
-        <td colspan="19" class="p-3 font-semibold text-indigo-700 uppercase">{{ category }}</td>
+        <td colspan="{% if current_user.role != 'student' %}19{% else %}16{% endif %}" 
+            class="p-3 font-semibold text-indigo-700 uppercase">
+          {{ category }}
+        </td>
       </tr>
       {% for eq in items %}
       <tr class="border-b hover:bg-gray-50">
@@ -83,7 +91,6 @@
         <td class="p-3">{{ eq.po_date }}</td>
         <td class="p-3">{{ eq.intender_name }}</td>
         <td class="p-3">{{ eq.quantity }}</td>
-        <!-- <td class="p-3">{{ eq.department_code }}</td> -->
         <td class="p-3">
           {% if eq.student %}
             {{ eq.student.name }} ({{ eq.student.roll }})
@@ -91,26 +98,28 @@
             <span class="text-gray-500">Unassigned</span>
           {% endif %}
         </td>
-        <td class="p-3">
-  {% if eq.status.lower() in ['available', 'issued'] %}
-    {% if eq.assigned_to_roll %}
-      <!-- Already assigned: go to student assignment page -->
-      <a href="{{ url_for('it_equipment_assign', roll=eq.assigned_to_roll) }}"
-         class="text-indigo-600 hover:underline text-sm">Assign / Change</a>
-    {% else %}
-      <!-- Not assigned yet: go to new route to assign by equipment -->
-      <a href="{{ url_for('allotted_roll_check',roll=eq.assigned_to_roll,equipment_id=eq.id) }}"
-         class="text-indigo-600 hover:underline text-sm">Assign</a>
-    {% endif %}
-  {% elif eq.status.lower() == 'retired' %}
-    <span class="text-gray-500 text-sm">Retired</span>
-  {% elif eq.status.lower() == 'scrapped' %}
-    <span class="text-gray-500 text-sm">Scrapped</span>
-  {% else %}
-    <span class="text-gray-500 text-sm">{{ eq.status }}</span>
-  {% endif %}
-</td>
 
+        {% if current_user.role != "student" %}
+        <!-- Assign / Change -->
+        <td class="p-3">
+          {% if eq.status.lower() in ['available', 'issued'] %}
+            {% if eq.assigned_to_roll %}
+              <a href="{{ url_for('it_equipment_assign', roll=eq.assigned_to_roll) }}"
+                 class="text-indigo-600 hover:underline text-sm">Assign / Change</a>
+            {% else %}
+              <a href="{{ url_for('allotted_roll_check', roll=eq.assigned_to_roll, equipment_id=eq.id) }}"
+                 class="text-indigo-600 hover:underline text-sm">Assign</a>
+            {% endif %}
+          {% elif eq.status.lower() == 'retired' %}
+            <span class="text-gray-500 text-sm">Retired</span>
+          {% elif eq.status.lower() == 'scrapped' %}
+            <span class="text-gray-500 text-sm">Scrapped</span>
+          {% else %}
+            <span class="text-gray-500 text-sm">{{ eq.status }}</span>
+          {% endif %}
+        </td>
+
+        <!-- Edit / Delete -->
         <td class="p-3">
           <div class="flex items-center gap-2 text-sm">
             <a href="{{ url_for('edit_equipment', id=eq.id) }}"
@@ -124,16 +133,22 @@
             </form>
           </div>
         </td>
+
+        <!-- View History -->
         <td class="p-3">
           <a href="{{ url_for('equipment_history', equipment_id=eq.id) }}"
              class="text-green-600 hover:underline">View History</a>
         </td>
+        {% endif %}
       </tr>
       {% endfor %}
     {% endfor %}
   {% else %}
     <tr>
-      <td colspan="19" class="p-3 text-center text-gray-500">No equipment found.</td>
+      <td colspan="{% if current_user.role != 'student' %}19{% else %}16{% endif %}" 
+          class="p-3 text-center text-gray-500">
+        No equipment found.
+      </td>
     </tr>
   {% endif %}
 </tbody>
