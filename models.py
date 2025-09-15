@@ -185,6 +185,71 @@ class ProvisioningRequest(db.Model):
         return f"<ProvisioningRequest {self.mac_address} {self.os_image}>"
 
 
+# # -------------------------
+# # NEW: Workstation Inventory (separate from seating)
+# # -------------------------
+# class WorkstationAsset(db.Model):
+#     """
+#     A physical machine in inventory (reusable).
+#     No room/cubicle fields here—seating is separate.
+#     """
+#     __tablename__ = "workstation_asset"
+#     id = db.Column(db.Integer, primary_key=True)  # auto-increment asset ID
+
+#     # Identity & specs
+#     manufacturer = db.Column(db.String(100))
+#     otherManufacturer = db.Column(db.String(100))
+#     model = db.Column(db.String(100))
+#     serial = db.Column(db.String(100), unique=True, index=True)  # recommended unique
+#     os = db.Column(db.String(50))
+#     otherOs = db.Column(db.String(50))
+#     processor = db.Column(db.String(100))
+#     cores = db.Column(db.String(10))
+#     ram = db.Column(db.String(20))
+#     otherRam = db.Column(db.String(20))
+#     storage_type1 = db.Column(db.String(50))
+#     storage_capacity1 = db.Column(db.String(20))
+#     storage_type2 = db.Column(db.String(50))
+#     storage_capacity2 = db.Column(db.String(20))
+#     gpu = db.Column(db.String(100))
+#     vram = db.Column(db.String(10))
+
+#     # Peripherals are properties of the machine (not the person)
+#     keyboard_provided = db.Column(db.String(10))
+#     keyboard_details = db.Column(db.String(100))
+#     mouse_provided = db.Column(db.String(10))
+#     mouse_details = db.Column(db.String(100))
+#     monitor_provided = db.Column(db.String(20))
+#     monitor_details = db.Column(db.String(100))
+#     monitor_size = db.Column(db.String(10))
+#     monitor_serial = db.Column(db.String(100))
+#     mac_address = db.Column(db.String(50), nullable=True)
+
+#     # Procurement (asset-level)
+#     po_date = db.Column(db.String(20))
+#     source_of_fund = db.Column(db.String(100))
+
+#     # Lifecycle status
+#     # in_stock | assigned | retired
+#     status = db.Column(db.String(20), default="in_stock", index=True)
+
+#     # 🔹 New fields
+#     location = db.Column(db.String(100))   # Lab/Dept/Other location
+#     indenter = db.Column(db.String(100))   # Professor/Staff name (who owns/initiated purchase)
+
+#     assignments = db.relationship(
+#         "WorkstationAssignment",
+#         backref="asset",
+#         cascade="all, delete-orphan",
+#         lazy=True,
+#     )
+
+#     def __repr__(self) -> str:
+#         return (
+#             f"<WSAsset id={self.id} serial={self.serial} "
+#             f"status={self.status} location={self.location} indenter={self.indenter}>"
+#         )
+
 # -------------------------
 # NEW: Workstation Inventory (separate from seating)
 # -------------------------
@@ -214,7 +279,7 @@ class WorkstationAsset(db.Model):
     gpu = db.Column(db.String(100))
     vram = db.Column(db.String(10))
 
-    # Peripherals are properties of the machine (not the person)
+    # Peripherals
     keyboard_provided = db.Column(db.String(10))
     keyboard_details = db.Column(db.String(100))
     mouse_provided = db.Column(db.String(10))
@@ -225,17 +290,19 @@ class WorkstationAsset(db.Model):
     monitor_serial = db.Column(db.String(100))
     mac_address = db.Column(db.String(50), nullable=True)
 
-    # Procurement (asset-level)
+    # Procurement
     po_date = db.Column(db.String(20))
     source_of_fund = db.Column(db.String(100))
 
     # Lifecycle status
-    # in_stock | assigned | retired
     status = db.Column(db.String(20), default="in_stock", index=True)
 
-    # 🔹 New fields
+    # New fields
     location = db.Column(db.String(100))   # Lab/Dept/Other location
-    indenter = db.Column(db.String(100))   # Professor/Staff name (who owns/initiated purchase)
+    indenter = db.Column(db.String(100))   # Faculty/Staff who raised PO
+
+    # 🔹 Department Code (new)
+    department_code = db.Column(db.String(200), unique=True, index=True)
 
     assignments = db.relationship(
         "WorkstationAssignment",
@@ -246,10 +313,9 @@ class WorkstationAsset(db.Model):
 
     def __repr__(self) -> str:
         return (
-            f"<WSAsset id={self.id} serial={self.serial} "
+            f"<WSAsset id={self.id} serial={self.serial} dept_code={self.department_code} "
             f"status={self.status} location={self.location} indenter={self.indenter}>"
         )
-
 
 class WorkstationAssignment(db.Model):
     """

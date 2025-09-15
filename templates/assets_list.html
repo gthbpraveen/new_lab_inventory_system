@@ -79,7 +79,7 @@
       <thead class="bg-indigo-100 text-indigo-900">
         <tr>
           <th class="px-4 py-2">S.No</th>
-          <th class="px-4 py-2">Serial</th>
+          <th class="px-4 py-2">Dept_code</th>
           <th class="px-4 py-2">Manufacturer</th>
           <th class="px-4 py-2">Model</th>
           <th class="px-4 py-2">Location</th>
@@ -95,7 +95,7 @@
         {% for a in assets %}
           <tr class="border-t">
             <td class="px-4 py-2">{{ loop.index }}</td>
-            <td class="px-4 py-2">{{ a.serial }}</td>
+            <td class="px-4 py-2">{{ a.department_code }}</td>
             <td class="px-4 py-2">{{ a.manufacturer }}</td>
             <td class="px-4 py-2">{{ a.model }}</td>
             <td class="px-4 py-2">{{ a.location or '-' }}</td>

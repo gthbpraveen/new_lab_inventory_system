@@ -38,11 +38,18 @@
                class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
       </div>
 
-      <div class="mt-4">
-        <label for="model" class="block text-gray-700 font-medium mb-2 required-field">Model Name</label>
-        <input type="text" id="model" name="model" required value="{{ asset.model if asset else '' }}"
-          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-      </div>
+<div class="mt-4">
+  <label for="model" class="block text-gray-700 font-medium mb-2 required-field">Model Type</label>
+  <select id="model" name="model" required
+    class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+    <option value="">Select Model</option>
+    {% set model_types = ['Workstation','Desktop','Laptop','Server','Mac'] %}
+    {% for m in model_types %}
+      <option value="{{m}}" {% if asset and asset.model==m %}selected{% endif %}>{{m}}</option>
+    {% endfor %}
+  </select>
+</div>
+
 
       <div class="mt-4">
         <label for="serial" class="block text-gray-700 font-medium mb-2 required-field">Serial Number</label>
@@ -296,7 +303,7 @@
         {% set faculty_list = [
           'Prof. Antony Franklin','Dr. Ashish Mishra','Prof. Bheemarjuna Reddy Tamma',
           'Prof. C. Krishna Mohan','Dr. J. Saketha Nath','Dr. Jyothi Vedurada',
-          'Dr. Kotaro Kataoka','Prof. M. V. Panduranga Rao','Dr. Manish Singh',
+          'Dr. Kotaro Kataoka','Prof. M.V.Panduranga Rao','Dr. Manish Singh',
           'Dr. Maria Francis','Prof. Maunendra Sankar Desarkar','Dr. N. R. Aravind',
           'Dr. Nitin Saurabh','Dr. Praveen Tammana','Dr. Rajesh Kedia',
           'Dr. Rakesh Venkat','Dr. Ramakrishna Upadrasta','Dr. Rameshwar Pratap',

@@ -1162,6 +1162,67 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from datetime import date
 from models import db, Equipment
+# @app.route("/equipment_entry", methods=["GET", "POST"])
+# @login_required
+# def equipment_entry():
+#     if request.method == "POST":
+#         print(request.form.to_dict())  # 🔍 debug
+
+#         name = request.form["name"]
+#         category = request.form["category"]
+#         manufacturer = request.form["manufacturer"]
+#         model = request.form["model"]
+#         invoice_number = request.form.get("invoice_number")
+#         cost_per_unit = request.form.get("cost_per_unit", type=float)
+#         warranty_expiry = request.form.get("warranty_expiry")
+#         location = request.form["location"]
+#         purchase_date = request.form["purchase_date"]
+#         status = request.form["status"]
+#         po_date = request.form["po_date"]
+
+#         intender_name = request.form.get("intender_name")  # ✅ safe
+#         # if not intender_name:
+#         #     flash("Please select an indenter (Faculty/Staff).", "danger")
+#         #     return redirect(url_for("equipment_entry"))
+
+#         quantity = request.form.get("quantity", type=int)
+#         assigned_to_roll = request.form.get("assigned_to_roll")
+
+#         today = date.today()
+#         date_str = today.strftime("%Y-%m-%d")
+#         current_count = Equipment.query.filter_by(category=category).count()
+
+#         for i in range(quantity):
+#             serial_number = request.form.get(f"serial_number_{i+1}")
+#             serial = f"{current_count + i + 1:03}"
+#             department_code = f"CSE/{date_str}/{category}/{serial}"
+
+#             equipment = Equipment(
+#                 name=name,
+#                 category=category,
+#                 manufacturer=manufacturer,
+#                 model=model,
+#                 serial_number=serial_number,
+#                 invoice_number=invoice_number,
+#                 cost_per_unit=cost_per_unit,
+#                 warranty_expiry=warranty_expiry,
+#                 location=location,
+#                 purchase_date=purchase_date,
+#                 status=status,
+#                 po_date=po_date,
+#                 intender_name=intender_name,
+#                 quantity=1,
+#                 department_code=department_code,
+#                 assigned_to_roll=assigned_to_roll if assigned_to_roll else None
+#             )
+#             db.session.add(equipment)
+
+#         db.session.commit()
+#         flash(f"{quantity} equipment entries added successfully.", "success")
+#         return redirect(url_for("equipment_list"))
+
+#     students = Student.query.all()
+#     return render_template("equipment_entry.html", students=students)
 @app.route("/equipment_entry", methods=["GET", "POST"])
 @login_required
 def equipment_entry():
@@ -1178,24 +1239,32 @@ def equipment_entry():
         location = request.form["location"]
         purchase_date = request.form["purchase_date"]
         status = request.form["status"]
-        po_date = request.form["po_date"]
+        po_date_raw = request.form["po_date"]
 
-        intender_name = request.form.get("intender_name")  # ✅ safe
-        # if not intender_name:
-        #     flash("Please select an indenter (Faculty/Staff).", "danger")
-        #     return redirect(url_for("equipment_entry"))
+        # clean PO date
+        po_date = po_date_raw.replace("-", "")
+
+        # clean Indenter
+        intender_full = request.form.get("intender_name") or "Unknown"
+        intender_clean = (
+            intender_full.replace("Dr. ", "")
+                         .replace("Prof. ", "")
+                         .replace("Prof. M.V.Panduranga Rao", "MVP")
+        )
+        intender_first = intender_clean.split()[0]
 
         quantity = request.form.get("quantity", type=int)
         assigned_to_roll = request.form.get("assigned_to_roll")
 
-        today = date.today()
-        date_str = today.strftime("%Y-%m-%d")
+        # get current category-wise count (instead of all equipment)
         current_count = Equipment.query.filter_by(category=category).count()
 
         for i in range(quantity):
             serial_number = request.form.get(f"serial_number_{i+1}")
             serial = f"{current_count + i + 1:03}"
-            department_code = f"CSE/{date_str}/{category}/{serial}"
+
+            # NEW Department Code format (category-wise serial)
+            department_code = f"CSE/{po_date}/{category}/{manufacturer}/{intender_first}/{serial}"
 
             equipment = Equipment(
                 name=name,
@@ -1209,8 +1278,8 @@ def equipment_entry():
                 location=location,
                 purchase_date=purchase_date,
                 status=status,
-                po_date=po_date,
-                intender_name=intender_name,
+                po_date=po_date_raw,
+                intender_name=intender_full,
                 quantity=1,
                 department_code=department_code,
                 assigned_to_roll=assigned_to_roll if assigned_to_roll else None
@@ -1223,6 +1292,7 @@ def equipment_entry():
 
     students = Student.query.all()
     return render_template("equipment_entry.html", students=students)
+
 
 
 from flask import send_file
@@ -2991,14 +3061,81 @@ def assets_list():
 
 
 
+# @app.route("/assets/new", methods=["GET", "POST"])
+# def asset_new():
+#     if request.method == "POST":
+#         f = request.form
+#         a = WorkstationAsset(
+#             manufacturer=f.get("manufacturer") or None,
+#             otherManufacturer=f.get("otherManufacturer") or None,
+#             model=f.get("model") or None,
+#             serial=(f.get("serial") or "").strip() or None,
+#             os=f.get("os") or None,
+#             otherOs=f.get("otherOs") or None,
+#             processor=f.get("processor") or None,
+#             cores=f.get("cores") or None,
+#             ram=f.get("ram") or None,
+#             otherRam=f.get("otherRam") or None,
+#             storage_type1=f.get("storage_type1") or None,
+#             storage_capacity1=f.get("storage_capacity1") or None,
+#             storage_type2=f.get("storage_type2") or None,
+#             storage_capacity2=f.get("storage_capacity2") or None,
+#             gpu=f.get("gpu") or None,
+#             vram=f.get("vram") or None,
+#             keyboard_provided=f.get("keyboard_provided") or None,
+#             keyboard_details=f.get("keyboard_details") or None,
+#             mouse_provided=f.get("mouse_provided") or None,
+#             mouse_details=f.get("mouse_details") or None,
+#             monitor_provided=f.get("monitor_provided") or None,
+#             monitor_details=f.get("monitor_details") or None,
+#             monitor_size=f.get("monitor_size") or None,
+#             monitor_serial=f.get("monitor_serial") or None,
+#             mac_address=f.get("mac_address") or None,
+#             po_date=f.get("po_date") or None,
+#             source_of_fund=f.get("source_of_fund") or None,
+#             
+#             location=f.get("location") or None,
+#             indenter=f.get("indenter") or None,
+#             status="Available",
+#         )
+#         try:
+#             db.session.add(a)
+#             db.session.commit()
+#             flash("Asset added.", "success")
+#             return redirect(url_for("assets_list"))
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f"Error adding asset: {e}", "danger")
+#     return render_template("asset_form.html", asset=None)
+
 @app.route("/assets/new", methods=["GET", "POST"])
 def asset_new():
     if request.method == "POST":
         f = request.form
+
+        # Get fields
+        manufacturer = f.get("manufacturer") or None
+        model = f.get("model") or None
+        indenter_full = f.get("indenter") or "Unknown"
+        po_date_raw = f.get("po_date") or "Unknown"
+
+        # Clean PO date and indenter name
+        po_date = po_date_raw.replace("-", "")
+        indenter_clean = indenter_full.replace("Dr. ", "").replace("Prof. ", "")
+        indenter_first = indenter_clean.split()[0]
+
+        # Sequential number: count existing assets + 1
+        count = WorkstationAsset.query.count() + 1
+        serial = f"{count:03}"
+
+        # Construct department_code
+        department_code = f"CSE/{po_date}/{manufacturer}/{model}/{indenter_first}/{serial}"
+
+        # Create asset
         a = WorkstationAsset(
-            manufacturer=f.get("manufacturer") or None,
+            manufacturer=manufacturer,
             otherManufacturer=f.get("otherManufacturer") or None,
-            model=f.get("model") or None,
+            model=model,
             serial=(f.get("serial") or "").strip() or None,
             os=f.get("os") or None,
             otherOs=f.get("otherOs") or None,
@@ -3021,21 +3158,22 @@ def asset_new():
             monitor_size=f.get("monitor_size") or None,
             monitor_serial=f.get("monitor_serial") or None,
             mac_address=f.get("mac_address") or None,
-            po_date=f.get("po_date") or None,
+            po_date=po_date_raw,
             source_of_fund=f.get("source_of_fund") or None,
-            # NEW FIELDS
             location=f.get("location") or None,
-            indenter=f.get("indenter") or None,
+            indenter=indenter_full,
             status="Available",
+            department_code=department_code  # set auto-generated code
         )
         try:
             db.session.add(a)
             db.session.commit()
-            flash("Asset added.", "success")
+            flash(f"Asset added. Department Code: {department_code}", "success")
             return redirect(url_for("assets_list"))
         except Exception as e:
             db.session.rollback()
             flash(f"Error adding asset: {e}", "danger")
+
     return render_template("asset_form.html", asset=None)
 
 
@@ -3102,7 +3240,7 @@ def asset_retire(asset_id):
 def asset_unretire(asset_id):
     a = WorkstationAsset.query.get_or_404(asset_id)
     if a.status == "Retired":
-        a.status = "Avaible"
+        a.status = "Available"
         db.session.commit()
         flash("Asset un-retired and now Available.", "success")
     return redirect(url_for("assets_list"))
