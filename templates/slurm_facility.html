@@ -1,8 +1,9 @@
 {% extends "login_home.html" %}
+
 {% block title %}Slurm Facility{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-indigo-100 via-blue-200 to-purple-200 py-16 px-4 flex items-center justify-center">
+<div class="py-6 px-4 flex justify-center mt-12">
   <div class="w-full max-w-2xl bg-white/40 backdrop-blur-lg shadow-2xl rounded-2xl p-10 border border-white/30">
 
     <!-- Heading -->
@@ -14,7 +15,7 @@
     </p>
 
     <!-- Form -->
-    <form method="POST" action="/slurm_facility" class="space-y-6">
+    <form method="POST" action="{{ url_for('slurm_facility') }}" class="space-y-6">
       <div>
         <label for="roll_number" class="block text-left text-sm font-medium text-gray-700 mb-2">
           Roll Number

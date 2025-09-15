@@ -951,7 +951,7 @@ def reset_request():
             user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=15)
             db.session.commit()
             # In production, send email. Here, show URL
-            flash(f"Reset link: http://127.0.0.1:5006/reset-password/{token}")
+            flash(f"Reset link: http://127.0.0.1:5009/reset-password/{token}")
         else:
             flash("Email not found")
         return redirect(url_for("reset_request"))
@@ -3634,6 +3634,31 @@ def generate_student_pdf(roll):
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'inline; filename={student.roll}_report.pdf'
     return response
+
+
+@app.route('/faculty_assets', methods=['GET'])
+@login_required
+def faculty_assets():
+    # Get selected faculty name from GET params
+    selected_indenter = request.args.get('indenter', None)
+
+    equipment_list = []
+    workstation_list = []
+
+    if selected_indenter:
+        # Filter equipment by intender_name
+        equipment_list = Equipment.query.filter_by(intender_name=selected_indenter).all()
+
+        # Filter workstations by indenter
+        workstation_list = WorkstationAsset.query.filter_by(indenter=selected_indenter).all()
+
+    return render_template(
+        'faculty_assets.html',
+        selected_indenter=selected_indenter,
+        equipment_list=equipment_list,
+        workstation_list=workstation_list
+    )
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0",debug=True, port=5009)
