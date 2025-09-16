@@ -249,7 +249,8 @@
       {"name": "Lab Utilization", "icon": "📊", "url": "/utilization"},
       {"name": "Software Utility", "icon": "💻", "url": "/os_related"},
       {"name": "Slurm Facility", "icon": "⚙️", "url": "/slurm_facility"},
-      {"name": "User Settings", "icon": "🛠️", "url": "/user/settings"}
+      {"name": "User Settings", "icon": "🛠️", "url": "/user/settings"},
+      {"name": "Faculty Assets", "icon": "", "url": "/faculty_assets"}
     ] %}
 
   {% elif current_user.role == "admin" %}
@@ -263,7 +264,8 @@
       {"name": "Slurm Facility", "icon": "⚙️", "url": "/slurm_facility"},
       {"name": "Approve Users", "icon": "✔️", "url": "/admin/approve"},
       {"name": "Registered Users", "icon": "👥", "url": "/registered_users"},
-      {"name": "User Settings", "icon": "🛠️", "url": "/user/settings"}
+      {"name": "User Settings", "icon": "💻", "url": "/fuser/settings"},
+      {"name": "Faculty Assets", "icon": "", "url": "/faculty_assets"}
     ] %}
   {% endif %}
 {% endif %}

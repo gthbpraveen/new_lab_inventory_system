@@ -40,6 +40,7 @@
     <table class="w-full text-sm text-left border border-gray-300 mb-6">
       <thead class="bg-gray-100 text-gray-700">
         <tr>
+          <th class="p-2 border">DeptCode</th>
           <th class="p-2 border">Name</th>
           <th class="p-2 border">Category</th>
           <th class="p-2 border">Serial</th>
@@ -51,10 +52,11 @@
       <tbody>
         {% for eq in equipment_list %}
         <tr class="border-b hover:bg-gray-50">
+          <td class="p-2">{{ eq.department_code }}</td>
           <td class="p-2">{{ eq.name }}</td>
           <td class="p-2">{{ eq.category }}</td>
           <td class="p-2">{{ eq.serial_number }}</td>
-          <td class="p-2">{{ eq.student.name if eq.student else '-' }}</td>
+          <td class="p-2">{{ eq.student.roll if eq.student else '-' }}</td>
           <td class="p-2">{{ eq.status }}</td>
           <td class="p-2">{{ eq.location }} </td>
         </tr>
@@ -71,6 +73,7 @@
     <table class="w-full text-sm text-left border border-gray-300 mb-6">
       <thead class="bg-gray-100 text-gray-700">
         <tr>
+          <th class="p-2 border">DeptCode</th>
           <th class="p-2 border">Manufacturer</th>
           <th class="p-2 border">Serial</th>
           <th class="p-2 border">Model</th>
@@ -82,6 +85,7 @@
       <tbody>
         {% for ws in workstation_list %}
         <tr class="border-b hover:bg-gray-50">
+          <td class="p-2">{{ ws.department_code }}</td>
           <td class="p-2">{{ ws.manufacturer }}</td>
           <td class="p-2">{{ ws.serial }}</td>
           <td class="p-2">{{ ws.model }}</td>
