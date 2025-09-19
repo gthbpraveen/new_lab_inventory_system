@@ -27,10 +27,10 @@ db = SQLAlchemy()
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False, index=True)
-    password = db.Column(db.String(150), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default="student")  # admin, staff, faculty, student
     is_approved = db.Column(db.Boolean, default=False)
-    reset_token = db.Column(db.String(100), nullable=True)
+    reset_token = db.Column(db.String(200), nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
     registered_at = db.Column(db.DateTime, default=datetime.utcnow)
     approved_at = db.Column(db.DateTime, nullable=True)
