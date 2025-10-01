@@ -74,7 +74,7 @@
             <a href="/cse_labs" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Labs</a>
             <a href="/assets" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Workstations</a>
             <a href="/equipment_list" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">IT Equipment</a>
-            <a href="/allotment_options/{{ current_user.student.roll }}" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Allotment Options</a>
+          <!--  <a href="/allotment_options/{{ current_user.student.roll }}" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Allotment Options</a> -->
             <a href="/logout" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Logout</a>
 
           {% elif current_user.role in ["faculty", "staff"] %}
@@ -126,7 +126,7 @@
           <a href="/cse_labs" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Labs</a>
           <a href="/assets" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Workstations</a>
           <a href="/equipment_list" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">IT Equipment</a>
-          <a href="/allotment_options/{{ current_user.student.roll }}" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Allotment Options</a>
+    <!--          <a href="/allotment_options/{{ current_user.student.roll }}" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Allotment Options</a> -->
           <a href="/logout" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Logout</a>
 
         {% elif current_user.role in ["faculty", "staff"] %}
@@ -236,8 +236,7 @@
       {"name": "Labs", "icon": "💻", "url": "/cse_labs"},
       {"name": "User Settings", "icon": "🛠️", "url": "/user/settings"},
       {"name": "List of workstations", "icon": "🖥️", "url": "/assets"},
-      {"name": "List of IT equipment", "icon": "🖥️", "url": "/equipment_list"},
-      {"name": "Allotment Options", "icon": "🖥️", "url": "/allotment_options/" ~ current_user.student.roll}
+      {"name": "List of IT equipment", "icon": "🖥️", "url": "/equipment_list"}
     ] %}
 
   {% elif current_user.role in ["faculty", "staff"] %}

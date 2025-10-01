@@ -1,0 +1,393 @@
+[2025-09-29 05:52:06 +0000] [483047] [INFO] Starting gunicorn 23.0.0
+[2025-09-29 05:52:06 +0000] [483047] [INFO] Listening at: http://0.0.0.0:5009 (483047)
+[2025-09-29 05:52:06 +0000] [483047] [INFO] Using worker: sync
+[2025-09-29 05:52:06 +0000] [483048] [INFO] Booting worker with pid: 483048
+[2025-09-29 05:52:06 +0000] [483049] [INFO] Booting worker with pid: 483049
+[2025-09-29 05:52:06 +0000] [483050] [INFO] Booting worker with pid: 483050
+[2025-09-29 05:52:29,069] ERROR in app: Exception on /login_home [GET]
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 89, in wrapped_view
+    return view_func(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 105, in login_home
+    return render_template("login_home.html")
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/praveen/Lab-and-inventory-system/templates/login_home.html", line 240, in template
+    <!-- {"name": "Allotment Options", "icon": "🖥️", "url": "/allotment_options/" ~ current_user.student.roll} -->
+jinja2.exceptions.TemplateSyntaxError: unexpected char '!' at 13149
+[2025-09-29 05:52:29 +0000] [483049] [ERROR] Socket error processing request.
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 89, in wrapped_view
+    return view_func(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 105, in login_home
+    return render_template("login_home.html")
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/praveen/Lab-and-inventory-system/templates/login_home.html", line 240, in template
+    <!-- {"name": "Allotment Options", "icon": "🖥️", "url": "/allotment_options/" ~ current_user.student.roll} -->
+jinja2.exceptions.TemplateSyntaxError: unexpected char '!' at 13149
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 192, in handle_request
+    util.reraise(*sys.exc_info())
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/util.py", line 640, in reraise
+    raise value
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 177, in handle_request
+    respiter = self.wsgi(environ, resp.start_response)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 860, in handle_exception
+    server_error = self.ensure_sync(handler)(server_error)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 1938, in internal_error
+    return render_template("errors/500.html"), 500
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 65, in get_source
+    return self._get_source_fast(environment, template)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 99, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: errors/500.html
+[2025-09-29 05:52:29,092] ERROR in app: Exception on /login_home [GET]
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 89, in wrapped_view
+    return view_func(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 105, in login_home
+    return render_template("login_home.html")
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/praveen/Lab-and-inventory-system/templates/login_home.html", line 240, in template
+    <!-- {"name": "Allotment Options", "icon": "🖥️", "url": "/allotment_options/" ~ current_user.student.roll} -->
+jinja2.exceptions.TemplateSyntaxError: unexpected char '!' at 13149
+[2025-09-29 05:52:29 +0000] [483049] [ERROR] Socket error processing request.
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 89, in wrapped_view
+    return view_func(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 105, in login_home
+    return render_template("login_home.html")
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/praveen/Lab-and-inventory-system/templates/login_home.html", line 240, in template
+    <!-- {"name": "Allotment Options", "icon": "🖥️", "url": "/allotment_options/" ~ current_user.student.roll} -->
+jinja2.exceptions.TemplateSyntaxError: unexpected char '!' at 13149
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 192, in handle_request
+    util.reraise(*sys.exc_info())
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/util.py", line 640, in reraise
+    raise value
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 177, in handle_request
+    respiter = self.wsgi(environ, resp.start_response)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 860, in handle_exception
+    server_error = self.ensure_sync(handler)(server_error)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 1938, in internal_error
+    return render_template("errors/500.html"), 500
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 65, in get_source
+    return self._get_source_fast(environment, template)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 99, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: errors/500.html
+[2025-09-29 05:52:30,141] ERROR in app: Exception on /login_home [GET]
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 89, in wrapped_view
+    return view_func(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 105, in login_home
+    return render_template("login_home.html")
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/praveen/Lab-and-inventory-system/templates/login_home.html", line 240, in template
+    <!-- {"name": "Allotment Options", "icon": "🖥️", "url": "/allotment_options/" ~ current_user.student.roll} -->
+jinja2.exceptions.TemplateSyntaxError: unexpected char '!' at 13149
+[2025-09-29 05:52:30 +0000] [483048] [ERROR] Socket error processing request.
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 89, in wrapped_view
+    return view_func(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 105, in login_home
+    return render_template("login_home.html")
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/praveen/Lab-and-inventory-system/templates/login_home.html", line 240, in template
+    <!-- {"name": "Allotment Options", "icon": "🖥️", "url": "/allotment_options/" ~ current_user.student.roll} -->
+jinja2.exceptions.TemplateSyntaxError: unexpected char '!' at 13149
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 134, in handle
+    self.handle_request(listener, req, client, addr)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 192, in handle_request
+    util.reraise(*sys.exc_info())
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/util.py", line 640, in reraise
+    raise value
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 177, in handle_request
+    respiter = self.wsgi(environ, resp.start_response)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/app.py", line 860, in handle_exception
+    server_error = self.ensure_sync(handler)(server_error)
+  File "/home/praveen/Lab-and-inventory-system/app.py", line 1938, in internal_error
+    return render_template("errors/500.html"), 500
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 65, in get_source
+    return self._get_source_fast(environment, template)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/flask/templating.py", line 99, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: errors/500.html
+[2025-09-29 14:29:04 +0000] [483047] [CRITICAL] WORKER TIMEOUT (pid:483048)
+[2025-09-29 14:29:04 +0000] [483048] [ERROR] Error handling request (no URI read)
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 133, in handle
+    req = next(parser)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/parser.py", line 41, in __next__
+    self.mesg = self.mesg_class(self.cfg, self.unreader, self.source_addr, self.req_count)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 259, in __init__
+    super().__init__(cfg, unreader, peer_addr)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 60, in __init__
+    unused = self.parse(self.unreader)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 271, in parse
+    self.get_data(unreader, buf, stop=True)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 262, in get_data
+    data = unreader.read()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/unreader.py", line 36, in read
+    d = self.chunk()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/unreader.py", line 63, in chunk
+    return self.sock.recv(self.mxchunk)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/base.py", line 204, in handle_abort
+    sys.exit(1)
+SystemExit: 1
+[2025-09-29 14:29:04 +0000] [483048] [INFO] Worker exiting (pid: 483048)
+[2025-09-29 14:29:04 +0000] [488764] [INFO] Booting worker with pid: 488764
+[2025-09-29 14:42:35 +0000] [483047] [CRITICAL] WORKER TIMEOUT (pid:488764)
+[2025-09-29 14:42:35 +0000] [488764] [ERROR] Error handling request (no URI read)
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 133, in handle
+    req = next(parser)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/parser.py", line 41, in __next__
+    self.mesg = self.mesg_class(self.cfg, self.unreader, self.source_addr, self.req_count)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 259, in __init__
+    super().__init__(cfg, unreader, peer_addr)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 60, in __init__
+    unused = self.parse(self.unreader)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 271, in parse
+    self.get_data(unreader, buf, stop=True)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 262, in get_data
+    data = unreader.read()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/unreader.py", line 36, in read
+    d = self.chunk()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/unreader.py", line 63, in chunk
+    return self.sock.recv(self.mxchunk)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/base.py", line 204, in handle_abort
+    sys.exit(1)
+SystemExit: 1
+[2025-09-29 14:42:35 +0000] [488764] [INFO] Worker exiting (pid: 488764)
+[2025-09-29 14:42:35 +0000] [489018] [INFO] Booting worker with pid: 489018
+[2025-09-29 14:52:46 +0000] [483047] [CRITICAL] WORKER TIMEOUT (pid:483050)
+[2025-09-29 14:52:46 +0000] [483050] [ERROR] Error handling request (no URI read)
+Traceback (most recent call last):
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/sync.py", line 133, in handle
+    req = next(parser)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/parser.py", line 41, in __next__
+    self.mesg = self.mesg_class(self.cfg, self.unreader, self.source_addr, self.req_count)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 259, in __init__
+    super().__init__(cfg, unreader, peer_addr)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 60, in __init__
+    unused = self.parse(self.unreader)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 271, in parse
+    self.get_data(unreader, buf, stop=True)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/message.py", line 262, in get_data
+    data = unreader.read()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/unreader.py", line 36, in read
+    d = self.chunk()
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/http/unreader.py", line 63, in chunk
+    return self.sock.recv(self.mxchunk)
+  File "/home/praveen/Lab-and-inventory-system/venv/lib/python3.10/site-packages/gunicorn/workers/base.py", line 204, in handle_abort
+    sys.exit(1)
+SystemExit: 1
+[2025-09-29 14:52:46 +0000] [483050] [INFO] Worker exiting (pid: 483050)
+[2025-09-29 14:52:46 +0000] [489248] [INFO] Booting worker with pid: 489248
