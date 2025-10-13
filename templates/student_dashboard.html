@@ -68,6 +68,7 @@
             <th class="px-4 py-2">Required Till</th>
             <th class="px-4 py-2">Return Date</th>
             <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2 text-center">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -82,6 +83,17 @@
                 ✅ Returned
               {% else %}
                 🟢 Active
+              {% endif %}
+            </td>
+            <td class="px-4 py-2 text-center">
+              {% if not ws.end_date %}
+              <form action="{{ url_for('workstation_delete', ws_id=ws.id) }}" method="POST"
+                    onsubmit="return confirm('Mark this workstation as returned?');" class="inline">
+                <button type="submit"
+                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs">
+                  Return
+                </button>
+              </form>
               {% endif %}
             </td>
           </tr>
@@ -109,6 +121,7 @@
             <th class="px-4 py-2">Assigned Date</th>
             <th class="px-4 py-2">Return Date</th>
             <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2 text-center">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -124,6 +137,17 @@
                 ✅ Returned
               {% else %}
                 🟢 Active
+              {% endif %}
+            </td>
+            <td class="px-4 py-2 text-center">
+              {% if not hist.unassigned_date %}
+              <form action="{{ url_for('unassign_equipment', eq_id=eq.id) }}" method="POST"
+                    onsubmit="return confirm('Mark this equipment as returned?');" class="inline">
+                <button type="submit"
+                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs">
+                  Return
+                </button>
+              </form>
               {% endif %}
             </td>
           </tr>
@@ -157,8 +181,6 @@
    class="bg-sky-600 hover:bg-sky-800 text-white px-6 py-2 rounded-lg shadow-md font-semibold">
   📄 Download PDF Report
 </a>
-
-
       </div> 
     </div>
     {% endif %}

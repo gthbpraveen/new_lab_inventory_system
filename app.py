@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 import requests
-
+from flask_mail import Mail, Message
 # Models
 from models import (
     db,
@@ -92,6 +92,54 @@ def roles_required(*roles):
 
 
 
+# =========================================================
+# 📧 MAIL CONFIGURATION (Flask-Mail)
+# =========================================================
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")  # from .env
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")  # from .env (Gmail app password)
+app.config["MAIL_DEFAULT_SENDER"] = ("CSE Lab Admin", os.getenv("MAIL_USERNAME"))
+
+mail = Mail(app)
+
+# ---- Helper for sending email ----
+import threading
+
+def send_async_email(app, msg):
+    """Run mail.send() in a background thread"""
+    with app.app_context():
+        try:
+            mail.send(msg)
+            print(f"✅ Email sent to {msg.recipients}")
+        except Exception as e:
+            print(f"❌ Error sending email: {e}")
+
+def send_notification_email(to_email, subject, body):
+    """Main function to send notification email"""
+    if not to_email:
+        print("⚠️ Skipping email: no recipient")
+        return
+    msg = Message(subject=subject, recipients=[to_email], body=body)
+    thr = threading.Thread(target=send_async_email, args=[app, msg])
+    thr.start()
+
+
+# =========================================================
+# ✅ TEST ROUTE FOR EMAIL
+# =========================================================
+@app.route("/test_email")
+def test_email():
+    try:
+        send_notification_email(
+            "shivareddy.m@cse.iith.ac.in",
+            "✅ Test Email from Lab Management System",
+            "Hello!\n\nThis is a test email confirming Flask-Mail setup is working fine.\n\n– CSE Lab Admin"
+        )
+        return "✅ Test email sent successfully!"
+    except Exception as e:
+        return f"❌ Email test failed: {e}"
 
 
 @app.route("/")
@@ -3799,4 +3847,4 @@ def faculty_assets():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

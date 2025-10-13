@@ -136,6 +136,7 @@ class Equipment(db.Model):
     quantity = db.Column(db.Integer, nullable=True)
     department_code = db.Column(db.String(100), unique=True, nullable=True)
     mac_address = db.Column(db.String(50), nullable=True)
+    source_of_fund = db.Column(db.String(100))
 
     assigned_to_roll = db.Column(
         db.String(20),
