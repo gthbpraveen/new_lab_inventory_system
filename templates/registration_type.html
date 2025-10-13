@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Choose Registration Type{% endblock %}
+{% block content %}
+
+<style>
+  .wrapper {
+    background: linear-gradient(135deg, #667eea, #e8e8e9);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .glass-card {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    color: #333;
+  }
+
+  .glass-card h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #4f46e5;
+  }
+
+  .glass-card p {
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    color: #555;
+  }
+
+  .reg-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: #4f46e5;
+    color: white;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    transition: background 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .reg-btn:hover {
+    background: #4338ca;
+  }
+</style>
+
+<div class="wrapper">
+  <div class="glass-card">
+    <h2>Register as:</h2>
+    <p>Select your role to continue registration</p>
+
+    <a href="{{ url_for('student_info') }}" class="reg-btn">Student</a>
+    <a href="{{ url_for('register') }}" class="reg-btn">Faculty / Staff / Admin</a>
+  </div>
+</div>
+
+<footer class="bg-white text-center py-4 text-gray-500 text-sm mt-2">
+  © {{ current_year or "2025" }} CSE Department, IITH. All rights reserved.
+</footer>
+
+{% endblock %}

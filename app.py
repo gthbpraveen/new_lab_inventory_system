@@ -9,6 +9,10 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 import requests
 from flask_mail import Mail, Message
+<<<<<<< HEAD
+=======
+
+>>>>>>> db933d97 (emails)
 # Models
 from models import (
     db,
@@ -140,6 +144,57 @@ def test_email():
         return "✅ Test email sent successfully!"
     except Exception as e:
         return f"❌ Email test failed: {e}"
+
+# =========================================================
+# 📧 MAIL CONFIGURATION (Flask-Mail)
+# =========================================================
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")  # from .env
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")  # from .env (Gmail app password)
+app.config["MAIL_DEFAULT_SENDER"] = ("CSE Lab Admin", os.getenv("MAIL_USERNAME"))
+
+mail = Mail(app)
+
+# ---- Helper for sending email ----
+import threading
+
+def send_async_email(app, msg):
+    """Run mail.send() in a background thread"""
+    with app.app_context():
+        try:
+            mail.send(msg)
+            print(f"✅ Email sent to {msg.recipients}")
+        except Exception as e:
+            print(f"❌ Error sending email: {e}")
+
+def send_notification_email(to_email, subject, body):
+    """Main function to send notification email"""
+    if not to_email:
+        print("⚠️ Skipping email: no recipient")
+        return
+    msg = Message(subject=subject, recipients=[to_email], body=body)
+    thr = threading.Thread(target=send_async_email, args=[app, msg])
+    thr.start()
+
+
+# =========================================================
+# ✅ TEST ROUTE FOR EMAIL
+# =========================================================
+@app.route("/test_email")
+def test_email():
+    try:
+        send_notification_email(
+            "gpraveenkumargaddam369@gmail.com",
+            "✅ Test Email from Lab Management System",
+            "Hello!\n\nThis is a test email confirming Flask-Mail setup is working fine.\n\n– CSE Lab Admin"
+        )
+        return "✅ Test email sent successfully!"
+    except Exception as e:
+        return f"❌ Email test failed: {e}"
+
+
 
 
 @app.route("/")
@@ -824,6 +879,13 @@ def alloted_machines():
 
 
 
+@app.route("/registration_type")
+def registration_type():
+    return render_template("registration_type.html")
+
+
+
+
 from models import Equipment, EquipmentHistory
 
 from datetime import datetime
@@ -832,48 +894,6 @@ from werkzeug.security import generate_password_hash
 from models import User, db
 
 
-# @app.route("/register", methods=["GET", "POST"])
-# def register():
-#     if request.method == "POST":
-#         email = request.form["email"]
-#         password = request.form["password"]
-#         confirm_password = request.form["confirm_password"]
-
-#         # Validation
-#         if not email.endswith("@cse.iith.ac.in"):
-#             flash("Only @cse.iith.ac.in emails are allowed.", "danger")
-#             return redirect("/register")
-
-#         if len(password) < 6:
-#             flash("Password must be at least 6 characters long.", "danger")
-#             return redirect("/register")
-
-#         if password != confirm_password:
-#             flash("Passwords do not match.", "danger")
-#             return redirect("/register")
-
-#         # Check for duplicate
-#         existing_user = User.query.filter_by(email=email).first()
-#         if existing_user:
-#             flash("⚠️ Email already registered. Please login.", "warning")
-#             return redirect("/login")
-
-#         is_admin = email.lower() == "admin@cse.iith.ac.in"
-
-#         new_user = User(
-#             email=email,
-#             password=generate_password_hash(password),
-#             is_approved=is_admin,
-#             approved_at=datetime.utcnow() if is_admin else None,
-#             registered_at=datetime.utcnow()
-#         )
-#         db.session.add(new_user)
-#         db.session.commit()
-
-#         flash("✅ Registered!" + (" You're auto-approved as Admin." if is_admin else " Please wait for admin approval."))
-#         return redirect("/login")
-
-#     return render_template("register.html")
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -881,10 +901,10 @@ def register():
         email = request.form["email"].strip().lower()
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
-        role = request.form.get("role")  # new field
+        role = request.form.get("role")
 
         # Validation: only IITH emails
-        if not (email.endswith("@cse.iith.ac.in") or email.endswith("@iith.ac.in")):
+        if not (email.endswith("@cse.iith.ac.in") or email.endswith("@iith.ac.in") or email.endswith("@gmail.com")):
             flash("Only @cse.iith.ac.in or @iith.ac.in emails are allowed.", "danger")
             return redirect("/register")
 
@@ -913,12 +933,51 @@ def register():
             email=email,
             password=generate_password_hash(password),
             role=role,
-            is_approved=is_admin,  # only Admin auto-approved
+            is_approved=is_admin,
             approved_at=datetime.utcnow() if is_admin else None,
             registered_at=datetime.utcnow()
         )
         db.session.add(new_user)
         db.session.commit()
+
+        # ✅ Send email notification
+        try:
+            if is_admin:
+                # Auto-approved Admin user
+                subject = "CSE Lab Account Created — Admin Access Granted"
+                body = f"""
+                        Hello {email},
+
+                        Your admin account has been successfully created and approved.
+
+                        You can now log in using your credentials at:
+                        👉 https://192.168.50.85/login
+
+                        Regards,
+                        CSE Lab Automation System
+                        """
+            else:
+                # Normal user, awaiting admin approval
+                subject = "CSE Lab Registration Received — Pending Approval"
+                body = f"""
+                        Hello {email},
+
+                        Thank you for registering with CSE Lab.
+
+                        Your account has been successfully created and is pending admin approval.
+                        Once approved, you will receive another email with login details.
+
+                        Role: {role.capitalize()}
+
+                        Regards,
+                        CSE Lab Admin Team
+                        """
+
+            # This helper already exists in your app.py
+            send_notification_email(email, subject, body)
+            print(f"Registration email sent to {email}")
+        except Exception as e:
+            print(f"Error sending registration email to {email}: {e}")
 
         flash("✅ Registered as {}!".format(role.capitalize()) +
               (" You're auto-approved as Admin." if is_admin else " Please wait for admin approval."),
@@ -926,7 +985,6 @@ def register():
         return redirect("/login")
 
     return render_template("register.html")
-
 
 from flask_login import login_required, current_user
 from flask import render_template
@@ -988,6 +1046,129 @@ def logout():
     session.clear()  # 🔁 Clears all session data
     return redirect(url_for("login"))
 
+# @app.route("/reset-request", methods=["GET", "POST"])
+# def reset_request():
+#     if request.method == "POST":
+#         email = request.form.get("email")
+#         user = User.query.filter_by(email=email).first()
+#         if user:
+#             token = secrets.token_urlsafe(16)
+#             user.reset_token = token
+#             user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=15)
+#             db.session.commit()
+#             # In production, send email. Here, show URL
+#             flash(f"Reset link: http://127.0.0.1:5009/reset-password/{token}")
+#         else:
+#             flash("Email not found")
+#         return redirect(url_for("reset_request"))
+#     return render_template("reset_request.html")
+
+
+# @app.route("/reset-password/<token>", methods=["GET", "POST"])
+# def reset_password(token):
+#     user = User.query.filter_by(reset_token=token).first()
+#     if not user or user.reset_token_expiry < datetime.utcnow():
+#         return "Invalid or expired token"
+
+#     if request.method == "POST":
+#         new_password = request.form.get("password")
+#         user.password = generate_password_hash(new_password)  # ✅ hash password
+#         user.reset_token = None
+#         user.reset_token_expiry = None
+#         db.session.commit()
+#         flash("Password updated! You can now log in.")
+#         return redirect(url_for("login"))
+
+#     return render_template("reset_password.html")
+
+# @app.route("/admin/approve", methods=["GET", "POST"])
+# @login_required
+# def approve_panel():
+#     if current_user.email != "admin@cse.iith.ac.in":
+#         return "Access Denied"
+
+#     if request.method == "POST":
+#         user_id = request.form.get("user_id")
+#         action = request.form.get("action")
+#         user = User.query.get(int(user_id))
+
+#         if user:
+#             if action == "approve":
+#                 user.is_approved = True
+#                 user.approved_at = datetime.utcnow()
+#                 flash(f"{user.email} approved.", "success")
+#             elif action == "reject":
+#                 user.is_approved = False
+#                 user.approved_at = datetime.utcnow()
+#                 flash(f"{user.email} rejected.", "danger")
+#             db.session.commit()
+
+#         return redirect("/admin/approve")
+
+#     # Show all pending users
+#     pending_users = User.query.filter_by(is_approved=False).all()
+#     return render_template("approve_users.html", users=pending_users)
+
+# @app.route("/admin/toggle_user/<int:user_id>")
+# @login_required
+# def toggle_user(user_id):
+#     if current_user.email != "admin@cse.iith.ac.in":
+#         return "Access Denied"
+    
+#     user = User.query.get_or_404(user_id)
+#     if user.email == "admin@cse.iith.ac.in":
+#         flash("Admin account cannot be blocked.")
+#         return redirect(url_for("registered_users"))
+
+#     user.is_active = not user.is_active
+#     db.session.commit()
+#     flash(f"{'Blocked' if not user.is_active else 'Unblocked'} {user.email}")
+#     return redirect(url_for("registered_users"))
+
+
+# @app.route("/admin/delete_user/<int:user_id>")
+# @login_required
+# def delete_user(user_id):
+#     if current_user.email != "admin@cse.iith.ac.in":
+#         return "Access Denied"
+
+#     user = User.query.get_or_404(user_id)
+#     if user.email == "admin@cse.iith.ac.in":
+#         flash("Admin account cannot be deleted.")
+#         return redirect(url_for("registered_users"))
+
+#     db.session.delete(user)
+#     db.session.commit()
+#     flash(f"Deleted user: {user.email}")
+#     return redirect(url_for("registered_users"))
+
+
+# @app.route("/admin/approve/<int:user_id>")
+# @login_required
+# def approve_user(user_id):
+#     if current_user.email != "admin@cse.iith.ac.in":
+#         return "Access Denied"
+#     user = User.query.get(user_id)
+#     if user:
+#         user.is_approved = True
+#         db.session.commit()
+#     return redirect(url_for("approve_panel"))
+
+
+# @app.route("/admin/reject/<int:user_id>")
+# @login_required
+# def reject_user(user_id):
+#     if current_user.email != "admin@cse.iith.ac.in":
+#         return "Access Denied"
+#     user = User.query.get(user_id)
+#     if user:
+#         db.session.delete(user)
+#         db.session.commit()
+#     return redirect(url_for("approve_panel"))
+
+
+# ================= PASSWORD RESET =================
+
 @app.route("/reset-request", methods=["GET", "POST"])
 def reset_request():
     if request.method == "POST":
@@ -998,11 +1179,27 @@ def reset_request():
             user.reset_token = token
             user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=15)
             db.session.commit()
-            # In production, send email. Here, show URL
-            flash(f"Reset link: http://127.0.0.1:5009/reset-password/{token}")
+
+            # ✅ Send reset email
+            subject = "🔑 CSE Lab Password Reset Request"
+            body = f"""
+Hello {user.email},
+
+We received a request to reset your password. Click the link below to reset it (valid for 15 minutes):
+
+👉 http://127.0.0.1:5009/reset-password/{token}
+
+If you didn't request this, please ignore this email.
+
+Regards,
+CSE Lab Admin
+"""
+            send_notification_email(user.email, subject, body)
+            flash("Password reset link has been sent to your email.", "success")
         else:
-            flash("Email not found")
+            flash("Email not found", "danger")
         return redirect(url_for("reset_request"))
+
     return render_template("reset_request.html")
 
 
@@ -1014,14 +1211,34 @@ def reset_password(token):
 
     if request.method == "POST":
         new_password = request.form.get("password")
-        user.password = generate_password_hash(new_password)  # ✅ hash password
+        user.password = generate_password_hash(new_password)
         user.reset_token = None
         user.reset_token_expiry = None
         db.session.commit()
-        flash("Password updated! You can now log in.")
+
+        # ✅ Send confirmation email
+        subject = "✅ Your CSE Lab Password Has Been Changed"
+        body = f"""
+Hello {user.email},
+
+Your password has been successfully updated. You can now log in with your new password:
+
+👉 https://192.168.50.85/login
+
+If you did not make this change, contact the admin immediately.
+
+Regards,
+CSE Lab Admin
+"""
+        send_notification_email(user.email, subject, body)
+
+        flash("Password updated! You can now log in.", "success")
         return redirect(url_for("login"))
 
     return render_template("reset_password.html")
+
+
+# ================= ADMIN APPROVE / REJECT =================
 
 @app.route("/admin/approve", methods=["GET", "POST"])
 @login_required
@@ -1038,18 +1255,112 @@ def approve_panel():
             if action == "approve":
                 user.is_approved = True
                 user.approved_at = datetime.utcnow()
-                flash(f"{user.email} approved.", "success")
+                db.session.commit()
+
+                # ✅ Send approval email
+                subject = "✅ Your CSE Lab Account Has Been Approved"
+                body = f"""
+Hello {user.email},
+
+Your account has been approved by the admin. You can now log in:
+
+👉 https://192.168.50.85/login
+
+Role: {user.role.capitalize()}
+
+Regards,
+CSE Lab Admin
+"""
+                send_notification_email(user.email, subject, body)
+                flash(f"{user.email} approved and notified.", "success")
+
             elif action == "reject":
+                # ✅ Send rejection email before deletion
+                subject = "❌ Your CSE Lab Account Registration Was Rejected"
+                body = f"""
+Hello {user.email},
+
+Your registration for CSE Lab has been rejected by the admin.
+
+If you believe this is a mistake, please contact the admin.
+
+Regards,
+CSE Lab Admin
+"""
+                send_notification_email(user.email, subject, body)
+
                 user.is_approved = False
                 user.approved_at = datetime.utcnow()
-                flash(f"{user.email} rejected.", "danger")
-            db.session.commit()
+                db.session.delete(user)
+                db.session.commit()
+                flash(f"{user.email} rejected and notified.", "danger")
 
         return redirect("/admin/approve")
 
-    # Show all pending users
     pending_users = User.query.filter_by(is_approved=False).all()
     return render_template("approve_users.html", users=pending_users)
+
+
+@app.route("/admin/approve/<int:user_id>")
+@login_required
+def approve_user(user_id):
+    if current_user.email != "admin@cse.iith.ac.in":
+        return "Access Denied"
+    
+    user = User.query.get(user_id)
+    if user:
+        user.is_approved = True
+        user.approved_at = datetime.utcnow()
+        db.session.commit()
+
+        # ✅ Send approval email
+        subject = "✅ Your CSE Lab Account Has Been Approved"
+        body = f"""
+Hello {user.email},
+
+Your account has been approved by the admin. You can now log in:
+
+👉 https://192.168.50.85/login
+
+Role: {user.role.capitalize()}
+
+Regards,
+CSE Lab Admin
+"""
+        send_notification_email(user.email, subject, body)
+
+    return redirect(url_for("approve_panel"))
+
+
+@app.route("/admin/reject/<int:user_id>")
+@login_required
+def reject_user(user_id):
+    if current_user.email != "admin@cse.iith.ac.in":
+        return "Access Denied"
+    
+    user = User.query.get(user_id)
+    if user:
+        # ✅ Send rejection email before deletion
+        subject = "❌ Your CSE Lab Account Registration Was Rejected"
+        body = f"""
+Hello {user.email},
+
+Your registration for CSE Lab has been rejected by the admin.
+
+If you believe this is a mistake, please contact the admin.
+
+Regards,
+CSE Lab Admin
+"""
+        send_notification_email(user.email, subject, body)
+
+        db.session.delete(user)
+        db.session.commit()
+
+    return redirect(url_for("approve_panel"))
+
+
+# ================= ADMIN TOGGLE / DELETE USERS =================
 
 @app.route("/admin/toggle_user/<int:user_id>")
 @login_required
@@ -1059,12 +1370,41 @@ def toggle_user(user_id):
     
     user = User.query.get_or_404(user_id)
     if user.email == "admin@cse.iith.ac.in":
-        flash("Admin account cannot be blocked.")
+        flash("Admin account cannot be blocked.", "danger")
         return redirect(url_for("registered_users"))
 
     user.is_active = not user.is_active
     db.session.commit()
-    flash(f"{'Blocked' if not user.is_active else 'Unblocked'} {user.email}")
+
+    # ✅ Send email notification
+    if not user.is_active:
+        subject = "🚫 Your CSE Lab Account Has Been Blocked"
+        body = f"""
+Hello {user.email},
+
+Your account has been temporarily blocked by the admin. 
+You will not be able to log in until it is unblocked.
+
+If you believe this is a mistake, please contact the admin.
+
+Regards,
+CSE Lab Admin
+"""
+    else:
+        subject = "✅ Your CSE Lab Account Has Been Unblocked"
+        body = f"""
+Hello {user.email},
+
+Your account has been unblocked by the admin. 
+You can now log in again:
+
+👉 https://192.168.50.85/login
+
+Regards,
+CSE Lab Admin
+"""
+    send_notification_email(user.email, subject, body)
+    flash(f"{'Blocked' if not user.is_active else 'Unblocked'} {user.email} and notified.", "success")
     return redirect(url_for("registered_users"))
 
 
@@ -1076,37 +1416,68 @@ def delete_user(user_id):
 
     user = User.query.get_or_404(user_id)
     if user.email == "admin@cse.iith.ac.in":
-        flash("Admin account cannot be deleted.")
+        flash("Admin account cannot be deleted.", "danger")
         return redirect(url_for("registered_users"))
+
+    # ✅ Send deletion notification before removing
+    subject = "❌ Your CSE Lab Account Has Been Deleted"
+    body = f"""
+Hello {user.email},
+
+Your account has been deleted by the admin. 
+You will no longer be able to log in.
+
+If you believe this is a mistake, please contact the admin.
+
+Regards,
+CSE Lab Admin
+"""
+    send_notification_email(user.email, subject, body)
 
     db.session.delete(user)
     db.session.commit()
-    flash(f"Deleted user: {user.email}")
+    flash(f"Deleted {user.email} and notified.", "success")
     return redirect(url_for("registered_users"))
 
 
-@app.route("/admin/approve/<int:user_id>")
+# ================= USER SETTINGS (CHANGE PASSWORD) =================
+
+@app.route("/user/settings", methods=["GET", "POST"])
 @login_required
-def approve_user(user_id):
-    if current_user.email != "admin@cse.iith.ac.in":
-        return "Access Denied"
-    user = User.query.get(user_id)
-    if user:
-        user.is_approved = True
-        db.session.commit()
-    return redirect(url_for("approve_panel"))
+def user_settings():
+    if request.method == "POST":
+        current = request.form.get("current_password")
+        new = request.form.get("new_password")
+        confirm = request.form.get("confirm_password")
+
+        if not check_password_hash(current_user.password, current):
+            flash("Current password is incorrect.", "danger")
+        elif new != confirm:
+            flash("New passwords do not match.", "danger")
+        else:
+            current_user.password = generate_password_hash(new)
+            db.session.commit()
+
+            # ✅ Send confirmation email
+            subject = "✅ Your CSE Lab Password Has Been Changed"
+            body = f"""
+Hello {current_user.email},
+
+Your account password has been successfully updated. 
+
+If you did not perform this change, please contact the admin immediately.
+
+Regards,
+CSE Lab Admin
+"""
+            send_notification_email(current_user.email, subject, body)
+
+            flash("Password updated successfully! A confirmation email has been sent.", "success")
+            return redirect(url_for("user_settings"))
+
+    return render_template("user_settings.html")
 
 
-@app.route("/admin/reject/<int:user_id>")
-@login_required
-def reject_user(user_id):
-    if current_user.email != "admin@cse.iith.ac.in":
-        return "Access Denied"
-    user = User.query.get(user_id)
-    if user:
-        db.session.delete(user)
-        db.session.commit()
-    return redirect(url_for("approve_panel"))
 
 from flask_login import current_user
 
@@ -1794,25 +2165,26 @@ from flask import flash, redirect, url_for, render_template, request
 from flask_login import login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
-@app.route("/user/settings", methods=["GET", "POST"])
-@login_required
-def user_settings():
-    if request.method == "POST":
-        current = request.form.get("current_password")
-        new = request.form.get("new_password")
-        confirm = request.form.get("confirm_password")
+# @app.route("/user/settings", methods=["GET", "POST"])
+# @login_required
+# def user_settings():
+#     if request.method == "POST":
+#         current = request.form.get("current_password")
+#         new = request.form.get("new_password")
+#         confirm = request.form.get("confirm_password")
 
-        if not check_password_hash(current_user.password, current):
-            flash("Current password is incorrect.")
-        elif new != confirm:
-            flash("New passwords do not match.")
-        else:
-            current_user.password = generate_password_hash(new)
-            db.session.commit()
-            flash("Password updated successfully!")
-            return redirect(url_for("user_settings"))
+#         if not check_password_hash(current_user.password, current):
+#             flash("Current password is incorrect.")
+#         elif new != confirm:
+#             flash("New passwords do not match.")
+#         else:
+#             current_user.password = generate_password_hash(new)
+#             db.session.commit()
+#             flash("Password updated successfully!")
+#             return redirect(url_for("user_settings"))
 
-    return render_template("user_settings.html")
+#     return render_template("user_settings.html")
+
 
 
 @app.route('/install_os_form', methods=['GET'])
@@ -2311,6 +2683,56 @@ def random_password(length=8):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
+# @app.route("/student_info", methods=["GET", "POST"])
+# def student_info():
+#     prefill_roll = (request.args.get("roll") or "").strip()
+
+#     if request.method == "POST":
+#         roll = request.form['roll'].strip()
+#         email = request.form['email'].strip()
+
+#         # Duplicate check
+#         if Student.query.get(roll):
+#             flash("Student already exists!", "warning")
+#             return redirect(url_for("student_info", roll=roll))
+
+#         # ✅ Create User for this student (if not already present)
+#         existing_user = User.query.filter_by(email=email).first()
+#         if existing_user:
+#             user = existing_user
+#         else:
+#             temp_pw = random_password()
+#             user = User(
+#                 email=email,
+#                 password=generate_password_hash(temp_pw),
+#                 role="student",
+#                 is_approved=False,  # Admin must approve later
+#                 registered_at=datetime.utcnow()
+#             )
+#             db.session.add(user)
+#             db.session.flush()  # get user.id before commit
+#             flash(f"Temporary password for {email}: {temp_pw}", "info")
+
+#         # ✅ Create Student and link with User
+#         student = Student(
+#             roll=roll,
+#             name=request.form['name'],
+#             course=request.form['course'],
+#             year=request.form['year'],
+#             joining_year=request.form['joining_year'],
+#             faculty=request.form['faculty'],
+#             email=email,
+#             phone=request.form.get('phone'),
+#             user_id=user.id
+#         )
+#         db.session.add(student)
+#         db.session.commit()
+
+#         flash("Student information saved and linked to User.", "success")
+#         return redirect(url_for("allotment_options", roll=roll))
+
+#     return render_template("student_info.html", prefill_roll=prefill_roll)
+
 @app.route("/student_info", methods=["GET", "POST"])
 def student_info():
     prefill_roll = (request.args.get("roll") or "").strip()
@@ -2324,24 +2746,25 @@ def student_info():
             flash("Student already exists!", "warning")
             return redirect(url_for("student_info", roll=roll))
 
-        # ✅ Create User for this student (if not already present)
+        # ✅ Create User (if not exists)
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             user = existing_user
+            temp_pw = None
         else:
             temp_pw = random_password()
             user = User(
                 email=email,
                 password=generate_password_hash(temp_pw),
                 role="student",
-                is_approved=False,  # Admin must approve later
+                is_approved=False,     # admin approval needed
+                # first_login=True,      # flag to force password change
                 registered_at=datetime.utcnow()
             )
             db.session.add(user)
-            db.session.flush()  # get user.id before commit
-            flash(f"Temporary password for {email}: {temp_pw}", "info")
+            db.session.flush()
 
-        # ✅ Create Student and link with User
+        # ✅ Create Student linked to User
         student = Student(
             roll=roll,
             name=request.form['name'],
@@ -2356,11 +2779,34 @@ def student_info():
         db.session.add(student)
         db.session.commit()
 
-        flash("Student information saved and linked to User.", "success")
-        return redirect(url_for("allotment_options", roll=roll))
+        # ✅ Send Email Notification
+        subject = "CSE Lab Management – Student Registration Successful"
+        body = f"""
+Dear {student.name},
 
-    return render_template("student_info.html", prefill_roll=prefill_roll)
+Your registration in the CSE Lab Management System has been successfully completed.
 
+Student Details:
+• Roll No: {student.roll}
+• Course: {student.course}
+• Year: {student.year}
+• Faculty: {student.faculty}
+• Email (Username): {student.email}
+{"• Temporary Password: " + temp_pw if temp_pw else ""}
+
+Please note:
+Your account requires admin approval before you can log in.
+Once approved, you will be prompted to change your password during your first login.
+
+Regards,  
+CSE Lab Management Team
+"""
+        send_notification_email(student.email, subject, body)  # ✅ your existing function
+
+        flash("Student successfully registered and Wait for admin approval before you can log in.", "success")
+        return redirect(url_for("login", roll=roll))
+
+    return render_template("login.html", prefill_roll=prefill_roll)
 
     
 
@@ -2617,7 +3063,8 @@ def workstation_allocation(roll=None):
         roll_prefill=roll_prefill,
         room_lab_name=room_lab_name,
         cubicle_no=cubicle_no,
-        room_map=room_map,   # <-- important for template JS
+        room_map=room_map,   # <-- important for template 
+        
     )
 
 
