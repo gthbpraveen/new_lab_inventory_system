@@ -9,10 +9,8 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 import requests
 from flask_mail import Mail, Message
-<<<<<<< HEAD
-=======
 
->>>>>>> db933d97 (emails)
+
 # Models
 from models import (
     db,
@@ -94,8 +92,6 @@ def roles_required(*roles):
         return wrapped_view
     return decorator
 
-
-
 # =========================================================
 # 📧 MAIL CONFIGURATION (Flask-Mail)
 # =========================================================
@@ -110,71 +106,31 @@ mail = Mail(app)
 
 # ---- Helper for sending email ----
 import threading
+from flask_mail import Message
 
 def send_async_email(app, msg):
-    """Run mail.send() in a background thread"""
+    """Send email in background thread"""
     with app.app_context():
         try:
             mail.send(msg)
-            print(f"✅ Email sent to {msg.recipients}")
+            print(f"✅ Email sent to {msg.recipients} (CC: {msg.cc})")
         except Exception as e:
             print(f"❌ Error sending email: {e}")
 
-def send_notification_email(to_email, subject, body):
-    """Main function to send notification email"""
+def send_notification_email(to_email, subject, body, cc=None):
+    """Send notification email (supports HTML + CC)"""
     if not to_email:
         print("⚠️ Skipping email: no recipient")
         return
-    msg = Message(subject=subject, recipients=[to_email], body=body)
-    thr = threading.Thread(target=send_async_email, args=[app, msg])
-    thr.start()
 
+    msg = Message(subject=subject, recipients=[to_email], cc=cc or [])
 
-# =========================================================
-# ✅ TEST ROUTE FOR EMAIL
-# =========================================================
-@app.route("/test_email")
-def test_email():
-    try:
-        send_notification_email(
-            "shivareddy.m@cse.iith.ac.in",
-            "✅ Test Email from Lab Management System",
-            "Hello!\n\nThis is a test email confirming Flask-Mail setup is working fine.\n\n– CSE Lab Admin"
-        )
-        return "✅ Test email sent successfully!"
-    except Exception as e:
-        return f"❌ Email test failed: {e}"
+    # ✅ Use HTML if it looks like HTML, else plain text
+    if "<html>" in body.lower():
+        msg.html = body
+    else:
+        msg.body = body
 
-# =========================================================
-# 📧 MAIL CONFIGURATION (Flask-Mail)
-# =========================================================
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 587
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")  # from .env
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")  # from .env (Gmail app password)
-app.config["MAIL_DEFAULT_SENDER"] = ("CSE Lab Admin", os.getenv("MAIL_USERNAME"))
-
-mail = Mail(app)
-
-# ---- Helper for sending email ----
-import threading
-
-def send_async_email(app, msg):
-    """Run mail.send() in a background thread"""
-    with app.app_context():
-        try:
-            mail.send(msg)
-            print(f"✅ Email sent to {msg.recipients}")
-        except Exception as e:
-            print(f"❌ Error sending email: {e}")
-
-def send_notification_email(to_email, subject, body):
-    """Main function to send notification email"""
-    if not to_email:
-        print("⚠️ Skipping email: no recipient")
-        return
-    msg = Message(subject=subject, recipients=[to_email], body=body)
     thr = threading.Thread(target=send_async_email, args=[app, msg])
     thr.start()
 
@@ -2806,7 +2762,7 @@ CSE Lab Management Team
         flash("Student successfully registered and Wait for admin approval before you can log in.", "success")
         return redirect(url_for("login", roll=roll))
 
-    return render_template("login.html", prefill_roll=prefill_roll)
+    return render_template("student_info.html", prefill_roll=prefill_roll)
 
     
 
@@ -3084,71 +3040,81 @@ from sqlalchemy import or_
 @login_required
 def it_equipment_assign(roll):
     student = Student.query.filter_by(roll=roll).first_or_404()
-
-    # ---------- Return Equipment ----------
+# ---------- Return Equipment ----------
     if request.method == "POST" and "return_equipment_id" in request.form:
         equipment_id = request.form.get("return_equipment_id", type=int)
-
         eq = Equipment.query.get_or_404(equipment_id)
 
         if not eq.assigned_to_roll:
             flash("This equipment is not currently assigned.", "warning")
         else:
-            # Mark as returned
+            # Save assigned_date & expected_return before clearing
+            assigned_date = eq.assigned_date
+            expected_return = getattr(eq, "expected_return", None)
+            return_date = datetime.utcnow()
+
             eq.assigned_to_roll = None
             eq.status = "Available"
 
-            # Update last history record if open
+            # Update last history record
             last_hist = EquipmentHistory.query.filter_by(
                 equipment_id=eq.id,
                 assigned_to_roll=student.roll
             ).order_by(EquipmentHistory.id.desc()).first()
-
             if last_hist and last_hist.unassigned_date is None:
-                last_hist.unassigned_date = datetime.utcnow()
+                last_hist.unassigned_date = return_date
                 last_hist.status_snapshot = "Returned"
-            else:
-                # fallback: insert a new history row
-                hist = EquipmentHistory(
-                    equipment_id=eq.id,
-                    assigned_to_roll=student.roll,
-                    assigned_by=getattr(current_user, "email", None),
-                    assigned_date=eq.assigned_date,
-                    unassigned_date=datetime.utcnow(),
-                    status_snapshot="Returned",
-                )
-                db.session.add(hist)
 
             db.session.commit()
             flash(f"Returned {eq.serial_number} successfully.", "success")
 
-        return redirect(url_for(
-            "it_equipment_assign",
-            roll=roll,
-            location=request.args.get("location", ""),
-            intender_name=request.args.get("intender_name", "")
-        ))
+            # ---------- Send Email ----------
+            faculty_incharge = student.faculty or "Not Assigned"
+            staff_incharge = student.cubicle.room_lab.staff_incharge \
+                if student.cubicle and student.cubicle.room_lab else "Not Assigned"
+
+            email_subject = f"Equipment Returned: {eq.manufacturer} {eq.model}"
+            email_body = f"""
+    <html>
+    <body>
+    <p>Hello {student.name},</p>
+    <p>The following equipment has been returned:</p>
+    <table border="1" cellpadding="6">
+    <tr><th>Field</th><th>Value</th></tr>
+    <tr><td>Category</td><td>{eq.category}</td></tr>
+    <tr><td>Serial</td><td>{eq.serial_number}</td></tr>
+    <tr><td>Model</td><td>{eq.manufacturer} {eq.model}</td></tr>
+    <tr><td>Location</td><td>{eq.location}</td></tr>
+    <tr><td>Assigned Date</td><td>{assigned_date.strftime('%Y-%m-%d %H:%M') if assigned_date else '-'}</td></tr>
+    <tr><td>Expected Return Date</td><td>{expected_return if expected_return else '-'}</td></tr>
+    <tr><td>Actual Return Date</td><td>{return_date.strftime('%Y-%m-%d %H:%M')}</td></tr>
+    <tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
+    <tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
+    </table>
+    <p>Regards,<br>CSE Lab Admin</p>
+    </body>
+    </html>
+    """
+            msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
+            threading.Thread(target=send_async_email, args=[app, msg]).start()
+
 
     # ---------- Assign Equipment ----------
     if request.method == "POST" and "equipment_id" in request.form:
         equipment_id = request.form.get("equipment_id", type=int)
         issue_date = request.form.get("issue_date")          # optional
         expected_return = request.form.get("expected_return")  # optional
-
         eq = Equipment.query.get_or_404(equipment_id)
 
         if eq.assigned_to_roll:
             flash("Equipment already assigned.", "danger")
-        elif (eq.status or "").lower() in ("scrapped", "retired"):
-            flash("This equipment cannot be assigned (scrapped/retired).", "danger")
         else:
-            # Mark as issued
             eq.assigned_to_roll = student.roll
             eq.assigned_by = getattr(current_user, "email", None)
-            eq.assigned_date = datetime.utcnow()
+            eq.assigned_date = datetime.strptime(issue_date, "%Y-%m-%d") if issue_date else datetime.utcnow()
+            eq.expected_return = expected_return
             eq.status = "Issued"
 
-            # History entry
             hist = EquipmentHistory(
                 equipment_id=eq.id,
                 assigned_to_roll=student.roll,
@@ -3158,34 +3124,53 @@ def it_equipment_assign(roll):
             )
             db.session.add(hist)
             db.session.commit()
-
             flash(f"Assigned {eq.serial_number} to {student.name}.", "success")
 
-        return redirect(url_for(
-            "it_equipment_assign",
-            roll=roll,
-            location=request.args.get("location", ""),
-            intender_name=request.args.get("intender_name", "")
-        ))
+            # ---------- Send Email ----------
+            faculty_incharge = student.faculty or "Not Assigned"
+            staff_incharge = student.cubicle.room_lab.staff_incharge \
+                if student.cubicle and student.cubicle.room_lab else "Not Assigned"
+
+            email_subject = f"Equipment Assigned: {eq.manufacturer} {eq.model}"
+            email_body = f"""
+    <html>
+    <body>
+    <p>Hello {student.name},</p>
+    <p>The following equipment has been assigned to you:</p>
+    <table border="1" cellpadding="6">
+    <tr><th>Field</th><th>Value</th></tr>
+    <tr><td>Category</td><td>{eq.category}</td></tr>
+    <tr><td>Serial</td><td>{eq.serial_number}</td></tr>
+    <tr><td>Model</td><td>{eq.manufacturer} {eq.model}</td></tr>
+    <tr><td>Location</td><td>{eq.location}</td></tr>
+    <tr><td>Assigned Date</td><td>{eq.assigned_date.strftime('%Y-%m-%d %H:%M')}</td></tr>
+    <tr><td>Expected Return Date</td><td>{expected_return if expected_return else '-'}</td></tr>
+    <tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
+    <tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
+    </table>
+    <p>Please contact your faculty or staff in-charge for any questions.</p>
+    <p>Regards,<br>CSE Lab Admin</p>
+    </body>
+    </html>
+    """
+            msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
+            threading.Thread(target=send_async_email, args=[app, msg]).start()
 
     # ---------- Filters ----------
     location = (request.args.get("location") or "").strip()
     intender_name = (request.args.get("intender_name") or "").strip()
 
-    # Base query with optional filters applied
     base_q = Equipment.query
     if location:
         base_q = base_q.filter(Equipment.location == location)
     if intender_name:
         base_q = base_q.filter(Equipment.intender_name == intender_name)
 
-    # ✅ Only Available equipment
     available_equipment = base_q.filter(
         Equipment.assigned_to_roll.is_(None),
         or_(Equipment.status.is_(None), Equipment.status == "Available")
     ).order_by(Equipment.manufacturer, Equipment.model).all()
 
-    # Student’s current assignments (history panel)
     student_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll) \
         .order_by(Equipment.assigned_date.desc().nullslast()) \
         .all()
@@ -3196,6 +3181,124 @@ def it_equipment_assign(roll):
         available_equipment=available_equipment,
         student_equipment=student_equipment,
     )
+
+
+# @app.route("/it_equipment_assign/<roll>", methods=["GET", "POST"])
+# @login_required
+# def it_equipment_assign(roll):
+#     student = Student.query.filter_by(roll=roll).first_or_404()
+
+#     # ---------- Return Equipment ----------
+#     if request.method == "POST" and "return_equipment_id" in request.form:
+#         equipment_id = request.form.get("return_equipment_id", type=int)
+
+#         eq = Equipment.query.get_or_404(equipment_id)
+
+#         if not eq.assigned_to_roll:
+#             flash("This equipment is not currently assigned.", "warning")
+#         else:
+#             # Mark as returned
+#             eq.assigned_to_roll = None
+#             eq.status = "Available"
+
+#             # Update last history record if open
+#             last_hist = EquipmentHistory.query.filter_by(
+#                 equipment_id=eq.id,
+#                 assigned_to_roll=student.roll
+#             ).order_by(EquipmentHistory.id.desc()).first()
+
+#             if last_hist and last_hist.unassigned_date is None:
+#                 last_hist.unassigned_date = datetime.utcnow()
+#                 last_hist.status_snapshot = "Returned"
+#             else:
+#                 # fallback: insert a new history row
+#                 hist = EquipmentHistory(
+#                     equipment_id=eq.id,
+#                     assigned_to_roll=student.roll,
+#                     assigned_by=getattr(current_user, "email", None),
+#                     assigned_date=eq.assigned_date,
+#                     unassigned_date=datetime.utcnow(),
+#                     status_snapshot="Returned",
+#                 )
+#                 db.session.add(hist)
+
+#             db.session.commit()
+#             flash(f"Returned {eq.serial_number} successfully.", "success")
+
+#         return redirect(url_for(
+#             "it_equipment_assign",
+#             roll=roll,
+#             location=request.args.get("location", ""),
+#             intender_name=request.args.get("intender_name", "")
+#         ))
+
+#     # ---------- Assign Equipment ----------
+#     if request.method == "POST" and "equipment_id" in request.form:
+#         equipment_id = request.form.get("equipment_id", type=int)
+#         issue_date = request.form.get("issue_date")          # optional
+#         expected_return = request.form.get("expected_return")  # optional
+
+#         eq = Equipment.query.get_or_404(equipment_id)
+
+#         if eq.assigned_to_roll:
+#             flash("Equipment already assigned.", "danger")
+#         elif (eq.status or "").lower() in ("scrapped", "retired"):
+#             flash("This equipment cannot be assigned (scrapped/retired).", "danger")
+#         else:
+#             # Mark as issued
+#             eq.assigned_to_roll = student.roll
+#             eq.assigned_by = getattr(current_user, "email", None)
+#             eq.assigned_date = datetime.utcnow()
+#             eq.status = "Issued"
+
+#             # History entry
+#             hist = EquipmentHistory(
+#                 equipment_id=eq.id,
+#                 assigned_to_roll=student.roll,
+#                 assigned_by=eq.assigned_by,
+#                 assigned_date=eq.assigned_date,
+#                 status_snapshot=eq.status,
+#             )
+#             db.session.add(hist)
+#             db.session.commit()
+
+#             flash(f"Assigned {eq.serial_number} to {student.name}.", "success")
+
+#         return redirect(url_for(
+#             "it_equipment_assign",
+#             roll=roll,
+#             location=request.args.get("location", ""),
+#             intender_name=request.args.get("intender_name", "")
+#         ))
+
+#     # ---------- Filters ----------
+#     location = (request.args.get("location") or "").strip()
+#     intender_name = (request.args.get("intender_name") or "").strip()
+
+#     # Base query with optional filters applied
+#     base_q = Equipment.query
+#     if location:
+#         base_q = base_q.filter(Equipment.location == location)
+#     if intender_name:
+#         base_q = base_q.filter(Equipment.intender_name == intender_name)
+
+#     # ✅ Only Available equipment
+#     available_equipment = base_q.filter(
+#         Equipment.assigned_to_roll.is_(None),
+#         or_(Equipment.status.is_(None), Equipment.status == "Available")
+#     ).order_by(Equipment.manufacturer, Equipment.model).all()
+
+#     # Student’s current assignments (history panel)
+#     student_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll) \
+#         .order_by(Equipment.assigned_date.desc().nullslast()) \
+#         .all()
+
+#     return render_template(
+#         "it_equipment_assign.html",
+#         student=student,
+#         available_equipment=available_equipment,
+#         student_equipment=student_equipment,
+#     )
 
     # ---------- Filters ----------
     location = (request.args.get("location") or "").strip()
@@ -3828,25 +3931,115 @@ def assignments_list():
 #             flash(f"Error assigning workstation: {e}", "danger")
 
 #     return render_template("assignment_form.html", assets=Available_assets)
+# @app.route("/assignments/new", methods=["GET", "POST"])
+# def assignment_new():
+#     # --- Filters ---
+#     location = request.args.get("location", "")
+#     indenter = request.args.get("indenter", "")
+#     prefill_roll = request.args.get("student_roll", "").strip()
+#     prefill_lab = request.args.get("lab", "").strip()   # optional, if you want to show lab context
+
+#     # Base query: only Available assets
+#     q = WorkstationAsset.query.filter_by(status="Available")
+
+#     if location:
+#         q = q.filter(WorkstationAsset.location == location)
+#     if indenter:
+#         q = q.filter(WorkstationAsset.indenter == indenter)
+
+#     Available_assets = q.order_by(WorkstationAsset.id.desc()).all()
+
+#     # Distinct values for dropdowns
+#     locations = [l[0] for l in db.session.query(WorkstationAsset.location).distinct().all() if l[0]]
+#     indenters = [i[0] for i in db.session.query(WorkstationAsset.indenter).distinct().all() if i[0]]
+
+#     if request.method == "POST":
+#         f = request.form
+#         roll = (f.get("student_roll") or "").strip()
+#         asset_id = f.get("workstation_id")
+#         issue_date = f.get("issue_date")
+#         till = f.get("system_required_till")
+#         remarks = f.get("remarks") or None
+
+#         # validate
+#         if not roll or not asset_id or not issue_date or not till:
+#             flash("Roll, asset, issue date and required till are mandatory.", "warning")
+#             return render_template("assignment_form.html", 
+#                                    assets=Available_assets,
+#                                    locations=locations,
+#                                    indenters=indenters,
+#                                    location=location,
+#                                    indenter=indenter,
+#                                    prefill_roll=prefill_roll,
+#                                    prefill_lab=prefill_lab)
+
+#         st = Student.query.filter_by(roll=roll).first()
+#         if not st:
+#             flash("Student not found. Register student first.", "warning")
+#             return render_template("assignment_form.html", 
+#                                    assets=Available_assets,
+#                                    locations=locations,
+#                                    indenters=indenters,
+#                                    location=location,
+#                                    indenter=indenter,
+#                                    prefill_roll=prefill_roll,
+#                                    prefill_lab=prefill_lab)
+
+#         a = WorkstationAsset.query.get(asset_id)
+#         if not a or a.status != "Available":
+#             flash("Selected asset is not available for assignment.", "warning")
+#             return render_template("assignment_form.html", 
+#                                    assets=Available_assets,
+#                                    locations=locations,
+#                                    indenters=indenters,
+#                                    location=location,
+#                                    indenter=indenter,
+#                                    prefill_roll=prefill_roll,
+#                                    prefill_lab=prefill_lab)
+
+#         # create assignment
+#         assign = WorkstationAssignment(
+#             workstation_id=a.id,
+#             student_roll=roll,
+#             issue_date=issue_date,
+#             system_required_till=till,
+#             remarks=remarks,
+#             is_active=True
+#         )
+#         try:
+#             db.session.add(assign)
+#             a.status = "Issued"
+#             db.session.commit()
+#             flash("Workstation assigned.", "success")
+#             return redirect(url_for("assignments_list"))
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f"Error assigning workstation: {e}", "danger")
+
+#     return render_template("assignment_form.html",
+#                            assets=Available_assets,
+#                            locations=locations,
+#                            indenters=indenters,
+#                            location=location,
+#                            indenter=indenter,
+#                            prefill_roll=prefill_roll,
+#                            prefill_lab=prefill_lab)
+
 @app.route("/assignments/new", methods=["GET", "POST"])
 def assignment_new():
     # --- Filters ---
     location = request.args.get("location", "")
     indenter = request.args.get("indenter", "")
     prefill_roll = request.args.get("student_roll", "").strip()
-    prefill_lab = request.args.get("lab", "").strip()   # optional, if you want to show lab context
+    prefill_lab = request.args.get("lab", "").strip()
 
-    # Base query: only Available assets
     q = WorkstationAsset.query.filter_by(status="Available")
-
     if location:
         q = q.filter(WorkstationAsset.location == location)
     if indenter:
         q = q.filter(WorkstationAsset.indenter == indenter)
-
     Available_assets = q.order_by(WorkstationAsset.id.desc()).all()
 
-    # Distinct values for dropdowns
     locations = [l[0] for l in db.session.query(WorkstationAsset.location).distinct().all() if l[0]]
     indenters = [i[0] for i in db.session.query(WorkstationAsset.indenter).distinct().all() if i[0]]
 
@@ -3858,45 +4051,51 @@ def assignment_new():
         till = f.get("system_required_till")
         remarks = f.get("remarks") or None
 
-        # validate
+        # Validation
         if not roll or not asset_id or not issue_date or not till:
             flash("Roll, asset, issue date and required till are mandatory.", "warning")
-            return render_template("assignment_form.html", 
-                                   assets=Available_assets,
-                                   locations=locations,
-                                   indenters=indenters,
-                                   location=location,
-                                   indenter=indenter,
-                                   prefill_roll=prefill_roll,
-                                   prefill_lab=prefill_lab)
+            return render_template(
+                "assignment_form.html",
+                assets=Available_assets,
+                locations=locations,
+                indenters=indenters,
+                location=location,
+                indenter=indenter,
+                prefill_roll=prefill_roll,
+                prefill_lab=prefill_lab
+            )
 
-        st = Student.query.filter_by(roll=roll).first()
-        if not st:
+        student = Student.query.filter_by(roll=roll).first()
+        if not student:
             flash("Student not found. Register student first.", "warning")
-            return render_template("assignment_form.html", 
-                                   assets=Available_assets,
-                                   locations=locations,
-                                   indenters=indenters,
-                                   location=location,
-                                   indenter=indenter,
-                                   prefill_roll=prefill_roll,
-                                   prefill_lab=prefill_lab)
+            return render_template(
+                "assignment_form.html",
+                assets=Available_assets,
+                locations=locations,
+                indenters=indenters,
+                location=location,
+                indenter=indenter,
+                prefill_roll=prefill_roll,
+                prefill_lab=prefill_lab
+            )
 
-        a = WorkstationAsset.query.get(asset_id)
-        if not a or a.status != "Available":
+        asset = WorkstationAsset.query.get(asset_id)
+        if not asset or asset.status != "Available":
             flash("Selected asset is not available for assignment.", "warning")
-            return render_template("assignment_form.html", 
-                                   assets=Available_assets,
-                                   locations=locations,
-                                   indenters=indenters,
-                                   location=location,
-                                   indenter=indenter,
-                                   prefill_roll=prefill_roll,
-                                   prefill_lab=prefill_lab)
+            return render_template(
+                "assignment_form.html",
+                assets=Available_assets,
+                locations=locations,
+                indenters=indenters,
+                location=location,
+                indenter=indenter,
+                prefill_roll=prefill_roll,
+                prefill_lab=prefill_lab
+            )
 
-        # create assignment
+        # Create assignment
         assign = WorkstationAssignment(
-            workstation_id=a.id,
+            workstation_id=asset.id,
             student_roll=roll,
             issue_date=issue_date,
             system_required_till=till,
@@ -3905,31 +4104,185 @@ def assignment_new():
         )
         try:
             db.session.add(assign)
-            a.status = "Issued"
+            asset.status = "Issued"
             db.session.commit()
             flash("Workstation assigned.", "success")
+
+            # ---------- Send Email ----------
+            # faculty_incharge = student.faculty or "Not Assigned"
+            # staff_incharge = asset.indenter or "Not Assigned"
+            student = Student.query.filter_by(roll=assign.student_roll).first()
+            if student:
+                faculty_incharge = student.faculty or "Not Assigned"
+                staff_incharge = (
+                    student.cubicle.room_lab.staff_incharge
+                    if student.cubicle and student.cubicle.room_lab
+                    else "Not Assigned"
+                )
+            email_subject = f"Workstation Assigned to {roll}"
+            email_body = f"""
+<html>
+<body style="font-family:Arial,sans-serif; line-height:1.5; color:#333;">
+<h2>Hello {student.name},</h2>
+<p>A workstation has been assigned to you. Details are below:</p>
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td>Roll Number</td><td>{student.roll}</td></tr>
+<tr><td>Name</td><td>{student.name}</td></tr>
+<tr><td>Workstation</td><td>{asset.manufacturer} {asset.model} (Serial: {asset.serial})</td></tr>
+<tr><td>Location</td><td>{asset.location}</td></tr>
+<tr><td>Issue Date</td><td>{issue_date}</td></tr>
+<tr><td>Required Till</td><td>{till}</td></tr>
+<tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
+<tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
+<tr><td>Remarks</td><td>{remarks or 'None'}</td></tr>
+</table>
+<p>Please contact your faculty or staff incharge for any questions.</p>
+<p>Regards,<br>CSE Lab Admin</p>
+</body>
+</html>
+"""
+            msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
+            threading.Thread(target=send_async_email, args=[app, msg]).start()
+
             return redirect(url_for("assignments_list"))
+
         except Exception as e:
             db.session.rollback()
             flash(f"Error assigning workstation: {e}", "danger")
 
-    return render_template("assignment_form.html",
-                           assets=Available_assets,
-                           locations=locations,
-                           indenters=indenters,
-                           location=location,
-                           indenter=indenter,
-                           prefill_roll=prefill_roll,
-                           prefill_lab=prefill_lab)
+    return render_template(
+        "assignment_form.html",
+        assets=Available_assets,
+        locations=locations,
+        indenters=indenters,
+        location=location,
+        indenter=indenter,
+        prefill_roll=prefill_roll,
+        prefill_lab=prefill_lab
+    )
 
+# @app.route("/assignments/<int:assign_id>/return", methods=["POST"])
+# def assignment_return(assign_id):
+#     assign = WorkstationAssignment.query.options(joinedload(WorkstationAssignment.asset)).get_or_404(assign_id)
+#     if not assign.is_active:
+#         flash("This assignment is already returned.", "info")
+#         return redirect(url_for("assignments_list"))@app.route("/assignments/new", methods=["GET", "POST"])
+# def assignment_new():
+#     # --- Filters ---
+#     location = request.args.get("location", "")
+#     indenter = request.args.get("indenter", "")
+#     prefill_roll = request.args.get("student_roll", "").strip()
+#     prefill_lab = request.args.get("lab", "").strip()   # optional, if you want to show lab context
+
+#     # Base query: only Available assets
+#     q = WorkstationAsset.query.filter_by(status="Available")
+
+#     if location:
+#         q = q.filter(WorkstationAsset.location == location)
+#     if indenter:
+#         q = q.filter(WorkstationAsset.indenter == indenter)
+
+#     Available_assets = q.order_by(WorkstationAsset.id.desc()).all()
+
+#     # Distinct values for dropdowns
+#     locations = [l[0] for l in db.session.query(WorkstationAsset.location).distinct().all() if l[0]]
+#     indenters = [i[0] for i in db.session.query(WorkstationAsset.indenter).distinct().all() if i[0]]
+
+#     if request.method == "POST":
+#         f = request.form
+#         roll = (f.get("student_roll") or "").strip()
+#         asset_id = f.get("workstation_id")
+#         issue_date = f.get("issue_date")
+#         till = f.get("system_required_till")
+#         remarks = f.get("remarks") or None
+
+#         # validate
+#         if not roll or not asset_id or not issue_date or not till:
+#             flash("Roll, asset, issue date and required till are mandatory.", "warning")
+#             return render_template("assignment_form.html", 
+#                                    assets=Available_assets,
+#                                    locations=locations,
+#                                    indenters=indenters,
+#                                    location=location,
+#                                    indenter=indenter,
+#                                    prefill_roll=prefill_roll,
+#                                    prefill_lab=prefill_lab)
+
+#         st = Student.query.filter_by(roll=roll).first()
+#         if not st:
+#             flash("Student not found. Register student first.", "warning")
+#             return render_template("assignment_form.html", 
+#                                    assets=Available_assets,
+#                                    locations=locations,
+#                                    indenters=indenters,
+#                                    location=location,
+#                                    indenter=indenter,
+#                                    prefill_roll=prefill_roll,
+#                                    prefill_lab=prefill_lab)
+
+#         a = WorkstationAsset.query.get(asset_id)
+#         if not a or a.status != "Available":
+#             flash("Selected asset is not available for assignment.", "warning")
+#             return render_template("assignment_form.html", 
+#                                    assets=Available_assets,
+#                                    locations=locations,
+#                                    indenters=indenters,
+#                                    location=location,
+#                                    indenter=indenter,
+#                                    prefill_roll=prefill_roll,
+#                                    prefill_lab=prefill_lab)
+
+#         # create assignment
+#         assign = WorkstationAssignment(
+#             workstation_id=a.id,
+#             student_roll=roll,
+#             issue_date=issue_date,
+#             system_required_till=till,
+#             remarks=remarks,
+#             is_active=True
+#         )
+#         try:
+#             db.session.add(assign)
+#             a.status = "Issued"
+#             db.session.commit()
+#             flash("Workstation assigned.", "success")
+#             return redirect(url_for("assignments_list"))
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f"Error assigning workstation: {e}", "danger")
+
+#     return render_template("assignment_form.html",
+#                            assets=Available_assets,
+#                            locations=locations,
+#                            indenters=indenters,
+#                            location=location,
+#                            indenter=indenter,
+#                            prefill_roll=prefill_roll,
+#                            prefill_lab=prefill_lab)
+
+
+#     try:
+#         assign.is_active = False
+#         assign.end_date = date.today().isoformat()
+#         if assign.asset and assign.asset.status == "Issued":
+#             assign.asset.status = "Available"
+#         db.session.commit()
+#         flash("Workstation returned.", "success")
+#     except Exception as e:
+#         db.session.rollback()
+#         flash(f"Error returning workstation: {e}", "danger")
+#     return redirect(url_for("assignments_list"))
 
 
 @app.route("/assignments/<int:assign_id>/return", methods=["POST"])
 def assignment_return(assign_id):
     assign = WorkstationAssignment.query.options(joinedload(WorkstationAssignment.asset)).get_or_404(assign_id)
+
     if not assign.is_active:
         flash("This assignment is already returned.", "info")
         return redirect(url_for("assignments_list"))
+
     try:
         assign.is_active = False
         assign.end_date = date.today().isoformat()
@@ -3937,10 +4290,55 @@ def assignment_return(assign_id):
             assign.asset.status = "Available"
         db.session.commit()
         flash("Workstation returned.", "success")
+
+        # ---------- Send Email ----------
+        # student = Student.query.filter_by(roll=assign.student_roll).first()
+        # if student:
+        #     faculty_incharge = student.faculty or "Not Assigned"
+        #     # staff_incharge = assign.asset.indenter if assign.asset else "Not Assigned"
+        #     staff_incharge = assign.asset.indenter or "Not Assigned"
+        student = Student.query.filter_by(roll=assign.student_roll).first()
+        if student:
+            faculty_incharge = student.faculty or "Not Assigned"
+            staff_incharge = (
+                student.cubicle.room_lab.staff_incharge
+                if student.cubicle and student.cubicle.room_lab
+                else "Not Assigned"
+            )
+
+
+
+
+
+            email_subject = f"Workstation Returned: {assign.asset.manufacturer} {assign.asset.model}" if assign.asset else "Workstation Returned"
+            email_body = f"""
+<html>
+<body style="font-family:Arial,sans-serif; line-height:1.5; color:#333;">
+<h2>Hello {student.name},</h2>
+<p>Your assigned workstation has been returned. Details:</p>
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td>Roll Number</td><td>{student.roll}</td></tr>
+<tr><td>Name</td><td>{student.name}</td></tr>
+<tr><td>Workstation</td><td>{assign.asset.manufacturer if assign.asset else '-'} {assign.asset.model if assign.asset else '-'} (Serial: {assign.asset.serial if assign.asset else '-'})</td></tr>
+<tr><td>Return Date</td><td>{assign.end_date}</td></tr>
+<tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
+<tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
+</table>
+<p>Thank you for returning the workstation.</p>
+<p>Regards,<br>CSE Lab Admin</p>
+</body>
+</html>
+"""
+            msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
+            threading.Thread(target=send_async_email, args=[app, msg]).start()
+
     except Exception as e:
         db.session.rollback()
         flash(f"Error returning workstation: {e}", "danger")
+
     return redirect(url_for("assignments_list"))
+
 
 # @app.route("/space_allocation", methods=["GET", "POST"])
 # def space_allocation():
@@ -3978,12 +4376,63 @@ def assignment_return(assign_id):
 #                            rooms=rooms,
 #                            roll_prefill=roll_prefill,
 #                            current_cubicle=current_cubicle)
+# @app.route("/space_allocation", methods=["GET", "POST"])
+# def space_allocation():
+#     rooms = RoomLab.query.all()
+#     roll_prefill = request.args.get("roll", "").strip()
+
+#     # Check if roll already has cubicle
+#     current_cubicle = None
+#     if roll_prefill:
+#         current_cubicle = Cubicle.query.filter_by(student_roll=roll_prefill).first()
+
+#     if request.method == "POST":
+#         roll = request.form.get("roll", "").strip()
+#         cubicle_id = request.form.get("cubicle_id")
+
+#         if not roll:
+#             flash("Roll number is required.", "danger")
+#             return redirect(url_for("space_allocation"))
+
+#         cubicle = Cubicle.query.get(cubicle_id)
+#         if not cubicle:
+#             flash("Invalid cubicle selected.", "danger")
+#             return redirect(url_for("space_allocation", roll=roll))
+
+#         if cubicle.student_roll:
+#             flash(f"Cubicle {cubicle.number} is already allocated.", "danger")
+#             return redirect(url_for("space_allocation", roll=roll))
+
+#         # Release old cubicle (if any)
+#         prev_cubicle = Cubicle.query.filter_by(student_roll=roll).first()
+#         if prev_cubicle:
+#             prev_cubicle.student_roll = None
+
+#         # Assign new cubicle
+#         cubicle.student_roll = roll
+#         db.session.commit()
+
+#         flash(f"Space {cubicle.number} allocated to {roll}", "success")
+#         return redirect(url_for("space_allocation", roll=roll))
+
+#     return render_template(
+#         "space_allocation.html",
+#         rooms=rooms,
+#         roll_prefill=roll_prefill,
+#         current_cubicle=current_cubicle
+#     )
+
+from datetime import datetime
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import current_user, login_required
+from models import db, RoomLab, Cubicle, Student  # adjust imports if needed
+
 @app.route("/space_allocation", methods=["GET", "POST"])
+@login_required
 def space_allocation():
     rooms = RoomLab.query.all()
     roll_prefill = request.args.get("roll", "").strip()
 
-    # Check if roll already has cubicle
     current_cubicle = None
     if roll_prefill:
         current_cubicle = Cubicle.query.filter_by(student_roll=roll_prefill).first()
@@ -4005,7 +4454,7 @@ def space_allocation():
             flash(f"Cubicle {cubicle.number} is already allocated.", "danger")
             return redirect(url_for("space_allocation", roll=roll))
 
-        # Release old cubicle (if any)
+        # Release old cubicle if any
         prev_cubicle = Cubicle.query.filter_by(student_roll=roll).first()
         if prev_cubicle:
             prev_cubicle.student_roll = None
@@ -4013,6 +4462,45 @@ def space_allocation():
         # Assign new cubicle
         cubicle.student_roll = roll
         db.session.commit()
+
+        # ============= 📧 EMAIL NOTIFICATION SECTION =============
+        student = Student.query.filter_by(roll=roll).first()
+        student_name = student.name if student else "Unknown Student"
+        student_email = student.email if student and student.email else None
+        faculty_incharge = student.faculty if student and student.faculty else "Not Assigned"
+
+        # If you also store faculty email, you can fetch:
+        faculty_email = getattr(student, "faculty_email", None)
+        cc_list = [faculty_email] if faculty_email else []
+
+        subject = f"Space Allocation Confirmation — {cubicle.room_lab.name}"
+
+        body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif;">
+         <h1> Dear {student_name},</h1>
+         <br>
+        <h3>Space Allocation Details</h3>
+        <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+          <tr><th align="left">Student Name</th><td>{student_name}</td></tr>
+          <tr><th align="left">Email</th><td>{student_email or 'N/A'}</td></tr>
+          <tr><th align="left">Roll Number</th><td>{roll}</td></tr>
+          <tr><th align="left">Room / Lab</th><td>{cubicle.room_lab.name}</td></tr>
+          <tr><th align="left">Cubicle Number</th><td>{cubicle.number}</td></tr>
+          <tr><th align="left">Faculty Incharge</th><td>{faculty_incharge}</td></tr>
+          <tr><th align="left">Assigned By</th><td>{current_user.email}</td></tr>
+          <tr><th align="left">Allocation Date</th><td>{datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}</td></tr>
+        </table>
+        <p style="margin-top:20px;">Regards,<br><b>CSE Lab Management System</b></p>
+        </body>
+        </html>
+        """
+
+        if student_email:
+            send_notification_email(student_email, subject, body, cc=cc_list)
+            print(f"📩 Email sent to {student_email} (CC: {cc_list})")
+        else:
+            print(f"⚠️ No email found for student roll {roll}")
 
         flash(f"Space {cubicle.number} allocated to {roll}", "success")
         return redirect(url_for("space_allocation", roll=roll))
@@ -4025,14 +4513,77 @@ def space_allocation():
     )
 
 
+# @app.route("/space/release/<int:cubicle_id>", methods=["POST"])
+# def space_release(cubicle_id):
+#     cubicle = Cubicle.query.get_or_404(cubicle_id)
+#     roll = cubicle.student_roll
+#     cubicle.student_roll = None
+#     db.session.commit()
+#     flash(f"Released cubicle {cubicle.number} from roll {roll}", "success")
+#     return redirect(url_for("space_allocation", roll=roll))
+
 @app.route("/space/release/<int:cubicle_id>", methods=["POST"])
+@login_required
 def space_release(cubicle_id):
     cubicle = Cubicle.query.get_or_404(cubicle_id)
     roll = cubicle.student_roll
+
+    if not roll:
+        flash("No student assigned to this cubicle.", "warning")
+        return redirect(url_for("space_allocation"))
+
+    # Fetch student info
+    student = Student.query.filter_by(roll=roll).first()
+    student_name = student.name if student else "Unknown Student"
+    student_email = student.email if student and student.email else None
+    faculty_incharge = student.faculty if student and student.faculty else "Not Assigned"
+
+    # If you later store faculty email, you can CC here
+    faculty_email = getattr(student, "faculty_email", None)
+    cc_list = [faculty_email] if faculty_email else []
+
+    # Release cubicle
     cubicle.student_roll = None
     db.session.commit()
+
+    # Prepare email
+    subject = f"Space Released — {cubicle.room_lab.name}"
+
+    body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif;">
+    <h1> Dear {student_name},</h1>
+    <br>
+
+
+    <h3>Space Release Notification</h3>
+    <p>The following space allocation has been released:</p>
+
+    <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+      <tr><th align="left">Student Name</th><td>{student_name}</td></tr>
+      <tr><th align="left">Email</th><td>{student_email or 'N/A'}</td></tr>
+      <tr><th align="left">Roll Number</th><td>{roll}</td></tr>
+      <tr><th align="left">Room / Lab</th><td>{cubicle.room_lab.name}</td></tr>
+      <tr><th align="left">Faculty Incharge</th><td>{faculty_incharge}</td></tr>
+      <tr><th align="left">Released By</th><td>{current_user.email}</td></tr>
+      <tr><th align="left">Release Date</th><td>{datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}</td></tr>
+    </table>
+
+    <p style="margin-top:20px;">Regards,<br><b>CSE Lab Management System</b></p>
+    </body>
+    </html>
+    """
+
+    # Send email
+    if student_email:
+        send_notification_email(student_email, subject, body, cc=cc_list)
+        print(f"📩 Release email sent to {student_email} (CC: {cc_list})")
+    else:
+        print(f"⚠️ No email found for student roll {roll}")
+
     flash(f"Released cubicle {cubicle.number} from roll {roll}", "success")
     return redirect(url_for("space_allocation", roll=roll))
+
 
 # @app.route("/labs/<lab_code>/allotments")
 # @login_required
