@@ -3706,35 +3706,109 @@ def assets_list():
 #             flash(f"Error adding asset: {e}", "danger")
 #     return render_template("asset_form.html", asset=None)
 
+# @app.route("/assets/new", methods=["GET", "POST"])
+# def asset_new():
+#     if request.method == "POST":
+#         f = request.form
+
+#         # Get fields
+#         manufacturer = f.get("manufacturer") or None
+#         model = f.get("model") or None
+#         indenter_full = f.get("indenter") or "Unknown"
+#         po_date_raw = f.get("po_date") or "Unknown"
+
+#         # Clean PO date and indenter name
+#         po_date = po_date_raw.replace("-", "")
+#         indenter_clean = indenter_full.replace("Dr. ", "").replace("Prof. ", "")
+#         indenter_first = indenter_clean.split()[0]
+
+#         # Sequential number: count existing assets + 1
+#         count = WorkstationAsset.query.count() + 1
+#         serial = f"{count:03}"
+
+#         # Construct department_code
+#         department_code = f"CSE/{po_date}/{manufacturer}/{model}/{indenter_first}/{serial}"
+
+#         # Create asset
+#         a = WorkstationAsset(
+#             manufacturer=manufacturer,
+#             otherManufacturer=f.get("otherManufacturer") or None,
+#             model=model,
+#             serial=(f.get("serial") or "").strip() or None,
+#             os=f.get("os") or None,
+#             otherOs=f.get("otherOs") or None,
+#             processor=f.get("processor") or None,
+#             cores=f.get("cores") or None,
+#             ram=f.get("ram") or None,
+#             otherRam=f.get("otherRam") or None,
+#             storage_type1=f.get("storage_type1") or None,
+#             storage_capacity1=f.get("storage_capacity1") or None,
+#             storage_type2=f.get("storage_type2") or None,
+#             storage_capacity2=f.get("storage_capacity2") or None,
+#             gpu=f.get("gpu") or None,
+#             vram=f.get("vram") or None,
+#             keyboard_provided=f.get("keyboard_provided") or None,
+#             keyboard_details=f.get("keyboard_details") or None,
+#             mouse_provided=f.get("mouse_provided") or None,
+#             mouse_details=f.get("mouse_details") or None,
+#             monitor_provided=f.get("monitor_provided") or None,
+#             monitor_details=f.get("monitor_details") or None,
+#             monitor_size=f.get("monitor_size") or None,
+#             monitor_serial=f.get("monitor_serial") or None,
+#             mac_address=f.get("mac_address") or None,
+#             po_date=po_date_raw,
+#             source_of_fund=f.get("source_of_fund") or None,
+#             location=f.get("location") or None,
+#             indenter=indenter_full,
+#             status="Available",
+#             department_code=department_code  # set auto-generated code
+#         )
+#         try:
+#             db.session.add(a)
+#             db.session.commit()
+#             flash(f"Asset added. Department Code: {department_code}", "success")
+#             return redirect(url_for("assets_list"))
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f"Error adding asset: {e}", "danger")
+
+#     return render_template("asset_form.html", asset=None)
 @app.route("/assets/new", methods=["GET", "POST"])
 def asset_new():
     if request.method == "POST":
         f = request.form
 
-        # Get fields
         manufacturer = f.get("manufacturer") or None
         model = f.get("model") or None
         indenter_full = f.get("indenter") or "Unknown"
         po_date_raw = f.get("po_date") or "Unknown"
 
-        # Clean PO date and indenter name
+        # Format PO date and indenter for department code
         po_date = po_date_raw.replace("-", "")
         indenter_clean = indenter_full.replace("Dr. ", "").replace("Prof. ", "")
         indenter_first = indenter_clean.split()[0]
 
-        # Sequential number: count existing assets + 1
-        count = WorkstationAsset.query.count() + 1
-        serial = f"{count:03}"
+        # Determine serial: use form input if provided and unique, else auto-generate
+        serial_input = (f.get("serial") or "").strip()
+        if serial_input:
+            existing = WorkstationAsset.query.filter_by(serial=serial_input).first()
+            if existing:
+                flash(f"❌ Serial '{serial_input}' already exists!", "danger")
+                return redirect(url_for("asset_new"))
+            serial = serial_input
+        else:
+            # Auto-generate serial
+            count = WorkstationAsset.query.count() + 1
+            serial = f"{count:03}"
 
-        # Construct department_code
+        # Generate unique department code
         department_code = f"CSE/{po_date}/{manufacturer}/{model}/{indenter_first}/{serial}"
 
-        # Create asset
-        a = WorkstationAsset(
+        asset = WorkstationAsset(
             manufacturer=manufacturer,
             otherManufacturer=f.get("otherManufacturer") or None,
             model=model,
-            serial=(f.get("serial") or "").strip() or None,
+            serial=serial,
             os=f.get("os") or None,
             otherOs=f.get("otherOs") or None,
             processor=f.get("processor") or None,
@@ -3756,23 +3830,77 @@ def asset_new():
             monitor_size=f.get("monitor_size") or None,
             monitor_serial=f.get("monitor_serial") or None,
             mac_address=f.get("mac_address") or None,
-            po_date=po_date_raw,
+            po_number=f.get("po_number") or None,
+            po_date=po_date_raw or None,
             source_of_fund=f.get("source_of_fund") or None,
+            vendor_company=f.get("vendor_company") or None,
+            vendor_contact_person=f.get("vendor_contact_person") or None,
+            vendor_mobile=f.get("vendor_mobile") or None,
+            warranty_start=f.get("warranty_start") or None,
+            warranty_expiry=f.get("warranty_expiry") or None,
+            status=f.get("status") or "Available",
             location=f.get("location") or None,
             indenter=indenter_full,
-            status="Available",
-            department_code=department_code  # set auto-generated code
+            department_code=department_code
         )
+
         try:
-            db.session.add(a)
+            db.session.add(asset)
             db.session.commit()
-            flash(f"Asset added. Department Code: {department_code}", "success")
-            return redirect(url_for("assets_list"))
+            flash(f"✅ Asset added successfully. Dept Code: {department_code}", "success")
+            return redirect(url_for("asset_new"))
         except Exception as e:
             db.session.rollback()
-            flash(f"Error adding asset: {e}", "danger")
+            flash(f"❌ Error adding asset: {e}", "danger")
 
     return render_template("asset_form.html", asset=None)
+
+
+# @app.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
+# def asset_edit(asset_id):
+#     a = WorkstationAsset.query.get_or_404(asset_id)
+#     if request.method == "POST":
+#         f = request.form
+#         a.manufacturer     = f.get("manufacturer") or None
+#         a.otherManufacturer= f.get("otherManufacturer") or None
+#         a.model            = f.get("model") or None
+#         a.serial           = (f.get("serial") or "").strip() or None
+#         a.os               = f.get("os") or None
+#         a.otherOs          = f.get("otherOs") or None
+#         a.processor        = f.get("processor") or None
+#         a.cores            = f.get("cores") or None
+#         a.ram              = f.get("ram") or None
+#         a.otherRam         = f.get("otherRam") or None
+#         a.storage_type1    = f.get("storage_type1") or None
+#         a.storage_capacity1= f.get("storage_capacity1") or None
+#         a.storage_type2    = f.get("storage_type2") or None
+#         a.storage_capacity2= f.get("storage_capacity2") or None
+#         a.gpu              = f.get("gpu") or None
+#         a.vram             = f.get("vram") or None
+#         a.keyboard_provided= f.get("keyboard_provided") or None
+#         a.keyboard_details = f.get("keyboard_details") or None
+#         a.mouse_provided   = f.get("mouse_provided") or None
+#         a.mouse_details    = f.get("mouse_details") or None
+#         a.monitor_provided = f.get("monitor_provided") or None
+#         a.monitor_details  = f.get("monitor_details") or None
+#         a.monitor_size     = f.get("monitor_size") or None
+#         a.monitor_serial   = f.get("monitor_serial") or None
+#         a.mac_address      = f.get("mac_address") or None
+#         a.po_date          = f.get("po_date") or None
+#         a.source_of_fund   = f.get("source_of_fund") or None
+#         # NEW FIELDS
+#         a.location         = f.get("location") or None
+#         a.indenter         = f.get("indenter") or None
+#         # NOTE: do NOT change status here, use retire/unretire
+#         try:
+#             db.session.commit()
+#             flash("Asset updated.", "success")
+#             return redirect(url_for("assets_list"))
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f"Error updating asset: {e}", "danger")
+#     return render_template("asset_form.html", asset=a)
+
 
 
 @app.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
@@ -3780,59 +3908,122 @@ def asset_edit(asset_id):
     a = WorkstationAsset.query.get_or_404(asset_id)
     if request.method == "POST":
         f = request.form
-        a.manufacturer     = f.get("manufacturer") or None
-        a.otherManufacturer= f.get("otherManufacturer") or None
-        a.model            = f.get("model") or None
-        a.serial           = (f.get("serial") or "").strip() or None
-        a.os               = f.get("os") or None
-        a.otherOs          = f.get("otherOs") or None
-        a.processor        = f.get("processor") or None
-        a.cores            = f.get("cores") or None
-        a.ram              = f.get("ram") or None
-        a.otherRam         = f.get("otherRam") or None
-        a.storage_type1    = f.get("storage_type1") or None
-        a.storage_capacity1= f.get("storage_capacity1") or None
-        a.storage_type2    = f.get("storage_type2") or None
-        a.storage_capacity2= f.get("storage_capacity2") or None
-        a.gpu              = f.get("gpu") or None
-        a.vram             = f.get("vram") or None
-        a.keyboard_provided= f.get("keyboard_provided") or None
-        a.keyboard_details = f.get("keyboard_details") or None
-        a.mouse_provided   = f.get("mouse_provided") or None
-        a.mouse_details    = f.get("mouse_details") or None
-        a.monitor_provided = f.get("monitor_provided") or None
-        a.monitor_details  = f.get("monitor_details") or None
-        a.monitor_size     = f.get("monitor_size") or None
-        a.monitor_serial   = f.get("monitor_serial") or None
-        a.mac_address      = f.get("mac_address") or None
-        a.po_date          = f.get("po_date") or None
-        a.source_of_fund   = f.get("source_of_fund") or None
-        # NEW FIELDS
-        a.location         = f.get("location") or None
-        a.indenter         = f.get("indenter") or None
+
+        # Update basic fields
+        a.manufacturer      = f.get("manufacturer") or None
+        a.otherManufacturer = f.get("otherManufacturer") or None
+        a.model             = f.get("model") or None
+        new_serial          = (f.get("serial") or "").strip() or None
+        a.os                = f.get("os") or None
+        a.otherOs           = f.get("otherOs") or None
+        a.processor         = f.get("processor") or None
+        a.cores             = f.get("cores") or None
+        a.ram               = f.get("ram") or None
+        a.otherRam          = f.get("otherRam") or None
+        a.storage_type1     = f.get("storage_type1") or None
+        a.storage_capacity1 = f.get("storage_capacity1") or None
+        a.storage_type2     = f.get("storage_type2") or None
+        a.storage_capacity2 = f.get("storage_capacity2") or None
+        a.gpu               = f.get("gpu") or None
+        a.vram              = f.get("vram") or None
+        a.keyboard_provided = f.get("keyboard_provided") or None
+        a.keyboard_details  = f.get("keyboard_details") or None
+        a.mouse_provided    = f.get("mouse_provided") or None
+        a.mouse_details     = f.get("mouse_details") or None
+        a.monitor_provided  = f.get("monitor_provided") or None
+        a.monitor_details   = f.get("monitor_details") or None
+        a.monitor_size      = f.get("monitor_size") or None
+        a.monitor_serial    = f.get("monitor_serial") or None
+        a.mac_address       = f.get("mac_address") or None
+        a.po_date           = f.get("po_date") or None
+        a.po_number         = f.get("po_number") or None
+        a.source_of_fund    = f.get("source_of_fund") or None
+        a.vendor_company    = f.get("vendor_company") or None
+        a.vendor_contact_person = f.get("vendor_contact_person") or None
+        a.vendor_mobile     = f.get("vendor_mobile") or None
+        a.warranty_start    = f.get("warranty_start") or None
+        a.warranty_expiry   = f.get("warranty_expiry") or None
+        a.location          = f.get("location") or None
+        a.indenter          = f.get("indenter") or None
         # NOTE: do NOT change status here, use retire/unretire
+
+        # Handle serial uniqueness
+        if new_serial and new_serial != a.serial:
+            existing = WorkstationAsset.query.filter_by(serial=new_serial).first()
+            if existing:
+                flash(f"❌ Serial '{new_serial}' already exists!", "danger")
+                return redirect(url_for("asset_edit", asset_id=asset_id))
+            a.serial = new_serial
+
+        # Re-generate department code if key fields changed
+        if a.manufacturer and a.model and a.indenter and a.serial and a.po_date:
+            indenter_clean = a.indenter.replace("Dr. ", "").replace("Prof. ", "")
+            indenter_first = indenter_clean.split()[0]
+            po_date_clean = a.po_date.replace("-", "")
+            a.department_code = f"CSE/{po_date_clean}/{a.manufacturer}/{a.model}/{indenter_first}/{a.serial}"
+
         try:
             db.session.commit()
-            flash("Asset updated.", "success")
+            flash("✅ Asset updated successfully.", "success")
             return redirect(url_for("assets_list"))
         except Exception as e:
             db.session.rollback()
-            flash(f"Error updating asset: {e}", "danger")
+            flash(f"❌ Error updating asset: {e}", "danger")
+
     return render_template("asset_form.html", asset=a)
 
 
 
+# @app.route("/assets/<int:asset_id>/retire", methods=["POST"])
+# def asset_retire(asset_id):
+#     a = WorkstationAsset.query.get_or_404(asset_id)
+#     # Allow retire from Available only; prevent retire if assigned
+#     if a.status == "Issued":
+#         flash("Cannot retire an assigned asset. Return it first.", "warning")
+#         return redirect(url_for("assets_list"))
+#     a.status = "Retired"
+#     db.session.commit()
+#     flash("Asset retired.", "success")
+#     return redirect(url_for("assets_list"))
+
+# @app.route("/assets/<int:asset_id>/unretire", methods=["POST"])
+# def asset_unretire(asset_id):
+#     a = WorkstationAsset.query.get_or_404(asset_id)
+#     if a.status == "Retired":
+#         a.status = "Available"
+#         db.session.commit()
+#         flash("Asset un-retired and now Available.", "success")
+#     return redirect(url_for("assets_list"))
+
+
+# @app.route("/assets/<int:asset_id>/delete", methods=["POST"])
+# def asset_delete(asset_id):
+#     a = WorkstationAsset.query.get_or_404(asset_id)
+#     if a.assignments and len(a.assignments) > 0:
+#         flash("Cannot delete: this asset has assignment history. Consider retire.", "warning")
+#         return redirect(url_for("assets_list"))
+#     try:
+#         db.session.delete(a)
+#         db.session.commit()
+#         flash("Asset deleted.", "success")
+#     except Exception as e:
+#         db.session.rollback()
+#         flash(f"Error deleting asset: {e}", "danger")
+#     return redirect(url_for("assets_list"))
+
 @app.route("/assets/<int:asset_id>/retire", methods=["POST"])
 def asset_retire(asset_id):
     a = WorkstationAsset.query.get_or_404(asset_id)
-    # Allow retire from Available only; prevent retire if assigned
     if a.status == "Issued":
         flash("Cannot retire an assigned asset. Return it first.", "warning")
-        return redirect(url_for("assets_list"))
-    a.status = "Retired"
-    db.session.commit()
-    flash("Asset retired.", "success")
+    elif a.status == "Retired":
+        flash("Asset is already retired.", "info")
+    else:
+        a.status = "Retired"
+        db.session.commit()
+        flash("Asset retired.", "success")
     return redirect(url_for("assets_list"))
+
 
 @app.route("/assets/<int:asset_id>/unretire", methods=["POST"])
 def asset_unretire(asset_id):
@@ -3841,6 +4032,8 @@ def asset_unretire(asset_id):
         a.status = "Available"
         db.session.commit()
         flash("Asset un-retired and now Available.", "success")
+    else:
+        flash("Asset is not retired.", "info")
     return redirect(url_for("assets_list"))
 
 
@@ -3858,7 +4051,6 @@ def asset_delete(asset_id):
         db.session.rollback()
         flash(f"Error deleting asset: {e}", "danger")
     return redirect(url_for("assets_list"))
-
 
 # =========================
 # Assign / Return

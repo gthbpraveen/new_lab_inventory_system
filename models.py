@@ -127,17 +127,29 @@ class Equipment(db.Model):
     invoice_number = db.Column(db.String(100), nullable=True)
     cost_per_unit = db.Column(db.Float, nullable=True)
     location = db.Column(db.String(100), nullable=True)
+
+    # 🧾 Procurement Info
     po_date = db.Column(db.String(20), nullable=True)
-    purchase_date = db.Column(db.String(20), nullable=True)
+    po_number = db.Column(db.String(100), nullable=True)
+    source_of_fund = db.Column(db.String(100), nullable=True)
+
+    # 🛡️ Warranty Info
+    warranty_start = db.Column(db.String(20), nullable=True)
     warranty_expiry = db.Column(db.String(20), nullable=True)
+
+    # 🏢 Vendor Contact Info
+    vendor_company = db.Column(db.String(150), nullable=True)
+    vendor_contact_person = db.Column(db.String(100), nullable=True)
+    vendor_mobile = db.Column(db.String(20), nullable=True)
+
     status = db.Column(db.String(20), default="Available")
     intender_name = db.Column(db.String(100), nullable=True)
     remarks = db.Column(db.String(200), nullable=True)
     quantity = db.Column(db.Integer, nullable=True)
     department_code = db.Column(db.String(100), unique=True, nullable=True)
     mac_address = db.Column(db.String(50), nullable=True)
-    source_of_fund = db.Column(db.String(100))
 
+    # 🔗 Equipment–Student Relationship
     assigned_to_roll = db.Column(
         db.String(20),
         db.ForeignKey("student.roll", name="fk_equipment_assigned_to_roll"),
@@ -148,8 +160,10 @@ class Equipment(db.Model):
     assigned_date = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self) -> str:
-        return f"<Equipment {self.name} SN={self.serial_number} to={self.assigned_to_roll}>"
-
+        return (
+            f"<Equipment {self.name} SN={self.serial_number} "
+            f"PO={self.po_number} Warranty={self.warranty_expiry}>"
+        )
 
 class EquipmentHistory(db.Model):
     __tablename__ = "equipment_history"
@@ -254,19 +268,81 @@ class ProvisioningRequest(db.Model):
 # -------------------------
 # NEW: Workstation Inventory (separate from seating)
 # -------------------------
+# class WorkstationAsset(db.Model):
+#     """
+#     A physical machine in inventory (reusable).
+#     No room/cubicle fields here—seating is separate.
+#     """
+#     __tablename__ = "workstation_asset"
+#     id = db.Column(db.Integer, primary_key=True)  # auto-increment asset ID
+
+#     # Identity & specs
+#     manufacturer = db.Column(db.String(100))
+#     otherManufacturer = db.Column(db.String(100))
+#     model = db.Column(db.String(100))
+#     serial = db.Column(db.String(100), unique=True, index=True)  # recommended unique
+#     os = db.Column(db.String(50))
+#     otherOs = db.Column(db.String(50))
+#     processor = db.Column(db.String(100))
+#     cores = db.Column(db.String(10))
+#     ram = db.Column(db.String(20))
+#     otherRam = db.Column(db.String(20))
+#     storage_type1 = db.Column(db.String(50))
+#     storage_capacity1 = db.Column(db.String(20))
+#     storage_type2 = db.Column(db.String(50))
+#     storage_capacity2 = db.Column(db.String(20))
+#     gpu = db.Column(db.String(100))
+#     vram = db.Column(db.String(10))
+
+#     # Peripherals
+#     keyboard_provided = db.Column(db.String(10))
+#     keyboard_details = db.Column(db.String(100))
+#     mouse_provided = db.Column(db.String(10))
+#     mouse_details = db.Column(db.String(100))
+#     monitor_provided = db.Column(db.String(20))
+#     monitor_details = db.Column(db.String(100))
+#     monitor_size = db.Column(db.String(10))
+#     monitor_serial = db.Column(db.String(100))
+#     mac_address = db.Column(db.String(50), nullable=True)
+
+#     # Procurement
+#     po_date = db.Column(db.String(20))
+#     source_of_fund = db.Column(db.String(100))
+
+#     # Lifecycle status
+#     status = db.Column(db.String(20), default="in_stock", index=True)
+
+#     # New fields
+#     location = db.Column(db.String(100))   # Lab/Dept/Other location
+#     indenter = db.Column(db.String(100))   # Faculty/Staff who raised PO
+
+#     # 🔹 Department Code (new)
+#     department_code = db.Column(db.String(200), unique=True, index=True)
+
+#     assignments = db.relationship(
+#         "WorkstationAssignment",
+#         backref="asset",
+#         cascade="all, delete-orphan",
+#         lazy=True,
+#     )
+
+#     def __repr__(self) -> str:
+#         return (
+#             f"<WSAsset id={self.id} serial={self.serial} dept_code={self.department_code} "
+#             f"status={self.status} location={self.location} indenter={self.indenter}>"
+#         )
 class WorkstationAsset(db.Model):
     """
-    A physical machine in inventory (reusable).
-    No room/cubicle fields here—seating is separate.
+    Physical machine in inventory (reusable).
     """
     __tablename__ = "workstation_asset"
-    id = db.Column(db.Integer, primary_key=True)  # auto-increment asset ID
+    id = db.Column(db.Integer, primary_key=True)
 
     # Identity & specs
     manufacturer = db.Column(db.String(100))
     otherManufacturer = db.Column(db.String(100))
     model = db.Column(db.String(100))
-    serial = db.Column(db.String(100), unique=True, index=True)  # recommended unique
+    serial = db.Column(db.String(100), unique=True, index=True)
     os = db.Column(db.String(50))
     otherOs = db.Column(db.String(50))
     processor = db.Column(db.String(100))
@@ -291,20 +367,27 @@ class WorkstationAsset(db.Model):
     monitor_serial = db.Column(db.String(100))
     mac_address = db.Column(db.String(50), nullable=True)
 
-    # Procurement
-    po_date = db.Column(db.String(20))
-    source_of_fund = db.Column(db.String(100))
+    # 🧾 Procurement Info
+    po_date = db.Column(db.String(20), nullable=True)
+    po_number = db.Column(db.String(100), nullable=True)
+    source_of_fund = db.Column(db.String(100), nullable=True)
 
-    # Lifecycle status
+    # 🛡️ Warranty Info
+    warranty_start = db.Column(db.String(20), nullable=True)
+    warranty_expiry = db.Column(db.String(20), nullable=True)
+
+    # 🏢 Vendor Contact Info
+    vendor_company = db.Column(db.String(150), nullable=True)
+    vendor_contact_person = db.Column(db.String(100), nullable=True)
+    vendor_mobile = db.Column(db.String(20), nullable=True)
+
+    # Lifecycle and ownership
     status = db.Column(db.String(20), default="in_stock", index=True)
-
-    # New fields
-    location = db.Column(db.String(100))   # Lab/Dept/Other location
-    indenter = db.Column(db.String(100))   # Faculty/Staff who raised PO
-
-    # 🔹 Department Code (new)
+    location = db.Column(db.String(100))
+    indenter = db.Column(db.String(100))
     department_code = db.Column(db.String(200), unique=True, index=True)
 
+    # Relationships
     assignments = db.relationship(
         "WorkstationAssignment",
         backref="asset",
@@ -314,8 +397,8 @@ class WorkstationAsset(db.Model):
 
     def __repr__(self) -> str:
         return (
-            f"<WSAsset id={self.id} serial={self.serial} dept_code={self.department_code} "
-            f"status={self.status} location={self.location} indenter={self.indenter}>"
+            f"<WorkstationAsset id={self.id} serial={self.serial} "
+            f"PO={self.po_number} Warranty={self.warranty_expiry}>"
         )
 
 class WorkstationAssignment(db.Model):

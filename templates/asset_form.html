@@ -4,7 +4,7 @@
 {% block content %}
 <div class="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-lg">
   <h2 class="text-2xl font-bold text-gray-800 mb-6">
-    {{ 'Edit Workstation Asset' if asset else 'Add New Workstation Asset' }}
+    {{ 'Edit Workstation Asset' if asset else 'Add New Workstation/Server/Desktop Asset' }}
   </h2>
 
   <form method="POST" action="">
@@ -38,18 +38,17 @@
                class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
       </div>
 
-<div class="mt-4">
-  <label for="model" class="block text-gray-700 font-medium mb-2 required-field">Model Type</label>
-  <select id="model" name="model" required
-    class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-    <option value="">Select Model</option>
-    {% set model_types = ['Workstation','Desktop','Laptop','Server','Mac'] %}
-    {% for m in model_types %}
-      <option value="{{m}}" {% if asset and asset.model==m %}selected{% endif %}>{{m}}</option>
-    {% endfor %}
-  </select>
-</div>
-
+      <div class="mt-4">
+        <label for="model" class="block text-gray-700 font-medium mb-2 required-field">Model Type</label>
+        <select id="model" name="model" required
+          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+          <option value="">Select Model</option>
+          {% set model_types = ['Workstation','Desktop','Laptop','Server','Mac'] %}
+          {% for m in model_types %}
+            <option value="{{m}}" {% if asset and asset.model==m %}selected{% endif %}>{{m}}</option>
+          {% endfor %}
+        </select>
+      </div>
 
       <div class="mt-4">
         <label for="serial" class="block text-gray-700 font-medium mb-2 required-field">Serial Number</label>
@@ -174,19 +173,53 @@
       </div>
     </div>
 
-    <!-- Fund & Allotment -->
-    <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
-      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Fund & Allotment</h2>
+    <!-- PO, Vendor & Warranty Section -->
+    <div class="form-section bg-yellow-50 rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">
+        PO, Vendor & Warranty Details
+      </h2>
+      
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="po_number" class="block mb-2">PO Number</label>
+          <input type="text" id="po_number" name="po_number" value="{{ asset.po_number if asset else '' }}"
+                 class="block w-full px-4 py-2 border rounded-md">
+        </div>
         <div>
           <label for="po_date" class="block mb-2">PO Date</label>
           <input type="date" id="po_date" name="po_date" value="{{ asset.po_date if asset else '' }}"
-            class="block w-full px-4 py-2 border rounded-md">
+                 class="block w-full px-4 py-2 border rounded-md">
         </div>
         <div>
           <label for="source_of_fund" class="block mb-2">Source of Fund</label>
           <input type="text" id="source_of_fund" name="source_of_fund" value="{{ asset.source_of_fund if asset else '' }}"
-            class="block w-full px-4 py-2 border rounded-md">
+                 class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div>
+          <label for="vendor_company" class="block mb-2">Vendor Company</label>
+          <input type="text" id="vendor_company" name="vendor_company" value="{{ asset.vendor_company if asset else '' }}"
+                 class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div>
+          <label for="vendor_contact_person" class="block mb-2">Vendor Contact Person</label>
+          <input type="text" id="vendor_contact_person" name="vendor_contact_person" value="{{ asset.vendor_contact_person if asset else '' }}"
+                 class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div>
+          <label for="vendor_mobile" class="block mb-2">Vendor Mobile</label>
+          <input type="text" id="vendor_mobile" name="vendor_mobile" value="{{ asset.vendor_mobile if asset else '' }}"
+                 placeholder="e.g., +91-XXXXXXXXXX"
+                 class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div>
+          <label for="warranty_start" class="block mb-2">Warranty Start Date</label>
+          <input type="date" id="warranty_start" name="warranty_start" value="{{ asset.warranty_start if asset else '' }}"
+                 class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        <div>
+          <label for="warranty_expiry" class="block mb-2">Warranty Expiry Date</label>
+          <input type="date" id="warranty_expiry" name="warranty_expiry" value="{{ asset.warranty_expiry if asset else '' }}"
+                 class="block w-full px-4 py-2 border rounded-md">
         </div>
       </div>
     </div>
@@ -252,130 +285,104 @@
           <input type="text" id="monitor_serial" name="monitor_serial" value="{{ asset.monitor_serial if asset else '' }}"
             placeholder="Serial Number" class="block w-full px-4 py-2 border rounded-md">
         </div>
-     <!-- Location Section -->
+      </div>
+    </div>
 
-     <br/>
+    <!-- Location & Indenter -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div>
+        <label class="block mb-2">Location</label>
+        <select id="location" name="location" required
+          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-yellow-500">
+          <option value="">-- Select Location --</option>
+          <optgroup label="Labs">
+            {% set lab_list = [
+              'CS-107','CS-108','CS-109',
+              'CS-207','CS-208','CS-209',
+              'CS-317','CS-318','CS-319','CS-320',
+              'CS-411','CS-412'
+            ] %}
+            {% for l in lab_list %}
+              <option value="{{l}}" {% if asset and asset.location==l %}selected{% endif %}>{{l}}</option>
+            {% endfor %}
+          </optgroup>
+          <optgroup label="Other Locations">
+            {% set other_locations = [
+              'CSE Office','CSE Store','Institute Datacenter','SmartRack'
+            ] %}
+            {% for o in other_locations %}
+              <option value="{{o}}" {% if asset and asset.location==o %}selected{% endif %}>{{o}}</option>
+            {% endfor %}
+          </optgroup>
+        </select>
+      </div>
 
-  <div>
-    
-    <label class="block mb-2">Location</label>
-    <select id="location" name="location" required
-      class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-yellow-500">
-      <option value="">-- Select Location --</option>
-
-      <optgroup label="Labs">
-        {% set lab_list = [
-          'CS-107','CS-108','CS-109',
-          'CS-207','CS-208','CS-209',
-          'CS-317','CS-318','CS-319','CS-320',
-          'CS-411','CS-412'
-        ] %}
-        {% for l in lab_list %}
-          <option value="{{l}}" {% if asset and asset.location==l %}selected{% endif %}>{{l}}</option>
-        {% endfor %}
-      </optgroup>
-
-      <optgroup label="Other Locations">
-        {% set other_locations = [
-          'CSE Office','CSE Store','Institute Datacenter','SmartRack'
-        ] %}
-        {% for o in other_locations %}
-          <option value="{{o}}" {% if asset and asset.location==o %}selected{% endif %}>{{o}}</option>
-        {% endfor %}
-      </optgroup>
-    </select>
-  </div>
-</div>
-
-
-<!-- Indenter Section -->
-<br/>
-
-  <div>
-    <label class="block mb-2">Select Faculty / Staff</label>
-      
-    
-    <select id="indenter" name="indenter" required
-      class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-green-500">
-      <option value="">-- Select Faculty / Staff --</option>
-
-      <optgroup label="Faculty">
-        {% set faculty_list = [
-          'Prof. Antony Franklin','Dr. Ashish Mishra','Prof. Bheemarjuna Reddy Tamma',
-          'Prof. C. Krishna Mohan','Dr. J. Saketha Nath','Dr. Jyothi Vedurada',
-          'Dr. Kotaro Kataoka','Prof. M.V.Panduranga Rao','Dr. Manish Singh',
-          'Dr. Maria Francis','Prof. Maunendra Sankar Desarkar','Dr. N. R. Aravind',
-          'Dr. Nitin Saurabh','Dr. Praveen Tammana','Dr. Rajesh Kedia',
-          'Dr. Rakesh Venkat','Dr. Ramakrishna Upadrasta','Dr. Rameshwar Pratap',
-          'Dr. Rogers Mathew','Prof. Sathya Peri','Dr. Saurabh Kumar',
-          'Dr. Shirshendu Das','Dr. Sobhan Babu','Dr. Srijith P. K.',
-          'Prof. Subrahmanyam Kalyanasundaram','Prof. Vineeth N. Balasubramanian'
-        ] %}
-        {% for f in faculty_list %}
-          <option value="{{f}}" {% if asset and asset.indenter==f %}selected{% endif %}>{{f}}</option>
-        {% endfor %}
-      </optgroup>
-
-      <optgroup label="Staff">
-        {% set staff_list = [
-          'G Praveen Kumar','Shiva Kumar Reddy','Sunitha M',
-          'Nikith Reddy','Vijay Chakravarthy','Syam N'
-        ] %}
-        {% for s in staff_list %}
-          <option value="{{s}}" {% if asset and asset.indenter==s %}selected{% endif %}>{{s}}</option>
-        {% endfor %}
-      </optgroup>
-    </select>
-  </div>
-</div>
-
-
-
-
-
-
+      <div>
+        <label class="block mb-2">Select Faculty / Staff</label>
+        <select id="indenter" name="indenter" required
+          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-green-500">
+          <option value="">-- Select Faculty / Staff --</option>
+          <optgroup label="Faculty">
+            {% set faculty_list = [
+              'Prof. Antony Franklin','Dr. Ashish Mishra','Prof. Bheemarjuna Reddy Tamma',
+              'Prof. C. Krishna Mohan','Dr. J. Saketha Nath','Dr. Jyothi Vedurada',
+              'Dr. Kotaro Kataoka','Prof. M.V.Panduranga Rao','Dr. Manish Singh',
+              'Dr. Maria Francis','Prof. Maunendra Sankar Desarkar','Dr. N. R. Aravind',
+              'Dr. Nitin Saurabh','Dr. Praveen Tammana','Dr. Rajesh Kedia',
+              'Dr. Rakesh Venkat','Dr. Ramakrishna Upadrasta','Dr. Rameshwar Pratap',
+              'Dr. Rogers Mathew','Prof. Sathya Peri','Dr. Saurabh Kumar',
+              'Dr. Shirshendu Das','Dr. Sobhan Babu','Dr. Srijith P. K.',
+              'Prof. Subrahmanyam Kalyanasundaram','Prof. Vineeth N. Balasubramanian'
+            ] %}
+            {% for f in faculty_list %}
+              <option value="{{f}}" {% if asset and asset.indenter==f %}selected{% endif %}>{{f}}</option>
+            {% endfor %}
+          </optgroup>
+          <optgroup label="Staff">
+            {% set staff_list = [
+              'G Praveen Kumar','Shiva Kumar Reddy','Sunitha M',
+              'Nikith Reddy','Vijay Chakravarthy','Syam N'
+            ] %}
+            {% for s in staff_list %}
+              <option value="{{s}}" {% if asset and asset.indenter==s %}selected{% endif %}>{{s}}</option>
+            {% endfor %}
+          </optgroup>
+        </select>
       </div>
     </div>
 
     <!-- Submit -->
-    <div class="flex justify-end space-x-3">
-      <a href="{{ url_for('assets_list') }}" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</a>
-      <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-        {{ 'Update Asset' if asset else 'Create Asset' }}
+    <div class="flex justify-end">
+      <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700">
+        {{ 'Update Asset' if asset else 'Add Asset' }}
       </button>
     </div>
   </form>
 </div>
 
 <script>
-function toggleOtherManufacturer() {
-  let val = document.getElementById("manufacturer").value;
-  document.getElementById("otherManufacturerContainer").classList.toggle("hidden", val !== "Others");
-}
-function toggleOtherOs() {
-  let val = document.getElementById("os").value;
-  document.getElementById("otherOsContainer").classList.toggle("hidden", val !== "Other");
-}
-function toggleOtherRam() {
-  let val = document.getElementById("ram").value;
-  document.getElementById("otherRamContainer").classList.toggle("hidden", val !== "other");
-}
-function togglePeripheral(type) {
-  if (type === "keyboard") {
-    let val = document.getElementById("keyboard_provided").value;
-    document.getElementById("keyboard-details-container").classList.toggle("hidden", val !== "yes");
+  function toggleOtherManufacturer() {
+    const m = document.getElementById('manufacturer').value;
+    document.getElementById('otherManufacturerContainer').classList.toggle('hidden', m !== 'Others');
   }
-  if (type === "mouse") {
-    let val = document.getElementById("mouse_provided").value;
-    document.getElementById("mouse-details-container").classList.toggle("hidden", val !== "yes");
+
+  function toggleOtherOs() {
+    const os = document.getElementById('os').value;
+    document.getElementById('otherOsContainer').classList.toggle('hidden', os !== 'Other');
   }
-  if (type === "monitor") {
-    let val = document.getElementById("monitor_provided").value;
-    let show = (val === "yes");
-    document.getElementById("monitor-details-container").classList.toggle("hidden", !show);
-    document.getElementById("monitor-size-container").classList.toggle("hidden", !show);
-    document.getElementById("monitor-serial-container").classList.toggle("hidden", !show);
+
+  function toggleOtherRam() {
+    const ram = document.getElementById('ram').value;
+    document.getElementById('otherRamContainer').classList.toggle('hidden', ram !== 'other');
   }
-}
+
+  function togglePeripheral(type) {
+    const provided = document.getElementById(type + '_provided').value;
+    document.getElementById(type + '-details-container').classList.toggle('hidden', provided !== 'yes');
+    if(type==='monitor'){
+      document.getElementById('monitor-size-container').classList.toggle('hidden', provided !== 'yes');
+      document.getElementById('monitor-serial-container').classList.toggle('hidden', provided !== 'yes');
+    }
+  }
 </script>
 {% endblock %}
