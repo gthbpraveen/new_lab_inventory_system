@@ -1598,75 +1598,99 @@ from models import db, Equipment
 
 #     students = Student.query.all()
 #     return render_template("equipment_entry.html", students=students)
+from flask import render_template, request, flash, redirect, url_for
+from flask_login import login_required
+from models import db, Equipment, Student
+from datetime import datetime
+
 @app.route("/equipment_entry", methods=["GET", "POST"])
 @login_required
 def equipment_entry():
     if request.method == "POST":
-        print(request.form.to_dict())  # 🔍 debug
+        try:
+            # 🔍 Debug
+            print("🧾 Form Data:", request.form.to_dict())
 
-        name = request.form["name"]
-        category = request.form["category"]
-        manufacturer = request.form["manufacturer"]
-        model = request.form["model"]
-        invoice_number = request.form.get("invoice_number")
-        cost_per_unit = request.form.get("cost_per_unit", type=float)
-        warranty_expiry = request.form.get("warranty_expiry")
-        location = request.form["location"]
-        purchase_date = request.form["purchase_date"]
-        status = request.form["status"]
-        po_date_raw = request.form["po_date"]
+            name = request.form["name"]
+            category = request.form["category"]
+            manufacturer = request.form["manufacturer"]
+            model = request.form["model"]
+            invoice_number = request.form.get("invoice_number")
+            cost_per_unit = request.form.get("cost_per_unit", type=float)
+            warranty_start = request.form.get("warranty_start")
+            warranty_expiry = request.form.get("warranty_expiry")
+            location = request.form["location"]
+            po_date = request.form.get("po_date")
+            po_number = request.form.get("po_number")
+            source_of_fund = request.form.get("source_of_fund")
+            vendor_company = request.form.get("vendor_company")
+            vendor_contact_person = request.form.get("vendor_contact_person")
+            vendor_mobile = request.form.get("vendor_mobile")
+            intender_full = request.form.get("intender_name") or "Unknown"
+            status = request.form.get("status")
+            remarks = request.form.get("remarks")
+            quantity = request.form.get("quantity", type=int)
+            assigned_to_roll = request.form.get("assigned_to_roll")
+            assigned_by = request.form.get("assigned_by")
+            assigned_date = datetime.now() if assigned_to_roll else None
 
-        # clean PO date
-        po_date = po_date_raw.replace("-", "")
+            # Current category-wise count for unique department code
+            current_count = Equipment.query.filter_by(category=category).count()
 
-        # clean Indenter
-        intender_full = request.form.get("intender_name") or "Unknown"
-        intender_clean = (
-            intender_full.replace("Dr. ", "")
-                         .replace("Prof. ", "")
-                         .replace("Prof. M.V.Panduranga Rao", "MVP")
-        )
-        intender_first = intender_clean.split()[0]
+            for i in range(quantity):
+                serial_number = request.form.get(f"serial_number_{i+1}")
+                mac_address = request.form.get(f"mac_address_{i+1}", "")
 
-        quantity = request.form.get("quantity", type=int)
-        assigned_to_roll = request.form.get("assigned_to_roll")
+                serial = f"{current_count + i + 1:03}"  # 001, 002, etc.
 
-        # get current category-wise count (instead of all equipment)
-        current_count = Equipment.query.filter_by(category=category).count()
+                # Department code format
+                po_date_clean = po_date.replace("-", "")
+                intender_clean = intender_full.split()[0]  # First word
+                department_code = f"CSE/{po_date_clean}/{category}/{manufacturer}/{intender_clean}/{serial}"
 
-        for i in range(quantity):
-            serial_number = request.form.get(f"serial_number_{i+1}")
-            serial = f"{current_count + i + 1:03}"
+                equipment = Equipment(
+                    name=name,
+                    category=category,
+                    manufacturer=manufacturer,
+                    model=model,
+                    serial_number=serial_number,
+                    mac_address=mac_address,
+                    invoice_number=invoice_number,
+                    cost_per_unit=cost_per_unit,
+                    warranty_start=warranty_start,
+                    warranty_expiry=warranty_expiry,
+                    location=location,
+                    po_date=po_date,
+                    po_number=po_number,
+                    source_of_fund=source_of_fund,
+                    vendor_company=vendor_company,
+                    vendor_contact_person=vendor_contact_person,
+                    vendor_mobile=vendor_mobile,
+                    status=status,
+                    intender_name=intender_full,
+                    remarks=remarks,
+                    quantity=1,  # Each entry is separate
+                    department_code=department_code,
+                    assigned_to_roll=assigned_to_roll if assigned_to_roll else None,
+                    assigned_by=assigned_by,
+                    assigned_date=assigned_date
+                )
 
-            # NEW Department Code format (category-wise serial)
-            department_code = f"CSE/{po_date}/{category}/{manufacturer}/{intender_first}/{serial}"
+                db.session.add(equipment)
 
-            equipment = Equipment(
-                name=name,
-                category=category,
-                manufacturer=manufacturer,
-                model=model,
-                serial_number=serial_number,
-                invoice_number=invoice_number,
-                cost_per_unit=cost_per_unit,
-                warranty_expiry=warranty_expiry,
-                location=location,
-                purchase_date=purchase_date,
-                status=status,
-                po_date=po_date_raw,
-                intender_name=intender_full,
-                quantity=1,
-                department_code=department_code,
-                assigned_to_roll=assigned_to_roll if assigned_to_roll else None
-            )
-            db.session.add(equipment)
+            db.session.commit()
+            flash(f"{quantity} equipment entries added successfully.", "success")
+            return redirect(url_for("equipment_entry"))
 
-        db.session.commit()
-        flash(f"{quantity} equipment entries added successfully.", "success")
-        return redirect(url_for("equipment_list"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"❌ Error adding equipment: {e}", "danger")
+            print("Error:", e)
 
     students = Student.query.all()
     return render_template("equipment_entry.html", students=students)
+
+
 
 
 
@@ -1688,6 +1712,51 @@ from sqlalchemy import or_
 from collections import defaultdict
 from sqlalchemy import or_
 
+# @app.route("/equipment_list", methods=["GET"])
+# def equipment_list():
+#     search_query = request.args.get('search', '').strip()
+#     status_filter = request.args.get('status_filter', '').strip()
+#     page = request.args.get('page', 1, type=int)
+#     per_page = 10  # Adjust as needed
+
+#     query = Equipment.query
+
+#     if search_query:
+#         query = query.filter(
+#             or_(
+#                 Equipment.name.ilike(f"%{search_query}%"),
+#                 Equipment.category.ilike(f"%{search_query}%"),
+#                 Equipment.status.ilike(f"%{search_query}%"),
+#                 Equipment.department_code.ilike(f"%{search_query}%"),
+#                 Equipment.intender_name.ilike(f"%{search_query}%"),
+#                 Equipment.model.ilike(f"%{search_query}%"),
+#                 Equipment.location.ilike(f"%{search_query}%"),
+#                 Equipment.manufacturer.ilike(f"%{search_query}%"),
+#                 Equipment.serial_number.ilike(f"%{search_query}%"),
+#                 Equipment.po_date.ilike(f"%{search_query}%"),
+#                 Equipment.purchase_date.ilike(f"%{search_query}%")
+#             )
+#         )
+
+#     if status_filter:
+#         query = query.filter(Equipment.status == status_filter)
+
+#     pagination = query.order_by(Equipment.category, Equipment.name).paginate(page=page, per_page=per_page)
+
+#     # Group the paginated items by category
+#     grouped_equipment = defaultdict(list)
+#     for eq in pagination.items:
+#         grouped_equipment[eq.category].append(eq)
+
+#     return render_template("equipment_list.html",
+#                            grouped_equipment=grouped_equipment,
+#                            pagination=pagination,
+#                            search_query=search_query,
+#                            status_filter=status_filter)
+from collections import defaultdict
+from flask import request, render_template
+from sqlalchemy import or_
+
 @app.route("/equipment_list", methods=["GET"])
 def equipment_list():
     search_query = request.args.get('search', '').strip()
@@ -1697,6 +1766,7 @@ def equipment_list():
 
     query = Equipment.query
 
+    # Search across multiple columns
     if search_query:
         query = query.filter(
             or_(
@@ -1710,25 +1780,31 @@ def equipment_list():
                 Equipment.manufacturer.ilike(f"%{search_query}%"),
                 Equipment.serial_number.ilike(f"%{search_query}%"),
                 Equipment.po_date.ilike(f"%{search_query}%"),
-                Equipment.purchase_date.ilike(f"%{search_query}%")
+                Equipment.purchase_date.ilike(f"%{search_query}%"),
+                Equipment.mac_address.ilike(f"%{search_query}%"),
+                Equipment.vendor_company.ilike(f"%{search_query}%")
             )
         )
 
+    # Status filter
     if status_filter:
         query = query.filter(Equipment.status == status_filter)
 
+    # Pagination
     pagination = query.order_by(Equipment.category, Equipment.name).paginate(page=page, per_page=per_page)
 
-    # Group the paginated items by category
+    # Group by category
     grouped_equipment = defaultdict(list)
     for eq in pagination.items:
         grouped_equipment[eq.category].append(eq)
 
-    return render_template("equipment_list.html",
-                           grouped_equipment=grouped_equipment,
-                           pagination=pagination,
-                           search_query=search_query,
-                           status_filter=status_filter)
+    return render_template(
+        "equipment_list.html",
+        grouped_equipment=grouped_equipment,
+        pagination=pagination,
+        search_query=search_query,
+        status_filter=status_filter
+    )
 
 
 from flask import render_template, request, redirect, url_for, flash, jsonify
@@ -5037,4 +5113,4 @@ def faculty_assets():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)

@@ -1,158 +1,186 @@
 {% extends "login_home.html" %}
+{% block title %}Workstation Assets{% endblock %}
+
 {% block content %}
-<div class="container mx-auto px-6 py-6">
-
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-indigo-800">Workstation Assets</h1>
-    {% if current_user.role != "student" %}
-    <a href="{{ url_for('asset_new') }}" 
-       class="bg-green-600 text-white px-4 py-2 rounded-md shadow hover:bg-green-700">
-      + Add Asset
-    </a>
-    {% endif %}
-  </div>
-
-  <!-- Filter Form -->
-  <form method="get" class="flex flex-wrap items-end gap-4 bg-blue-50 p-4 rounded-lg mb-6">
-    {% if roll %}
-      <input type="hidden" name="roll" value="{{ roll }}">
-    {% endif %}
-
-    <!-- Status -->
-    {% if current_user.role != "student" %}
-    <div>
-      <label for="status" class="block text-gray-700 font-medium mb-1">Status</label>
-      <select name="status" id="status" class="border rounded-md px-3 py-2">
-        <option value="">All</option>
-        <option value="Available" {% if status=="Available" %}selected{% endif %}>Available</option>
-        <option value="Issued" {% if status=="Issued" %}selected{% endif %}>Issued</option>
-        <option value="Retired" {% if status=="Retired" %}selected{% endif %}>Retired</option>
-        <option value="Scrapped" {% if status=="Scrapped" %}selected{% endif %}>Scrapped</option>
-      </select>
-    </div>
-    {% endif %}
-
-    <!-- Location -->
-    <div>
-      <label for="location" class="block text-gray-700 font-medium mb-1">Location</label>
-      <select name="location" id="location" class="border rounded-md px-3 py-2">
-        <option value="">All</option>
-        {% for loc in locations %}
-          <option value="{{ loc }}" {% if location==loc %}selected{% endif %}>{{ loc }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <!-- Indenter -->
-    <div>
-      <label for="indenter" class="block text-gray-700 font-medium mb-1">Indenter</label>
-      <select name="indenter" id="indenter" class="border rounded-md px-3 py-2">
-        <option value="">All</option>
-        {% for ind in indenters %}
-          <option value="{{ ind }}" {% if indenter==ind %}selected{% endif %}>{{ ind }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <!-- Search -->
-    <div class="flex-1">
-      <label for="search" class="block text-gray-700 font-medium mb-1">Search</label>
-      <input type="text" name="search" id="search" value="{{ search }}" 
-             placeholder="Search by Serial / Model / Manufacturer"
-             class="border rounded-md px-3 py-2 w-full">
-    </div>
-
-    <div class="flex gap-2">
-      <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md shadow">
-        Apply
-      </button>
-      <a href="{{ url_for('assets_list') }}" 
-         class="bg-gray-400 text-white px-4 py-2 rounded-md shadow hover:bg-gray-500">
-        Clear
+<section class="py-10">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-3xl font-bold text-indigo-700">Workstation Assets</h2>
+      {% if current_user.role != "student" %}
+      <a href="{{ url_for('asset_new') }}" 
+         class="bg-green-600 text-white px-4 py-2 rounded-md shadow hover:bg-green-700">
+        + Add Asset
       </a>
+      {% endif %}
     </div>
-  </form>
 
-  <!-- Assets Table -->
-  <div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="min-w-full text-sm text-left">
-      <thead class="bg-indigo-100 text-indigo-900">
-        <tr>
-          <th class="px-4 py-2">S.No</th>
-          <th class="px-4 py-2">Dept_code</th>
-          <th class="px-4 py-2">Manufacturer</th>
-          <th class="px-4 py-2">Model</th>
-          <th class="px-4 py-2">Location</th>
-          <th class="px-4 py-2">Indenter</th>
-          <th class="px-4 py-2">Status</th>
+    <!-- Filter Form -->
+    <form method="get" class="flex flex-wrap items-end gap-4 bg-blue-50 p-4 rounded-lg mb-6">
+      {% if roll %}
+        <input type="hidden" name="roll" value="{{ roll }}">
+      {% endif %}
+      {% if current_user.role != "student" %}
+      <div>
+        <label for="status" class="block text-gray-700 font-medium mb-1">Status</label>
+        <select name="status" id="status" class="border rounded-md px-3 py-2">
+          <option value="">All</option>
+          <option value="Available" {% if status=="Available" %}selected{% endif %}>Available</option>
+          <option value="Issued" {% if status=="Issued" %}selected{% endif %}>Issued</option>
+          <option value="Retired" {% if status=="Retired" %}selected{% endif %}>Retired</option>
+          <option value="Scrapped" {% if status=="Scrapped" %}selected{% endif %}>Scrapped</option>
+        </select>
+      </div>
+      {% endif %}
 
-          {% if current_user.role != "student" %}
-          <th class="px-4 py-2">Actions</th>
-          {% endif %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for a in assets %}
-          <tr class="border-t">
-            <td class="px-4 py-2">{{ loop.index }}</td>
-            <td class="px-4 py-2">{{ a.department_code }}</td>
-            <td class="px-4 py-2">{{ a.manufacturer }}</td>
-            <td class="px-4 py-2">{{ a.model }}</td>
-            <td class="px-4 py-2">{{ a.location or '-' }}</td>
-            <td class="px-4 py-2">{{ a.indenter or '-' }}</td>
+      <div>
+        <label for="location" class="block text-gray-700 font-medium mb-1">Location</label>
+        <select name="location" id="location" class="border rounded-md px-3 py-2">
+          <option value="">All</option>
+          {% for loc in locations %}
+            <option value="{{ loc }}" {% if location==loc %}selected{% endif %}>{{ loc }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-           
-            <td class="px-4 py-2">{{ a.status }}</td>
+      <div>
+        <label for="indenter" class="block text-gray-700 font-medium mb-1">Indenter</label>
+        <select name="indenter" id="indenter" class="border rounded-md px-3 py-2">
+          <option value="">All</option>
+          {% for ind in indenters %}
+            <option value="{{ ind }}" {% if indenter==ind %}selected{% endif %}>{{ ind }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-          {% if current_user.role != "student" %}
-            <td class="px-4 py-2 space-x-2">
-              <a href="{{ url_for('asset_edit', asset_id=a.id) }}" 
-                 class="text-indigo-600 hover:underline">Edit</a>
+      <div class="flex-1">
+        <label for="search" class="block text-gray-700 font-medium mb-1">Search</label>
+        <input type="text" name="search" id="search" value="{{ search }}" 
+               placeholder="Search by Serial / Model / Manufacturer"
+               class="border rounded-md px-3 py-2 w-full">
+      </div>
+
+      <div class="flex gap-2">
+        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md shadow">
+          Apply
+        </button>
+        <a href="{{ url_for('assets_list') }}" 
+           class="bg-gray-400 text-white px-4 py-2 rounded-md shadow hover:bg-gray-500">
+          Clear
+        </a>
+      </div>
+    </form>
+
+    <!-- Assets Table -->
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+      <table class="w-full text-sm text-left border border-gray-300 min-w-[800px]">
+        <thead class="bg-gray-100 text-gray-700">
+          <tr>
+            <th class="p-3 border">S.No</th>
+            <th class="p-3 border">Dept_code</th>
+            <th class="p-3 border">Manufacturer</th>
+            <th class="p-3 border">Model</th>
+            <th class="p-3 border">Status</th>
+            {% if current_user.role != "student" %}
+            <th class="p-3 border">Actions</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in assets %}
+          <tr class="border-b hover:bg-gray-50">
+            <td class="p-3">{{ loop.index }}</td>
+            <td class="p-3">
+              <a href="#" class="text-indigo-600 hover:underline"
+                 onclick="document.getElementById('details-{{ a.id }}').classList.toggle('hidden'); return false;">
+                {{ a.department_code }}
+              </a>
+            </td>
+            <td class="p-3">{{ a.manufacturer }}</td>
+            <td class="p-3">{{ a.model }}</td>
+            <td class="p-3">{{ a.status }}</td>
+
+            {% if current_user.role != "student" %}
+            <td class="p-3 space-x-2">
+              <a href="{{ url_for('asset_edit', asset_id=a.id) }}" class="text-indigo-600 hover:underline">Edit</a>
 
               {% if a.status == "Retired" %}
                 <form action="{{ url_for('asset_unretire', asset_id=a.id) }}" method="post" class="inline">
                   <button type="submit" class="text-yellow-600 hover:underline"
-                          onclick="return confirm('Un-retire this asset?')">
-                    Unretire
-                  </button>
+                          onclick="return confirm('Un-retire this asset?')">Unretire</button>
                 </form>
               {% elif a.status != "Issued" %}
                 <form action="{{ url_for('asset_retire', asset_id=a.id) }}" method="post" class="inline">
                   <button type="submit" class="text-yellow-600 hover:underline"
-                          onclick="return confirm('Retire this asset?')">
-                    Retire
-                  </button>
+                          onclick="return confirm('Retire this asset?')">Retire</button>
                 </form>
               {% endif %}
 
               <form action="{{ url_for('asset_delete', asset_id=a.id) }}" method="post" class="inline">
                 <button type="submit" class="text-red-600 hover:underline"
-                        onclick="return confirm('Are you sure you want to delete this asset?')">
-                  Delete
-                </button>
+                        onclick="return confirm('Are you sure you want to delete this asset?')">Delete</button>
               </form>
             </td>
             {% endif %}
           </tr>
-        {% else %}
-          <tr>
-            <td colspan="{% if current_user.role != 'student' %}8{% else %}6{% endif %}" 
-                class="text-center py-4 text-gray-500">
-              No assets found.
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
 
-  {% if roll %}
+          <!-- Expanded details row: show ALL workstation details -->
+          <tr id="details-{{ a.id }}" class="hidden bg-gray-50">
+  <td colspan="{% if current_user.role != 'student' %}6{% else %}5{% endif %}" class="p-4">
+    <table class="w-full text-sm border border-gray-300">
+      <tr><th class="p-2 border bg-gray-100">Department Code</th><td class="p-2 border">{{ a.department_code }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Manufacturer</th><td class="p-2 border">{{ a.manufacturer }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Other Manufacturer</th><td class="p-2 border">{{ a.otherManufacturer }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Model</th><td class="p-2 border">{{ a.model }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Serial</th><td class="p-2 border">{{ a.serial }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">OS</th><td class="p-2 border">{{ a.os }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Other OS</th><td class="p-2 border">{{ a.otherOs }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Processor</th><td class="p-2 border">{{ a.processor }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Cores</th><td class="p-2 border">{{ a.cores }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">RAM</th><td class="p-2 border">{{ a.ram }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Other RAM</th><td class="p-2 border">{{ a.otherRam }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Storage 1</th><td class="p-2 border">{{ a.storage_type1 }} - {{ a.storage_capacity1 }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Storage 2</th><td class="p-2 border">{{ a.storage_type2 }} - {{ a.storage_capacity2 }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">GPU</th><td class="p-2 border">{{ a.gpu }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">VRAM</th><td class="p-2 border">{{ a.vram }}</td></tr>
+
+      <tr><th class="p-2 border bg-gray-100">Keyboard</th><td class="p-2 border">{{ a.keyboard_provided }} - {{ a.keyboard_details }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Mouse</th><td class="p-2 border">{{ a.mouse_provided }} - {{ a.mouse_details }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Monitor</th><td class="p-2 border">{{ a.monitor_provided }} - {{ a.monitor_details }} ({{ a.monitor_size }}) SN: {{ a.monitor_serial }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">MAC Address</th><td class="p-2 border">{{ a.mac_address }}</td></tr>
+
+      <tr><th class="p-2 border bg-gray-100">PO Date</th><td class="p-2 border">{{ a.po_date }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">PO Number</th><td class="p-2 border">{{ a.po_number }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Source of Fund</th><td class="p-2 border">{{ a.source_of_fund }}</td></tr>
+
+      <tr><th class="p-2 border bg-gray-100">Warranty Start</th><td class="p-2 border">{{ a.warranty_start }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Warranty Expiry</th><td class="p-2 border">{{ a.warranty_expiry }}</td></tr>
+
+      <tr><th class="p-2 border bg-gray-100">Vendor</th><td class="p-2 border">{{ a.vendor_company }} ({{ a.vendor_contact_person }}) {{ a.vendor_mobile }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Status</th><td class="p-2 border">{{ a.status }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Location</th><td class="p-2 border">{{ a.location }}</td></tr>
+      <tr><th class="p-2 border bg-gray-100">Indenter</th><td class="p-2 border">{{ a.indenter }}</td></tr>
+    </table>
+  </td>
+</tr>
+
+          {% else %}
+          <tr>
+            <td colspan="{% if current_user.role != 'student' %}6{% else %}5{% endif %}" 
+                class="text-center py-4 text-gray-500">No assets found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if roll %}
     <div class="mt-6">
       <a href="{{ url_for('allotment_options', roll=roll) }}" 
          class="bg-purple-600 text-white px-4 py-2 rounded-md shadow hover:bg-purple-700">
         ← Back to Allotment Options
       </a>
     </div>
-  {% endif %}
-</div>
+    {% endif %}
+  </div>
+</section>
 {% endblock %}

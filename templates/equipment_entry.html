@@ -2,182 +2,189 @@
 {% block title %}Equipment Entry{% endblock %}
 {% block content %}
 
-<div class="max-w-4xl mx-auto px-4 py-4">
+<div class="max-w-5xl mx-auto px-4 py-4">
   <header class="bg-pink-100 rounded-md shadow-sm p-4 text-center">
-    <h1 class="text-xl sm:text-2xl font-semibold text-blue-700">Equipment Entry</h1>
+    <h1 class="text-2xl font-semibold text-blue-700">Equipment Entry</h1>
   </header>
 </div>
 
-{% with messages = get_flashed_messages() %}
+{% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 text-center">
-      {{ messages[0] }}
-    </div>
+    {% for category, msg in messages %}
+      <div class="mt-4 text-center px-4 py-3 rounded {{ 'bg-green-100 text-green-800' if category=='success' else 'bg-red-100 text-red-800' }}">
+        {{ msg }}
+      </div>
+    {% endfor %}
   {% endif %}
 {% endwith %}
 
-<form method="POST" class="bg-white p-6 rounded shadow-md max-w-3xl mx-auto space-y-4">
-  <div><label>Name</label><input type="text" name="name" required class="input"></div>
+<form method="POST" class="bg-white p-6 rounded shadow-md max-w-4xl mx-auto space-y-6">
 
-  <div>
-    <label>Category</label>
-    <select name="category" required class="input">
-      <option value="">-- Select Category --</option>
-     
-      <option value="CPU">CPU</option>
-      <option value="Monitor">Monitor</option>
-      <option value="Server">Server</option>
-      <option value="Printer">Printer</option>
-      <option value="GPU">GPU</option>
-      <option value="Mouse">Mouse</option>
-      <option value="Keyboard">Keyboard</option>
-      <option value="NIC card">NIC card</option>
-      <option value="Switch">Switch</option>
-      <option value="Router">Router</option>
-      <option value="Network Hub">Network Hub</option>
-      <option value="Others">Others</option>
-    </select>
-  </div>
+  <!-- 🔹 Basic Info -->
+  <section>
+    <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label>Name of the equipment</label><input type="text" name="name" required class="input" value="{{ request.form.get('name','') }}"></div>
+      <div>
+        <label>Category</label>
+        <select name="category" required class="input">
+          <option value="">-- Select Category --</option>
+          {% for cat in ['CPU','Monitor','Printer','GPU','Mouse','Keyboard','NIC card','Switch','Router','Network Hub','Others'] %}
+            <option value="{{ cat }}" {% if request.form.get('category')==cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div><label>Manufacturer</label><input type="text" name="manufacturer" required class="input" value="{{ request.form.get('manufacturer','') }}"></div>
+      <div><label>Model</label><input type="text" name="model" required class="input" value="{{ request.form.get('model','') }}"></div>
+    </div>
+  </section>
 
-  <div><label>Manufacturer</label><input type="text" name="manufacturer" required class="input"></div>
-  <div><label>Model</label><input type="text" name="model" required class="input"></div>
+  <!-- 🔹 Quantity and Serial Details -->
+  <section>
+    <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Quantity & Identification</h2>
+    <div><label>Quantity</label><input type="number" name="quantity" id="quantity" min="1" required class="input" value="{{ request.form.get('quantity','') }}"></div>
+    <div id="serial-mac-container" class="mt-4"></div>
+  </section>
 
-  <div>
-    <label>Quantity</label>
-    <input type="number" name="quantity" id="quantity" required min="1" class="input">
-  </div>
+  <!-- 🔹 Procurement & Warranty -->
+  <section>
+    <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Procurement & Warranty</h2>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label>Invoice Number</label><input type="text" name="invoice_number" class="input" value="{{ request.form.get('invoice_number','') }}"></div>
+      <div><label>Cost per Unit</label><input type="number" step="0.01" name="cost_per_unit" class="input" value="{{ request.form.get('cost_per_unit','') }}"></div>
+      <div><label>PO Number</label><input type="text" name="po_number" class="input" value="{{ request.form.get('po_number','') }}"></div>
+      <div><label>PO Date</label><input type="date" name="po_date" class="input" value="{{ request.form.get('po_date','') }}"></div>
+      <div><label>Source of Fund</label><input type="text" name="source_of_fund" class="input" value="{{ request.form.get('source_of_fund','') }}"></div>
+      <div><label>Warranty Start</label><input type="date" name="warranty_start" class="input" value="{{ request.form.get('warranty_start','') }}"></div>
+      <div><label>Warranty Expiry</label><input type="date" name="warranty_expiry" class="input" value="{{ request.form.get('warranty_expiry','') }}"></div>
+    </div>
+  </section>
 
-  <div id="serial-number-container" class="mt-4"></div>
+  <!-- 🔹 Vendor Details -->
+  <section>
+    <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Vendor Details</h2>
+    <div class="grid grid-cols-3 gap-4">
+      <div><label>Company</label><input type="text" name="vendor_company" class="input" value="{{ request.form.get('vendor_company','') }}"></div>
+      <div><label>Contact Person</label><input type="text" name="vendor_contact_person" class="input" value="{{ request.form.get('vendor_contact_person','') }}"></div>
+      <div><label>Mobile</label><input type="text" name="vendor_mobile" class="input" value="{{ request.form.get('vendor_mobile','') }}"></div>
+    </div>
+  </section>
 
-  <div><label>Invoice Number</label><input type="text" name="invoice_number" class="input"></div>
-  <div><label>Cost per Unit</label><input type="number" name="cost_per_unit" step="0.01" class="input"></div>
-  <div><label>Warranty Expiry</label><input type="date" name="warranty_expiry" class="input"></div>
+  <!-- 🔹 Allocation Info -->
+  <section>
+    <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Allocation Information</h2>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label>Location</label>
+        <select name="location" required class="input">
+          <option value="">-- Select Location --</option>
+          {% for l in ['CS-107','CS-108','CS-109','CS-207','CS-208','CS-209','CS-317','CS-318','CS-319','CS-320','CS-411','CS-412'] %}
+            <option value="{{l}}" {% if request.form.get('location')==l %}selected{% endif %}>{{l}}</option>
+          {% endfor %}
+          {% for o in ['CSE Office','CSE Store','Institute Datacenter','SmartRack'] %}
+            <option value="{{o}}" {% if request.form.get('location')==o %}selected{% endif %}>{{o}}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-  <div>
-    <label class="block mb-2">Location</label>
-    <select id="location" name="location" required
-      class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-yellow-500">
-      <option value="">-- Select Location --</option>
+      <div>
+        <label>Indender (Faculty/Staff)</label>
+        <select name="intender_name" required class="input">
+          <option value="">-- Select --</option>
+          {% for p in [
+            'Prof. Antony Franklin','Dr. Ashish Mishra','Prof. Bheemarjuna Reddy Tamma','Prof. C. Krishna Mohan',
+            'Dr. J. Saketha Nath','Dr. Jyothi Vedurada','Dr. Kotaro Kataoka','Prof. M.V.Panduranga Rao',
+            'Dr. Manish Singh','Dr. Maria Francis','Prof. Maunendra Sankar Desarkar','Dr. N. R. Aravind',
+            'Dr. Nitin Saurabh','Dr. Praveen Tammana','Dr. Rajesh Kedia','Dr. Rakesh Venkat',
+            'Dr. Ramakrishna Upadrasta','Dr. Rameshwar Pratap','Dr. Rogers Mathew','Prof. Sathya Peri',
+            'Dr. Saurabh Kumar','Dr. Shirshendu Das','Dr. Sobhan Babu','Dr. Srijith P. K.',
+            'Prof. Subrahmanyam Kalyanasundaram','Prof. Vineeth N. Balasubramanian',
+            'G Praveen Kumar','Shiva Kumar Reddy','Sunitha M','Nikith Reddy','Vijay Chakravarthy','Syam N'
+          ] %}
+            <option value="{{p}}" {% if request.form.get('intender_name')==p %}selected{% endif %}>{{p}}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-      <optgroup label="Labs">
-        {% set lab_list = [
-          'CS-107','CS-108','CS-109',
-          'CS-207','CS-208','CS-209',
-          'CS-317','CS-318','CS-319','CS-320',
-          'CS-411','CS-412'
-        ] %}
-        {% for l in lab_list %}
-          <option value="{{l}}" {% if asset and asset.location==l %}selected{% endif %}>{{l}}</option>
-        {% endfor %}
-      </optgroup>
+      <div>
+        <label>Status</label>
+        <select name="status" required class="input">
+          <option value="">-- Select Status --</option>
+          {% for s in ['Available','Issued','Scrapped','Retired'] %}
+            <option value="{{s}}" {% if request.form.get('status')==s %}selected{% endif %}>{{s}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div><label>Remarks</label><input type="text" name="remarks" class="input" value="{{ request.form.get('remarks','') }}"></div>
+    </div>
+  </section>
 
-      <optgroup label="Other Locations">
-        {% set other_locations = [
-          'CSE Office','CSE Store','Institute Datacenter','SmartRack'
-        ] %}
-        {% for o in other_locations %}
-          <option value="{{o}}" {% if asset and asset.location==o %}selected{% endif %}>{{o}}</option>
-        {% endfor %}
-      </optgroup>
-    </select>
-  </div>
-
-  <div><label>Purchase Date</label><input type="date" name="purchase_date" required class="input"></div>
-  <div><label>PO Date</label><input type="date" name="po_date" required class="input"></div>
-  <div><label>Source of fund</label><input type="text" name="source_of_fund" required class="input"></div>
-  <div class="form-group mb-3">
-  <label for="warranty_start" class="form-label">Warranty Start Date</label>
-  <input type="date" id="warranty_start" name="warranty_start" class="form-control" required>
-</div>
-
-<div class="form-group mb-3">
-  <label for="warranty_expiry" class="form-label">Warranty Expiry Date</label>
-  <input type="date" id="warranty_expiry" name="warranty_expiry" class="form-control" required>
-</div>
-
-  <div>
-    <label class="block mb-2">Select Faculty / Staff</label>
-    <select id="intender_name" name="intender_name" required
-      class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-green-500">
-      <option value="">-- Select Faculty / Staff --</option>
-
-      <optgroup label="Faculty">
-        {% set faculty_list = [
-          'Prof. Antony Franklin','Dr. Ashish Mishra','Prof. Bheemarjuna Reddy Tamma',
-          'Prof. C. Krishna Mohan','Dr. J. Saketha Nath','Dr. Jyothi Vedurada',
-          'Dr. Kotaro Kataoka','Prof. M.V.Panduranga Rao','Dr. Manish Singh',
-          'Dr. Maria Francis','Prof. Maunendra Sankar Desarkar','Dr. N. R. Aravind',
-          'Dr. Nitin Saurabh','Dr. Praveen Tammana','Dr. Rajesh Kedia',
-          'Dr. Rakesh Venkat','Dr. Ramakrishna Upadrasta','Dr. Rameshwar Pratap',
-          'Dr. Rogers Mathew','Prof. Sathya Peri','Dr. Saurabh Kumar',
-          'Dr. Shirshendu Das','Dr. Sobhan Babu','Dr. Srijith P. K.',
-          'Prof. Subrahmanyam Kalyanasundaram','Prof. Vineeth N. Balasubramanian'
-        ] %}
-        {% for f in faculty_list %}
-          <option value="{{f}}" {% if asset and asset.intender_name==f %}selected{% endif %}>{{f}}</option>
-        {% endfor %}
-      </optgroup>
-
-      <optgroup label="Staff">
-        {% set staff_list = [
-          'G Praveen Kumar','Shiva Kumar Reddy','Sunitha M',
-          'Nikith Reddy','Vijay Chakravarthy','Syam N'
-        ] %}
-        {% for s in staff_list %}
-          <option value="{{s}}" {% if asset and asset.intender_name==s %}selected{% endif %}>{{s}}</option>
-        {% endfor %}
-      </optgroup>
-    </select>
-  </div>
-
-  <div>
-    <label>Status</label>
-    <select name="status" required class="input">
-      <option value="">-- Select Status --</option>
-      <option value="Available">Available</option>
-      <option value="Issued">Issued</option>
-      <option value="Scrapped">Scrapped</option>
-      <option value="Retired">Retired</option>
-    </select>
-  </div>
-
-  <div class="text-center">
-    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Submit</button>
+  <div class="text-center pt-4">
+    <button type="submit" class="bg-blue-600 text-white px-8 py-2 rounded hover:bg-blue-700">Submit</button>
   </div>
 </form>
 
 <style>
-  label { display:block; font-weight: 600; margin-bottom: 4px; }
-  .input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; }
+  label { display:block; font-weight:600; margin-bottom:4px; }
+  .input { width:100%; padding:8px 12px; border:1px solid #cbd5e0; border-radius:6px; }
 </style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const quantityInput = document.getElementById("quantity");
-  const serialContainer = document.getElementById("serial-number-container");
+  const container = document.getElementById("serial-mac-container");
 
-  quantityInput.addEventListener("input", function () {
-    const qty = parseInt(this.value);
-    serialContainer.innerHTML = "";
+  function generateSerialMacFields(qty) {
+    container.innerHTML = "";
 
     if (qty > 0) {
       const label = document.createElement("label");
-      label.textContent = "Enter Serial Numbers";
-      label.classList.add("block", "font-semibold", "text-sm", "mb-2");
-      serialContainer.appendChild(label);
+      label.textContent = "Enter Serial Numbers and MAC Addresses";
+      label.classList.add("block","font-semibold","text-sm","mb-2");
+      container.appendChild(label);
 
       for (let i = 1; i <= qty; i++) {
-        const input = document.createElement("input");
-        input.type = "text";
-        input.name = `serial_number_${i}`;
-        input.placeholder = `Serial Number ${i}`;
-        input.required = true;
-        input.className = "input mb-2";
-        serialContainer.appendChild(input);
+        const row = document.createElement("div");
+        row.className = "grid grid-cols-2 gap-4 mb-2";
+
+        const serial = document.createElement("input");
+        serial.type = "text";
+        serial.name = `serial_number_${i}`;
+        serial.placeholder = `Serial Number ${i}`;
+        serial.required = true;
+        serial.className = "input";
+
+        const mac = document.createElement("input");
+        mac.type = "text";
+        mac.name = `mac_address_${i}`;
+        mac.placeholder = `MAC Address ${i} (optional)`;
+        mac.className = "input";
+
+        // Prefill values if present in request.form
+        {% for j in range(1, 50) %}  // adjust max quantity if needed
+        if (i === {{ j }}) {
+          serial.value = "{{ request.form.get('serial_number_' ~ j, '') }}";
+          mac.value = "{{ request.form.get('mac_address_' ~ j, '') }}";
+        }
+        {% endfor %}
+
+        row.appendChild(serial);
+        row.appendChild(mac);
+        container.appendChild(row);
       }
     }
+  }
+
+  // On page load, prefill if quantity already entered
+  let initialQty = parseInt(quantityInput.value) || 0;
+  generateSerialMacFields(initialQty);
+
+  quantityInput.addEventListener("input", function () {
+    const qty = parseInt(this.value);
+    generateSerialMacFields(qty);
   });
 });
 </script>
+
 
 {% endblock %}
