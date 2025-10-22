@@ -225,11 +225,11 @@
     </div>
 
     <!-- Peripherals -->
-    <div class="form-section bg-green-50 rounded-lg p-6 mb-8">
+    <!-- <div class="form-section bg-green-50 rounded-lg p-6 mb-8">
       <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Peripherals</h2>
 
       <!-- Keyboard -->
-      <div class="mb-6">
+      <!-- <div class="mb-6">
         <label class="block mb-2">Keyboard Provided?</label>
         <select id="keyboard_provided" name="keyboard_provided" onchange="togglePeripheral('keyboard')"
                 class="block w-full px-4 py-2 border rounded-md">
@@ -242,10 +242,10 @@
           <input type="text" id="keyboard_details" name="keyboard_details" value="{{ asset.keyboard_details if asset else '' }}"
             placeholder="Keyboard details" class="block w-full px-4 py-2 border rounded-md">
         </div>
-      </div>
+      </div>  -->
 
       <!-- Mouse -->
-      <div class="mb-6">
+      <!-- <div class="mb-6">
         <label class="block mb-2">Mouse Provided?</label>
         <select id="mouse_provided" name="mouse_provided" onchange="togglePeripheral('mouse')"
                 class="block w-full px-4 py-2 border rounded-md">
@@ -258,10 +258,10 @@
           <input type="text" id="mouse_details" name="mouse_details" value="{{ asset.mouse_details if asset else '' }}"
             placeholder="Mouse details" class="block w-full px-4 py-2 border rounded-md">
         </div>
-      </div>
+      </div> -->
 
       <!-- Monitor -->
-      <div>
+      <!-- <div>
         <label class="block mb-2">Monitor Provided?</label>
         <select id="monitor_provided" name="monitor_provided" onchange="togglePeripheral('monitor')"
                 class="block w-full px-4 py-2 border rounded-md">
@@ -286,7 +286,7 @@
             placeholder="Serial Number" class="block w-full px-4 py-2 border rounded-md">
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Location & Indenter -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -323,25 +323,26 @@
           class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-green-500">
           <option value="">-- Select Faculty / Staff --</option>
           <optgroup label="Faculty">
-            {% set faculty_list = [
-              'Prof. Antony Franklin','Dr. Ashish Mishra','Prof. Bheemarjuna Reddy Tamma',
-              'Prof. C. Krishna Mohan','Dr. J. Saketha Nath','Dr. Jyothi Vedurada',
-              'Dr. Kotaro Kataoka','Prof. M.V.Panduranga Rao','Dr. Manish Singh',
-              'Dr. Maria Francis','Prof. Maunendra Sankar Desarkar','Dr. N. R. Aravind',
-              'Dr. Nitin Saurabh','Dr. Praveen Tammana','Dr. Rajesh Kedia',
-              'Dr. Rakesh Venkat','Dr. Ramakrishna Upadrasta','Dr. Rameshwar Pratap',
-              'Dr. Rogers Mathew','Prof. Sathya Peri','Dr. Saurabh Kumar',
-              'Dr. Shirshendu Das','Dr. Sobhan Babu','Dr. Srijith P. K.',
-              'Prof. Subrahmanyam Kalyanasundaram','Prof. Vineeth N. Balasubramanian'
-            ] %}
+           {% set faculty_list = [
+    'Antony Franklin', 'Ashish Mishra', 'Bheemarjuna Reddy Tamma',
+    'KrishnaMohan C', 'Saketha Nath J', 'Jyothi Vedurada',
+    'Kotaro Kataoka', 'PandurangaRao M.V', 'Manish Singh',
+    'Maria Francis', 'Maunendra Sankar Desarkar', 'Aravind N.R',
+    'Nitin Saurabh', 'Praveen Tammana', 'Rajesh Kedia',
+    'Rakesh Venkat', 'Ramakrishna Upadrasta', 'Rameshwar Pratap',
+    'Rogers Mathew', 'Sathya Peri', 'Saurabh Kumar',
+    'Shirshendu Das', 'Sobhan Babu', 'Srijith P. K.',
+    'Subrahmanyam Kalyanasundaram', 'Vineeth N. Balasubramanian',
+    'Abhijit Das', 'Sandipan D', 'Anupam Sanghi'
+] %}
             {% for f in faculty_list %}
               <option value="{{f}}" {% if asset and asset.indenter==f %}selected{% endif %}>{{f}}</option>
             {% endfor %}
           </optgroup>
           <optgroup label="Staff">
             {% set staff_list = [
-              'G Praveen Kumar','Shiva Kumar Reddy','Sunitha M',
-              'Nikith Reddy','Vijay Chakravarthy','Syam N'
+              'Praveen Kumar G','Shiva Kumar Reddy','Sunitha M',
+              'Nikith Reddy','Vijay Chakravarthy','Syam N', 'Jathin S'
             ] %}
             {% for s in staff_list %}
               <option value="{{s}}" {% if asset and asset.indenter==s %}selected{% endif %}>{{s}}</option>

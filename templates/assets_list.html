@@ -100,27 +100,31 @@
             <td class="p-3">{{ a.status }}</td>
 
             {% if current_user.role != "student" %}
-            <td class="p-3 space-x-2">
-              <a href="{{ url_for('asset_edit', asset_id=a.id) }}" class="text-indigo-600 hover:underline">Edit</a>
+ <td class="p-3 space-x-2">
+  <a href="{{ url_for('asset_edit', asset_id=a.id) }}" class="text-indigo-600 hover:underline">Edit</a>
 
-              {% if a.status == "Retired" %}
-                <form action="{{ url_for('asset_unretire', asset_id=a.id) }}" method="post" class="inline">
-                  <button type="submit" class="text-yellow-600 hover:underline"
-                          onclick="return confirm('Un-retire this asset?')">Unretire</button>
-                </form>
-              {% elif a.status != "Issued" %}
-                <form action="{{ url_for('asset_retire', asset_id=a.id) }}" method="post" class="inline">
-                  <button type="submit" class="text-yellow-600 hover:underline"
-                          onclick="return confirm('Retire this asset?')">Retire</button>
-                </form>
-              {% endif %}
+  {% if a.status == "Retired" %}
+    <form action="{{ url_for('asset_unretire', asset_id=a.id) }}" method="post" class="inline">
+      <button type="submit" class="text-yellow-600 hover:underline"
+              onclick="return confirm('Un-retire this asset?')">Unretire</button>
+    </form>
+  {% elif a.status != "Issued" %}
+    <form action="{{ url_for('asset_retire', asset_id=a.id) }}" method="post" class="inline">
+      <button type="submit" class="text-yellow-600 hover:underline"
+              onclick="return confirm('Retire this asset?')">Retire</button>
+    </form>
+  {% endif %}
 
-              <form action="{{ url_for('asset_delete', asset_id=a.id) }}" method="post" class="inline">
-                <button type="submit" class="text-red-600 hover:underline"
-                        onclick="return confirm('Are you sure you want to delete this asset?')">Delete</button>
-              </form>
-            </td>
-            {% endif %}
+  <a href="{{ url_for('clone_workstation', asset_id=a.id) }}" 
+     class="text-yellow-600 hover:underline">Clone</a>
+
+  <form action="{{ url_for('asset_delete', asset_id=a.id) }}" method="post" class="inline">
+    <button type="submit" class="text-red-600 hover:underline"
+            onclick="return confirm('Are you sure you want to delete this asset?')">Delete</button>
+  </form>
+</td>
+  {% endif %}
+
           </tr>
 
           <!-- Expanded details row: show ALL workstation details -->

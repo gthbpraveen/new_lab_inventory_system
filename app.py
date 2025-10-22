@@ -2319,9 +2319,34 @@ def students_directory():
                            selected_roll=roll)
 
 
+# @app.route('/equipment/edit/<int:id>', methods=['GET', 'POST'])
+# def edit_equipment(id):
+#     item = Equipment.query.get_or_404(id)
+
+#     if request.method == 'POST':
+#         item.name = request.form['name']
+#         item.category = request.form['category']
+#         item.manufacturer = request.form['manufacturer']
+#         item.model = request.form['model']
+#         item.serial_number = request.form['serial_number']
+#         item.location = request.form['location']
+#         item.purchase_date = request.form['purchase_date']
+#         item.status = request.form['status']
+#         item.po_date = request.form['po_date']
+#         item.intender_name = request.form['intender_name']
+#         item.quantity = int(request.form['quantity'])
+#         item.department_code = request.form['department_code']
+
+#         db.session.commit()
+#         return redirect(url_for('equipment_list'))
+
+#     return render_template('edit_equipment.html', item=item)
+from models import Student  # make sure you have this imported
+
 @app.route('/equipment/edit/<int:id>', methods=['GET', 'POST'])
 def edit_equipment(id):
     item = Equipment.query.get_or_404(id)
+    students = Student.query.order_by(Student.roll).all()  # fetch all students for dropdown
 
     if request.method == 'POST':
         item.name = request.form['name']
@@ -2329,18 +2354,34 @@ def edit_equipment(id):
         item.manufacturer = request.form['manufacturer']
         item.model = request.form['model']
         item.serial_number = request.form['serial_number']
+        item.invoice_number = request.form['invoice_number']
+        item.cost_per_unit = request.form['cost_per_unit'] or None
         item.location = request.form['location']
-        item.purchase_date = request.form['purchase_date']
+        # item.purchase_date = request.form['purchase_date']
         item.status = request.form['status']
         item.po_date = request.form['po_date']
+        item.po_number = request.form['po_number']
+        item.source_of_fund = request.form['source_of_fund']
+        item.warranty_start = request.form['warranty_start']
+        item.warranty_expiry = request.form['warranty_expiry']
         item.intender_name = request.form['intender_name']
-        item.quantity = int(request.form['quantity'])
+        item.quantity = request.form['quantity'] or None
         item.department_code = request.form['department_code']
+        item.mac_address = request.form['mac_address']
+        item.vendor_company = request.form['vendor_company']
+        item.vendor_contact_person = request.form['vendor_contact_person']
+        item.vendor_mobile = request.form['vendor_mobile']
+        item.remarks = request.form['remarks']
+
+        # Handle assigned fields safely
+        item.assigned_to_roll = request.form.get('assigned_to_roll') or None
+        item.assigned_by = request.form.get('assigned_by') or None
 
         db.session.commit()
         return redirect(url_for('equipment_list'))
 
-    return render_template('edit_equipment.html', item=item)
+    return render_template('edit_equipment.html', item=item, students=students)
+
 
 @app.route('/equipment/delete/<int:id>', methods=['POST'])
 def delete_equipment(id):
@@ -3733,6 +3774,83 @@ def assets_list():
         indenters=indenters,
     )
 
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from random import randint
+
+
+@app.route("/clone_workstation/<int:asset_id>", methods=["GET", "POST"])
+def clone_workstation(asset_id):
+    asset = WorkstationAsset.query.get_or_404(asset_id)
+
+    if request.method == "POST":
+        f = request.form
+
+        new_mac = f.get("mac_address").strip() or None
+
+        # Count existing assets of same type
+        count = WorkstationAsset.query.filter_by(
+            model=asset.model,
+            manufacturer=asset.manufacturer,
+            indenter=asset.indenter,
+            po_date=asset.po_date
+        ).count() + 1
+        serial = f"{count:03}"
+
+        po_date_clean = asset.po_date.replace("-", "")
+        indenter_first = asset.indenter.split()[0]
+        new_department_code = f"CSE/{po_date_clean}/{asset.model}/{asset.manufacturer}/{indenter_first}/{serial}"
+
+        new_asset = WorkstationAsset(
+            manufacturer      = asset.manufacturer,
+            otherManufacturer = asset.otherManufacturer,
+            model             = asset.model,
+            serial            = serial,   # NEW serial
+            os                = asset.os,
+            otherOs           = asset.otherOs,
+            processor         = asset.processor,
+            cores             = asset.cores,
+            ram               = asset.ram,
+            otherRam          = asset.otherRam,
+            storage_type1     = asset.storage_type1,
+            storage_capacity1 = asset.storage_capacity1,
+            storage_type2     = asset.storage_type2,
+            storage_capacity2 = asset.storage_capacity2,
+            gpu               = asset.gpu,
+            vram              = asset.vram,
+            keyboard_provided = asset.keyboard_provided,
+            keyboard_details  = asset.keyboard_details,
+            mouse_provided    = asset.mouse_provided,
+            mouse_details     = asset.mouse_details,
+            monitor_provided  = asset.monitor_provided,
+            monitor_details   = asset.monitor_details,
+            monitor_size      = asset.monitor_size,
+            monitor_serial    = asset.monitor_serial,
+            mac_address       = new_mac,
+            po_date           = asset.po_date,
+            po_number         = asset.po_number,
+            source_of_fund    = asset.source_of_fund,
+            vendor_company    = asset.vendor_company,
+            vendor_contact_person = asset.vendor_contact_person,
+            vendor_mobile     = asset.vendor_mobile,
+            warranty_start    = asset.warranty_start,
+            warranty_expiry   = asset.warranty_expiry,
+            status            = asset.status,
+            location          = asset.location,
+            indenter          = asset.indenter,
+            department_code   = new_department_code
+        )
+
+        try:
+            db.session.add(new_asset)
+            db.session.commit()
+            flash("✅ Asset cloned successfully.", "success")
+            return redirect(url_for("assets_list"))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"❌ Error cloning asset: {e}", "danger")
+
+    return render_template("clone_workstation.html", asset=asset)
 
 
 # @app.route("/assets/new", methods=["GET", "POST"])
@@ -3864,20 +3982,16 @@ def asset_new():
         indenter_clean = indenter_full.replace("Dr. ", "").replace("Prof. ", "")
         indenter_first = indenter_clean.split()[0]
 
-        # Determine serial: use form input if provided and unique, else auto-generate
-        serial_input = (f.get("serial") or "").strip()
-        if serial_input:
-            existing = WorkstationAsset.query.filter_by(serial=serial_input).first()
-            if existing:
-                flash(f"❌ Serial '{serial_input}' already exists!", "danger")
-                return redirect(url_for("asset_new"))
-            serial = serial_input
-        else:
-            # Auto-generate serial
-            count = WorkstationAsset.query.count() + 1
-            serial = f"{count:03}"
+        # Determine serial automatically
+        count = WorkstationAsset.query.filter_by(
+            model=model,
+            manufacturer=manufacturer,
+            indenter=indenter_full,
+            po_date=po_date_raw
+        ).count() + 1
+        serial = f"{count:03}"
 
-        # Generate unique department code
+        # Generate department code
         department_code = f"CSE/{po_date}/{manufacturer}/{model}/{indenter_first}/{serial}"
 
         asset = WorkstationAsset(
@@ -3931,7 +4045,6 @@ def asset_new():
 
     return render_template("asset_form.html", asset=None)
 
-
 # @app.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
 # def asset_edit(asset_id):
 #     a = WorkstationAsset.query.get_or_404(asset_id)
@@ -3979,64 +4092,140 @@ def asset_new():
 
 
 
+# @app.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
+# def asset_edit(asset_id):
+#     a = WorkstationAsset.query.get_or_404(asset_id)
+#     if request.method == "POST":
+#         f = request.form
+
+#         # Update basic fields
+#         a.manufacturer      = f.get("manufacturer") or None
+#         a.otherManufacturer = f.get("otherManufacturer") or None
+#         a.model             = f.get("model") or None
+#         new_serial          = (f.get("serial") or "").strip() or None
+#         a.os                = f.get("os") or None
+#         a.otherOs           = f.get("otherOs") or None
+#         a.processor         = f.get("processor") or None
+#         a.cores             = f.get("cores") or None
+#         a.ram               = f.get("ram") or None
+#         a.otherRam          = f.get("otherRam") or None
+#         a.storage_type1     = f.get("storage_type1") or None
+#         a.storage_capacity1 = f.get("storage_capacity1") or None
+#         a.storage_type2     = f.get("storage_type2") or None
+#         a.storage_capacity2 = f.get("storage_capacity2") or None
+#         a.gpu               = f.get("gpu") or None
+#         a.vram              = f.get("vram") or None
+#         a.keyboard_provided = f.get("keyboard_provided") or None
+#         a.keyboard_details  = f.get("keyboard_details") or None
+#         a.mouse_provided    = f.get("mouse_provided") or None
+#         a.mouse_details     = f.get("mouse_details") or None
+#         a.monitor_provided  = f.get("monitor_provided") or None
+#         a.monitor_details   = f.get("monitor_details") or None
+#         a.monitor_size      = f.get("monitor_size") or None
+#         a.monitor_serial    = f.get("monitor_serial") or None
+#         a.mac_address       = f.get("mac_address") or None
+#         a.po_date           = f.get("po_date") or None
+#         a.po_number         = f.get("po_number") or None
+#         a.source_of_fund    = f.get("source_of_fund") or None
+#         a.vendor_company    = f.get("vendor_company") or None
+#         a.vendor_contact_person = f.get("vendor_contact_person") or None
+#         a.vendor_mobile     = f.get("vendor_mobile") or None
+#         a.warranty_start    = f.get("warranty_start") or None
+#         a.warranty_expiry   = f.get("warranty_expiry") or None
+#         a.location          = f.get("location") or None
+#         a.indenter          = f.get("indenter") or None
+#         # NOTE: do NOT change status here, use retire/unretire
+
+#         # Handle serial uniqueness
+#         if new_serial and new_serial != a.serial:
+#             existing = WorkstationAsset.query.filter_by(serial=new_serial).first()
+#             if existing:
+#                 flash(f"❌ Serial '{new_serial}' already exists!", "danger")
+#                 return redirect(url_for("asset_edit", asset_id=asset_id))
+#             a.serial = new_serial
+
+#         # Re-generate department code if key fields changed
+#         if a.manufacturer and a.model and a.indenter and a.serial and a.po_date:
+#             indenter_clean = a.indenter.replace("Dr. ", "").replace("Prof. ", "")
+#             indenter_first = indenter_clean.split()[0]
+#             po_date_clean = a.po_date.replace("-", "")
+#             a.department_code = f"CSE/{po_date_clean}/{a.manufacturer}/{a.model}/{indenter_first}/{a.serial}"
+
+#         try:
+#             db.session.commit()
+#             flash("✅ Asset updated successfully.", "success")
+#             return redirect(url_for("assets_list"))
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f"❌ Error updating asset: {e}", "danger")
+
+#     return render_template("asset_form.html", asset=a)
+
 @app.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
 def asset_edit(asset_id):
-    a = WorkstationAsset.query.get_or_404(asset_id)
+    asset = WorkstationAsset.query.get_or_404(asset_id)
+
     if request.method == "POST":
         f = request.form
 
-        # Update basic fields
-        a.manufacturer      = f.get("manufacturer") or None
-        a.otherManufacturer = f.get("otherManufacturer") or None
-        a.model             = f.get("model") or None
-        new_serial          = (f.get("serial") or "").strip() or None
-        a.os                = f.get("os") or None
-        a.otherOs           = f.get("otherOs") or None
-        a.processor         = f.get("processor") or None
-        a.cores             = f.get("cores") or None
-        a.ram               = f.get("ram") or None
-        a.otherRam          = f.get("otherRam") or None
-        a.storage_type1     = f.get("storage_type1") or None
-        a.storage_capacity1 = f.get("storage_capacity1") or None
-        a.storage_type2     = f.get("storage_type2") or None
-        a.storage_capacity2 = f.get("storage_capacity2") or None
-        a.gpu               = f.get("gpu") or None
-        a.vram              = f.get("vram") or None
-        a.keyboard_provided = f.get("keyboard_provided") or None
-        a.keyboard_details  = f.get("keyboard_details") or None
-        a.mouse_provided    = f.get("mouse_provided") or None
-        a.mouse_details     = f.get("mouse_details") or None
-        a.monitor_provided  = f.get("monitor_provided") or None
-        a.monitor_details   = f.get("monitor_details") or None
-        a.monitor_size      = f.get("monitor_size") or None
-        a.monitor_serial    = f.get("monitor_serial") or None
-        a.mac_address       = f.get("mac_address") or None
-        a.po_date           = f.get("po_date") or None
-        a.po_number         = f.get("po_number") or None
-        a.source_of_fund    = f.get("source_of_fund") or None
-        a.vendor_company    = f.get("vendor_company") or None
-        a.vendor_contact_person = f.get("vendor_contact_person") or None
-        a.vendor_mobile     = f.get("vendor_mobile") or None
-        a.warranty_start    = f.get("warranty_start") or None
-        a.warranty_expiry   = f.get("warranty_expiry") or None
-        a.location          = f.get("location") or None
-        a.indenter          = f.get("indenter") or None
-        # NOTE: do NOT change status here, use retire/unretire
+        # Update all basic fields
+        asset.manufacturer      = f.get("manufacturer") or None
+        asset.otherManufacturer = f.get("otherManufacturer") or None
+        asset.model             = f.get("model") or None
+        asset.os                = f.get("os") or None
+        asset.serial            = f.get("serial") or asset.serial  # keep existing if blank
+        asset.otherOs           = f.get("otherOs") or None
+        asset.processor         = f.get("processor") or None
+        asset.cores             = f.get("cores") or None
+        asset.ram               = f.get("ram") or None
+        asset.otherRam          = f.get("otherRam") or None
+        asset.storage_type1     = f.get("storage_type1") or None
+        asset.storage_capacity1 = f.get("storage_capacity1") or None
+        asset.storage_type2     = f.get("storage_type2") or None
+        asset.storage_capacity2 = f.get("storage_capacity2") or None
+        asset.gpu               = f.get("gpu") or None
+        asset.vram              = f.get("vram") or None
+        asset.keyboard_provided = f.get("keyboard_provided") or None
+        asset.keyboard_details  = f.get("keyboard_details") or None
+        asset.mouse_provided    = f.get("mouse_provided") or None
+        asset.mouse_details     = f.get("mouse_details") or None
+        asset.monitor_provided  = f.get("monitor_provided") or None
+        asset.monitor_details   = f.get("monitor_details") or None
+        asset.monitor_size      = f.get("monitor_size") or None
+        asset.monitor_serial    = f.get("monitor_serial") or None
+        asset.mac_address       = f.get("mac_address") or None
+        asset.po_date           = f.get("po_date") or None
+        asset.po_number         = f.get("po_number") or None
+        asset.source_of_fund    = f.get("source_of_fund") or None
+        asset.vendor_company    = f.get("vendor_company") or None
+        asset.vendor_contact_person = f.get("vendor_contact_person") or None
+        asset.vendor_mobile     = f.get("vendor_mobile") or None
+        asset.warranty_start    = f.get("warranty_start") or None
+        asset.warranty_expiry   = f.get("warranty_expiry") or None
+        asset.location          = f.get("location") or None
+        asset.indenter          = f.get("indenter") or None
 
-        # Handle serial uniqueness
-        if new_serial and new_serial != a.serial:
-            existing = WorkstationAsset.query.filter_by(serial=new_serial).first()
-            if existing:
-                flash(f"❌ Serial '{new_serial}' already exists!", "danger")
-                return redirect(url_for("asset_edit", asset_id=asset_id))
-            a.serial = new_serial
+        # Generate department code automatically
+        if asset.model and asset.manufacturer and asset.indenter and asset.po_date:
+            po_date_clean = asset.po_date.replace("-", "")
+            indenter_first = asset.indenter.split()[0]
 
-        # Re-generate department code if key fields changed
-        if a.manufacturer and a.model and a.indenter and a.serial and a.po_date:
-            indenter_clean = a.indenter.replace("Dr. ", "").replace("Prof. ", "")
-            indenter_first = indenter_clean.split()[0]
-            po_date_clean = a.po_date.replace("-", "")
-            a.department_code = f"CSE/{po_date_clean}/{a.manufacturer}/{a.model}/{indenter_first}/{a.serial}"
+            # Use existing serial if available
+            if not asset.serial:
+                # Count existing assets of same type for this user/date
+                count = WorkstationAsset.query.filter_by(
+                    model=asset.model,
+                    manufacturer=asset.manufacturer,
+                    indenter=asset.indenter,
+                    po_date=asset.po_date
+                ).count() + 1  # +1 for this asset
+                serial_part = f"{count:03}"
+                asset.serial = serial_part
+            else:
+                serial_part = asset.serial  # keep existing
+
+            # Dept code format: CSE/YYYYMMDD/Model/Manufacturer/Indenter/001, 002...
+            asset.department_code = f"CSE/{po_date_clean}/{asset.model}/{asset.manufacturer}/{indenter_first}/{serial_part}"
 
         try:
             db.session.commit()
@@ -4046,7 +4235,7 @@ def asset_edit(asset_id):
             db.session.rollback()
             flash(f"❌ Error updating asset: {e}", "danger")
 
-    return render_template("asset_form.html", asset=a)
+    return render_template("asset_form.html", asset=asset)
 
 
 
