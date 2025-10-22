@@ -1,42 +1,53 @@
 {% extends "login_home.html" %}
-{% block title %}Faculty Assets{% endblock %}
+{% block title %}Faculty & Staff Assets{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-6 py-6">
+<div class="container mx-auto px-6 py-6 relative">
 
-  <h1 class="text-2xl font-bold text-indigo-800 mb-6">Faculty Assets (by Indenter)</h1>
+  <h1 class="text-2xl font-bold text-indigo-800 mb-6">Faculty & Staff Assets (by Indenter)</h1>
 
   <!-- Select Indenter -->
-<form method="get" class="mb-6">
-  <label for="indenter" class="block font-medium text-gray-700 mb-2">Select Faculty</label>
-  <select name="indenter" id="indenter" class="border rounded-md px-3 py-2">
-    <option value="">-- Choose --</option>
-    <optgroup label="Faculty">
-      {% set faculty_list = [
-        'Prof. Antony Franklin','Dr. Ashish Mishra','Prof. Bheemarjuna Reddy Tamma',
-        'Prof. C. Krishna Mohan','Dr. J. Saketha Nath','Dr. Jyothi Vedurada',
-        'Dr. Kotaro Kataoka','Prof. M. V. Panduranga Rao','Dr. Manish Singh',
-        'Dr. Maria Francis','Prof. Maunendra Sankar Desarkar','Dr. N. R. Aravind',
-        'Dr. Nitin Saurabh','Dr. Praveen Tammana','Dr. Rajesh Kedia',
-        'Dr. Rakesh Venkat','Dr. Ramakrishna Upadrasta','Dr. Rameshwar Pratap',
-        'Dr. Rogers Mathew','Prof. Sathya Peri','Dr. Saurabh Kumar',
-        'Dr. Shirshendu Das','Dr. Sobhan Babu','Dr. Srijith P. K.',
-        'Prof. Subrahmanyam Kalyanasundaram','Prof. Vineeth N. Balasubramanian'
-      ] %}
-      {% for fac in faculty_list %}
-        <option value="{{ fac }}" {% if selected_indenter == fac %}selected{% endif %}>{{ fac }}</option>
-      {% endfor %}
-    </optgroup>
-  </select>
-  <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded ml-2">View</button>
-</form>
+  <form method="get" class="mb-6">
+    <label for="indenter" class="block font-medium text-gray-700 mb-2">Select Faculty / Staff</label>
+    <select name="indenter" id="indenter" class="border rounded-md px-3 py-2">
+      <option value="">-- Choose --</option>
 
+      <optgroup label="Faculty">
+        {% set faculty_list = [
+          'Prof. Antony Franklin','Dr. Ashish Mishra','Prof. Bheemarjuna Reddy Tamma',
+          'Prof. C. Krishna Mohan','Dr. J. Saketha Nath','Dr. Jyothi Vedurada',
+          'Dr. Kotaro Kataoka','Prof. M. V. Panduranga Rao','Dr. Manish Singh',
+          'Dr. Maria Francis','Prof. Maunendra Sankar Desarkar','Dr. N. R. Aravind',
+          'Dr. Nitin Saurabh','Dr. Praveen Tammana','Dr. Rajesh Kedia',
+          'Dr. Rakesh Venkat','Dr. Ramakrishna Upadrasta','Dr. Rameshwar Pratap',
+          'Dr. Rogers Mathew','Prof. Sathya Peri','Dr. Saurabh Kumar',
+          'Dr. Shirshendu Das','Dr. Sobhan Babu','Dr. Srijith P. K.',
+          'Prof. Subrahmanyam Kalyanasundaram','Prof. Vineeth N. Balasubramanian'
+        ] %}
+        {% for f in faculty_list %}
+          <option value="{{ f }}" {% if selected_indenter == f %}selected{% endif %}>{{ f }}</option>
+        {% endfor %}
+      </optgroup>
+
+      <optgroup label="Staff">
+        {% set staff_list = [
+          'G Praveen Kumar','Shiva Kumar Reddy','Sunitha M',
+          'Nikith Reddy','Vijay Chakravarthy','Syam N'
+        ] %}
+        {% for s in staff_list %}
+          <option value="{{ s }}" {% if selected_indenter == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </optgroup>
+    </select>
+
+    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded ml-2">View</button>
+  </form>
 
   {% if selected_indenter %}
     <h2 class="text-xl font-semibold text-indigo-700 mb-4">Indenter: {{ selected_indenter }}</h2>
 
     <!-- IT Equipment -->
-    <h3 class="text-lg font-semibold mt-4 mb-2">IT Equipments </h3>
+    <h3 class="text-lg font-semibold mt-4 mb-2">IT Equipments</h3>
     <table class="w-full text-sm text-left border border-gray-300 mb-6">
       <thead class="bg-gray-100 text-gray-700">
         <tr>
@@ -46,30 +57,51 @@
           <th class="p-2 border">Serial</th>
           <th class="p-2 border">Assigned To</th>
           <th class="p-2 border">Status</th>
-          <th class="p-2 border">location</th>
+          <th class="p-2 border">Location</th>
         </tr>
       </thead>
       <tbody>
         {% for eq in equipment_list %}
         <tr class="border-b hover:bg-gray-50">
-          <td class="p-2">{{ eq.department_code }}</td>
+          <td class="p-2 text-indigo-700 cursor-pointer hover:underline deptcode-cell"
+              data-details="
+              <b>Dept Code:</b> {{ eq.department_code }}<br>
+              <b>Name:</b> {{ eq.name }}<br>
+              <b>Category:</b> {{ eq.category }}<br>
+              <b>Serial No:</b> {{ eq.serial_number }}<br>
+              <b>MAC Address:</b> {{ eq.mac_address }}<br>
+              <b>Invoice No:</b> {{ eq.invoice_number }}<br>
+              <b>Cost/Unit:</b> {{ eq.cost_per_unit }}<br>
+              <b>PO Date:</b> {{ eq.po_date }}<br>
+              <b>PO Number:</b> {{ eq.po_number }}<br>
+              <b>Warranty Start:</b> {{ eq.warranty_start }}<br>
+              <b>Warranty Expiry:</b> {{ eq.warranty_expiry }}<br>
+              <b>Vendor Company:</b> {{ eq.vendor_company }}<br>
+              <b>Vendor Contact:</b> {{ eq.vendor_contact_person }}<br>
+              <b>Vendor Mobile:</b> {{ eq.vendor_mobile }}<br>
+              <b>Assigned To:</b> {{ eq.student.roll if eq.student else '-' }}<br>
+              <b>Assigned By:</b> {{ eq.assigned_by }}<br>
+              <b>Assigned Date:</b> {{ eq.assigned_date }}
+              ">
+              {{ eq.department_code }}
+          </td>
           <td class="p-2">{{ eq.name }}</td>
           <td class="p-2">{{ eq.category }}</td>
           <td class="p-2">{{ eq.serial_number }}</td>
           <td class="p-2">{{ eq.student.roll if eq.student else '-' }}</td>
           <td class="p-2">{{ eq.status }}</td>
-          <td class="p-2">{{ eq.location }} </td>
+          <td class="p-2">{{ eq.location }}</td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="5" class="p-2 text-center text-gray-500">No equipment found.</td>
+          <td colspan="7" class="p-2 text-center text-gray-500">No equipment found.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
 
     <!-- Workstations -->
-    <h3 class="text-lg font-semibold mt-4 mb-2">Workstations </h3>
+    <h3 class="text-lg font-semibold mt-4 mb-2">Workstations</h3>
     <table class="w-full text-sm text-left border border-gray-300 mb-6">
       <thead class="bg-gray-100 text-gray-700">
         <tr>
@@ -85,28 +117,75 @@
       <tbody>
         {% for ws in workstation_list %}
         <tr class="border-b hover:bg-gray-50">
-          <td class="p-2">{{ ws.department_code }}</td>
+          <td class="p-2 text-indigo-700 cursor-pointer hover:underline deptcode-cell"
+              data-details="
+              <b>Dept Code:</b> {{ ws.department_code }}<br>
+              <b>Manufacturer:</b> {{ ws.manufacturer }}<br>
+              <b>Other Manufacturer:</b> {{ ws.otherManufacturer }}<br>
+              <b>Model:</b> {{ ws.model }}<br>
+              <b>Serial:</b> {{ ws.serial }}<br>
+              <b>OS:</b> {{ ws.os }}<br>
+              <b>Other OS:</b> {{ ws.otherOs }}<br>
+              <b>Processor:</b> {{ ws.processor }}<br>
+              <b>Cores:</b> {{ ws.cores }}<br>
+              <b>RAM:</b> {{ ws.ram }}<br>
+              <b>Other RAM:</b> {{ ws.otherRam }}<br>
+              <b>Storage1:</b> {{ ws.storage_type1 }} - {{ ws.storage_capacity1 }}<br>
+              <b>Storage2:</b> {{ ws.storage_type2 }} - {{ ws.storage_capacity2 }}<br>
+              <b>GPU:</b> {{ ws.gpu }}<br>
+              <b>VRAM:</b> {{ ws.vram }}<br>
+              <b>Keyboard:</b> {{ ws.keyboard_provided }} - {{ ws.keyboard_details }}<br>
+              <b>Mouse:</b> {{ ws.mouse_provided }} - {{ ws.mouse_details }}<br>
+              <b>Monitor:</b> {{ ws.monitor_provided }} - {{ ws.monitor_details }} ({{ ws.monitor_size }}) SN: {{ ws.monitor_serial }}<br>
+              <b>MAC Address:</b> {{ ws.mac_address }}<br>
+              <b>PO Date:</b> {{ ws.po_date }}<br>
+              <b>PO Number:</b> {{ ws.po_number }}<br>
+              <b>Source of Fund:</b> {{ ws.source_of_fund }}<br>
+              <b>Warranty Start:</b> {{ ws.warranty_start }}<br>
+              <b>Warranty Expiry:</b> {{ ws.warranty_expiry }}<br>
+              <b>Vendor:</b> {{ ws.vendor_company }} ({{ ws.vendor_contact_person }}) {{ ws.vendor_mobile }}<br>
+              <b>Status:</b> {{ ws.status }}<br>
+              <b>Location:</b> {{ ws.location }}<br>
+              <b>Indenter:</b> {{ ws.indenter }}">
+              {{ ws.department_code }}
+          </td>
           <td class="p-2">{{ ws.manufacturer }}</td>
           <td class="p-2">{{ ws.serial }}</td>
           <td class="p-2">{{ ws.model }}</td>
-          <td class="p-2">
-            {% if ws.assignments %}
-              {{ ws.assignments[0].student.name }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
+          <td class="p-2">{% if ws.assignments %}{{ ws.assignments[0].student.name }}{% else %}-{% endif %}</td>
           <td class="p-2">{{ ws.status }}</td>
           <td class="p-2">{{ ws.location }}</td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="5" class="p-2 text-center text-gray-500">No workstations found.</td>
+          <td colspan="7" class="p-2 text-center text-gray-500">No workstations found.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   {% endif %}
-
 </div>
+
+<!-- Popup -->
+<div id="popup" class="hidden fixed bg-white border shadow-lg rounded-md p-4 w-96 z-50 top-20 left-1/2 -translate-x-1/2">
+  <button id="closePopup" class="absolute top-1 right-2 text-gray-500 hover:text-red-500 font-bold">×</button>
+  <div id="popupContent" class="text-sm text-gray-700 max-h-[70vh] overflow-y-auto"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const popup = document.getElementById("popup");
+  const popupContent = document.getElementById("popupContent");
+  const closePopup = document.getElementById("closePopup");
+
+  document.querySelectorAll(".deptcode-cell").forEach(cell => {
+    cell.addEventListener("click", e => {
+      popupContent.innerHTML = cell.getAttribute("data-details");
+      popup.classList.remove("hidden");
+    });
+  });
+
+  closePopup.addEventListener("click", () => popup.classList.add("hidden"));
+});
+</script>
 {% endblock %}
