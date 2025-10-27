@@ -3700,6 +3700,28 @@ def workstation_delete(ws_id):
     return redirect(url_for("allotment_options", roll=asg.student_roll))
 
 
+# # ============= Unassign IT equipment =============
+# @app.route("/unassign_equipment/<int:eq_id>", methods=["POST"])
+# @login_required
+# def unassign_equipment(eq_id):
+#     eq = db.session.get(Equipment, eq_id)
+#     if not eq or not eq.assigned_to_roll:
+#         flash("Equipment not assigned or not found.", "warning")
+#         return redirect(request.referrer or url_for("allotted_roll_check"))
+
+#     roll = eq.assigned_to_roll
+#     try:
+#         eq.assigned_to_roll = None
+#         eq.assigned_date = None
+#         eq.status = "Available"
+#         db.session.commit()
+#         flash("Equipment unassigned.", "success")
+#     except Exception as e:
+#         db.session.rollback()
+#         flash(f"Error unassigning equipment: {e}", "danger")
+
+#     return redirect(url_for("allotment_options", roll=roll))
+
 # ============= Unassign IT equipment =============
 @app.route("/unassign_equipment/<int:eq_id>", methods=["POST"])
 @login_required
@@ -3710,18 +3732,30 @@ def unassign_equipment(eq_id):
         return redirect(request.referrer or url_for("allotted_roll_check"))
 
     roll = eq.assigned_to_roll
+
     try:
+        # ✅ Find the active history entry
+        hist = EquipmentHistory.query.filter_by(
+            equipment_id=eq.id,
+            unassigned_date=None  # Active record
+        ).first()
+
+        if hist:
+            hist.unassigned_date = datetime.utcnow()  # ✅ Mark return timestamp
+
+        # ✅ Clear current assignment in Equipment table
         eq.assigned_to_roll = None
         eq.assigned_date = None
         eq.status = "Available"
+
         db.session.commit()
-        flash("Equipment unassigned.", "success")
+        flash("Equipment returned successfully.", "success")
+
     except Exception as e:
         db.session.rollback()
         flash(f"Error unassigning equipment: {e}", "danger")
 
     return redirect(url_for("allotment_options", roll=roll))
-
 
 
 # =========================
@@ -3787,6 +3821,7 @@ def clone_workstation(asset_id):
         f = request.form
 
         new_mac = f.get("mac_address").strip() or None
+        new_serial = f.get("serial").strip() or None
 
         # Count existing assets of same type
         count = WorkstationAsset.query.filter_by(
@@ -3805,7 +3840,7 @@ def clone_workstation(asset_id):
             manufacturer      = asset.manufacturer,
             otherManufacturer = asset.otherManufacturer,
             model             = asset.model,
-            serial            = serial,   # NEW serial
+            serial            = new_serial,   # NEW serial
             os                = asset.os,
             otherOs           = asset.otherOs,
             processor         = asset.processor,
@@ -3976,6 +4011,7 @@ def asset_new():
         model = f.get("model") or None
         indenter_full = f.get("indenter") or "Unknown"
         po_date_raw = f.get("po_date") or "Unknown"
+        old_serial = (f.get("serial") or "").strip() or None
 
         # Format PO date and indenter for department code
         po_date = po_date_raw.replace("-", "")
@@ -3992,13 +4028,13 @@ def asset_new():
         serial = f"{count:03}"
 
         # Generate department code
-        department_code = f"CSE/{po_date}/{manufacturer}/{model}/{indenter_first}/{serial}"
+        department_code = f"CSE/{po_date}/{model}/{manufacturer}/{indenter_first}/{serial}"
 
         asset = WorkstationAsset(
             manufacturer=manufacturer,
             otherManufacturer=f.get("otherManufacturer") or None,
             model=model,
-            serial=serial,
+            serial=old_serial,
             os=f.get("os") or None,
             otherOs=f.get("otherOs") or None,
             processor=f.get("processor") or None,

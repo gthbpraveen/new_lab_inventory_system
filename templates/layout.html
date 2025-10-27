@@ -1,0 +1,5 @@
+{% if current_user.is_authenticated %}
+{% extends "login_home.html" %}
+{% else %}
+{% extends "base.html" %}
+{% endif %}

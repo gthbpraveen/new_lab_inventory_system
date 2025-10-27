@@ -43,70 +43,90 @@
         .nav-link.active::after {
             width: 100%;
         }
+
+        /* ✅ Only spacing adjustments — nothing else */
+        nav {
+          padding-top: 6px !important;
+          padding-bottom: 6px !important;
+        }
+
+        .nav-link {
+          padding-left: 10px !important;
+          padding-right: 10px !important;
+        }
+
+        .md\:flex {
+          gap: 10px !important;
+        }
+        
     </style>
 </head>
 <body>
     <div class="min-h-screen flex flex-col">
-        <!-- Navigation Bar -->
-        <nav class="bg-white shadow-md sticky top-0 z-50 w-full">
-            <div class="px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-20">
-                    <div class="flex items-center space-x-4">
-                        <img src="https://iith.ac.in/assets/images/logo.png" class="h-10 w-auto" alt="IITH Logo"/>
-                        <span class="text-base sm:text-lg md:text-xl lg:text-1xl font-bold text-gray-800">
-                            Department of Computer Science and Engineering
-                        </span>
-                    </div>
-                    <div class="hidden md:flex space-x-2">
-                        <a href="/" class="nav-link active text-gray-800 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Home</a>
-                        <a href="/cse_labs" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Cse-Labs</a>
-                        <a href="/contact_us" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Contact Us</a>
-                        <a href="/login" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200">Login</a>
-                    </div>
-                    <div class="md:hidden">
-                        <button id="mobile-menu-button" class="text-gray-500 hover:text-blue-600 focus:outline-none">
-                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
-                    </div>
+
+      <nav class="bg-white shadow-md sticky top-0 z-50 w-full">
+        <div class="px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+
+                <div class="flex items-center space-x-3">
+                    <img src="https://iith.ac.in/assets/images/logo.png" class="h-10 w-auto" alt="IITH Logo"/>
+                    <span class="text-base sm:text-lg md:text-xl font-bold text-gray-800">
+                        Department of Computer Science and Engineering
+                    </span>
                 </div>
-                <!-- Responsive Menu Placeholder -->
-                <div id="mobile-menu" class="md:hidden hidden mt-2 space-y-2">
-                    <a href="/" class="block nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Home</a>
-                    <a href="/cse_labs" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Cse-Labs</a>
-                    <a href="/contact_us" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Contact Us</a>
-                    <a href="/login" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Login</a>
+
+                <div class="hidden md:flex space-x-1">
+                    <a href="/" class="nav-link active text-gray-800 hover:text-blue-600 px-2 py-1.5 text-sm font-medium transition">Home</a>
+                    <a href="/contact_us" class="nav-link text-gray-600 hover:text-blue-600 px-2 py-1.5 text-sm font-medium transition">Contact Us</a>
+                    <a href="/login" class="nav-link text-gray-600 hover:text-blue-600 px-2 py-1.5 text-sm font-medium transition">Login</a>
                 </div>
+
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-500 hover:text-blue-600 focus:outline-none">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+
             </div>
-        </nav>
 
-        <script>
-          document.getElementById('mobile-menu-button').addEventListener('click', () => {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
-          });
-        </script>
-
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            <div id="alert-box" class="max-w-md mx-auto mb-4 bg-red-50 text-red-800 border border-orange-200 rounded-lg px-4 py-3 flex items-start justify-between shadow-sm">
-              <div class="flex items-center">
-                <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
-                </svg>
-                <span class="text-sm">{{ messages[0] }}</span>
-              </div>
-              <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 transition">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10l-4.95-4.95A1 1 0 115.05 3.636L10 8.586z" clip-rule="evenodd" />
-                </svg>
-              </button>
+            <div id="mobile-menu" class="md:hidden hidden mt-2 space-y-1 pb-2">
+                <a href="/" class="block nav-link text-gray-800 hover:text-blue-600 px-2 py-1.5 text-sm">Home</a>
+                <a href="/contact_us" class="block nav-link text-gray-600 hover:text-blue-600 px-2 py-1.5 text-sm">Contact Us</a>
+                <a href="/login" class="block nav-link text-gray-600 hover:text-blue-600 px-2 py-1.5 text-sm">Login</a>
             </div>
-          {% endif %}
-        {% endwith %}
 
-        {% block content %}{% endblock %}
+        </div>
+      </nav>
+
+      <script>
+        document.getElementById('mobile-menu-button').addEventListener('click', () => {
+          const menu = document.getElementById('mobile-menu');
+          menu.classList.toggle('hidden');
+        });
+      </script>
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div id="alert-box" class="max-w-md mx-auto mb-4 bg-red-50 text-red-800 border border-orange-200 rounded-lg px-4 py-3 flex items-start justify-between shadow-sm">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
+              </svg>
+              <span class="text-sm">{{ messages[0] }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 transition">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10l-4.95-4.95A1 1 0 115.05 3.636L10 8.586z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
     </div>
 </body>
 </html>

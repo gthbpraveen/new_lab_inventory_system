@@ -63,20 +63,23 @@
       <table class="w-full text-sm border border-gray-300 rounded-lg">
         <thead class="bg-gray-100 text-gray-800">
           <tr>
-            <th class="px-4 py-2">Asset Serial</th>
-            <th class="px-4 py-2">Issue Date</th>
-            <th class="px-4 py-2">Required Till</th>
+            <th class="px-4 py-2">Name</th>
+            <th class="px-4 py-2">Category</th>
+            <th class="px-4 py-2">Serial</th>
+            <!-- <th class="px-4 py-2">Asset Serial</th> -->
+            <th class="px-4 py-2">Assigned Date</th>
             <th class="px-4 py-2">Return Date</th>
             <th class="px-4 py-2">Status</th>
             <th class="px-4 py-2 text-center">Action</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
+        <tbody class="divide-y divide-gray-200 text-center">
           {% for ws in student.workstation_assignments %}
           <tr>
-            <td class="px-4 py-2">{{ ws.asset.serial }}</td>
+            <td class="px-4 py-2">{{ ws.asset.manufacturer }}</td>
+            <td class="px-4 py-2">{{ ws.asset.model}}</td>
+            <td class="px-4 py-2">{{ ws.asset.serial}}</td>
             <td class="px-4 py-2">{{ ws.issue_date }}</td>
-            <td class="px-4 py-2">{{ ws.system_required_till }}</td>
             <td class="px-4 py-2">{{ ws.end_date or "-" }}</td>
             <td class="px-4 py-2">
               {% if ws.end_date %}
@@ -124,7 +127,7 @@
             <th class="px-4 py-2 text-center">Action</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
+        <tbody class="divide-y divide-gray-200 text-center">
           {% for hist, eq in student_equipment_history %}
           <tr>
             <td class="px-4 py-2">{{ eq.name }}</td>

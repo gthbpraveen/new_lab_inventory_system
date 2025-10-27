@@ -27,7 +27,7 @@
       }
     }
 
-    .nav-link {
+    /* .nav-link {
       position: relative;
     }
 
@@ -45,8 +45,62 @@
     .nav-link:hover::after,
     .nav-link.active::after {
       width: 100%;
-    }
-  </style>
+    } */
+     /* Compact Professional Navbar */
+     /*
+.navbar {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+
+.navbar-nav .nav-link {
+    padding: 4px 6px !important;   
+    font-size: 15px;
+    margin-right: 2px;            
+}
+
+.navbar-nav .nav-link:hover {
+    background-color: #0d6efd;      
+    border-radius: 4px;
+    color: #fff !important;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 18px;
+} */
+
+/* Reduce navbar link spacing */
+<style>
+/* Reduce spacing between menu links (desktop) */
+.md\:flex .nav-link {
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+  margin-left: 2px !important;
+  margin-right: 2px !important;
+}
+
+/* Reduce inventory dropdown button spacing */
+.group > button.nav-link {
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
+
+/* Reduce navbar height */
+nav {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Optional: reduce font size of all menu text */
+.nav-link {
+  font-size: 14px !important;
+}
+</style>
+
+</style>
+
+  
 </head>
 
 <body class="min-h-screen flex flex-col bg-white-700 page-transition">
@@ -54,10 +108,11 @@
   <div class="min-h-screen flex flex-col">
     <!-- Navigation Bar -->
     <!-- Navigation Bar -->
+<!-- Navigation Bar -->
 <nav class="bg-white shadow-md sticky top-0 z-50 w-full">
   <div class="px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between items-center h-20">
-      
+
       <!-- Logo & Title -->
       <div class="flex items-center space-x-4">
         <img src="https://iith.ac.in/assets/images/logo.png" class="h-10 w-auto" alt="IITH Logo"/>
@@ -67,98 +122,91 @@
       </div>
 
       <!-- Desktop Menu -->
-      <div class="hidden md:flex space-x-2">
+      <div class="hidden md:flex space-x-6 items-center">
+
         {% if current_user.is_authenticated %}
-          {% if current_user.role == "student" %}
-            <a href="/login_home" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2 text-sm font-medium">Home</a>
-            <a href="/cse_labs" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Labs</a>
-            <a href="/assets" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Workstations</a>
-            <a href="/equipment_list" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">IT Equipment</a>
-          <!--  <a href="/allotment_options/{{ current_user.student.roll }}" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Allotment Options</a> -->
-            <a href="/logout" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Logout</a>
 
-          {% elif current_user.role in ["faculty", "staff"] %}
-            <a href="/login_home" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2 text-sm font-medium">Home</a>
-            <a href="/cse_labs" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Labs</a>
-            <a href="/inventory" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Inventory</a>
-            <a href="/student_dashboard" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Search</a>
-            <!-- <a href="/students_directory" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Students Directory</a> -->
-            <a href="/utilization" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Lab Utilization</a>
-            <!-- <a href="/os_related" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Software Utility</a> -->
-            <!-- <a href="/slurm_facility" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Slurm Facility</a> -->
-            <!-- <a href="/user/settings" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">User Settings</a> -->
-            <a href="/logout" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Logout</a>
+          <a href="/login_home" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Home</a>
+          <a href="/cse_labs" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Labs</a>
 
-          {% elif current_user.role == "admin" %}
-            <a href="/login_home" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2 text-sm font-medium">Home</a>
-            <a href="/cse_labs" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Labs</a>
-            <a href="/inventory" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Inventory</a>
-            <a href="/student_dashboard" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Search</a>
-            <!-- <a href="/students_directory" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Students Directory</a> -->
-            <a href="/utilization" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Lab Utilization</a>
-            <!-- <a href="/os_related" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Software Utility</a> -->
-            <!-- <a href="/slurm_facility" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Slurm Facility</a> -->
-            <!-- <a href="/admin/approve" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Approve Users</a> -->
-            <!-- <a href="/registered_users" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Registered Users</a> -->
-            <!-- <a href="/user/settings" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">User Settings</a> -->
-            <a href="/logout" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">Logout</a>
+          {% if current_user.role in ["faculty", "staff", "admin"] %}
+          
+          <!-- Inventory Dropdown -->
+          <div class="relative group">
+            <button class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2 flex items-center">
+              Inventory ▼
+            </button>
+
+            <!-- Drop Down Panel -->
+            <div class="absolute left-0 mt-2 w-[400px] bg-white shadow-2xl border border-gray-200 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+              <div class="grid grid-cols-2 gap-6 p-6">
+
+                <!-- Column 1 -->
+                <div class="space-y-3">
+                  <a href="/student_info" class="block hover:text-blue-600 text-gray-700">Student Registration</a>
+                  <a href="/allotted_roll_check" class="block hover:text-blue-600 text-gray-700">Student Allotment Options</a>
+                  <a href="/alloted_machines" class="block hover:text-blue-600 text-gray-700">Allotted Machine List</a>
+                </div>
+
+                <!-- Column 2 -->
+                <div class="space-y-3">
+                  <a href="/equipment_list" class="block hover:text-blue-600 text-gray-700">List of IT Equipment</a>
+                  <a href="/assets" class="block hover:text-blue-600 text-gray-700">List of Workstations</a>
+                  <a href="/it_equipment_by_location_faculty_staff" class="block hover:text-blue-600 text-gray-700">Equipment List Lab-wise</a>
+                  <a href="/inventory_search" class="block hover:text-blue-600 text-gray-700">Inventory Search</a>
+                </div>
+
+              </div>
+            </div>
+          </div>
+          
           {% endif %}
+
+          <a href="/student_dashboard" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Search</a>
+          <a href="/utilization" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Lab Utilization</a>
+          <a href="/logout" class="nav-link text-gray-800 hover:text-red-600 px-3 py-2">Logout</a>
+
         {% endif %}
       </div>
 
       <!-- Mobile Menu Button -->
       <div class="md:hidden">
         <button id="mobile-menu-button" class="text-gray-500 hover:text-blue-600 focus:outline-none">
-          <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
-               viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 6h16M4 12h16M4 18h16" />
+                  d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
         </button>
       </div>
     </div>
 
     <!-- Mobile Menu -->
-    <div id="mobile-menu" class="md:hidden hidden mt-2 space-y-2">
-      {% if current_user.is_authenticated %}
-        {% if current_user.role == "student" %}
-          <a href="/login_home" class="block nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Home</a>
-          <a href="/cse_labs" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Labs</a>
-          <a href="/assets" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Workstations</a>
-          <a href="/equipment_list" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">IT Equipment</a>
-    <!--          <a href="/allotment_options/{{ current_user.student.roll }}" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Allotment Options</a> -->
-          <a href="/logout" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Logout</a>
+    <div id="mobile-menu" class="md:hidden hidden mt-2 space-y-2 mb-4">
+      <a href="/login_home" class="block px-4 py-2 text-gray-800">Home</a>
+      <a href="/cse_labs" class="block px-4 py-2 text-gray-800">Labs</a>
 
-        {% elif current_user.role in ["faculty", "staff"] %}
-          <a href="/login_home" class="block nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Home</a>
-          <a href="/cse_labs" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Labs</a>
-          <a href="/inventory" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Inventory</a>
-          <a href="/student_dashboard" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Search</a>
-          <!-- <a href="/students_directory" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Students Directory</a> -->
-          <a href="/utilization" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Lab Utilization</a>
-          <!-- <a href="/os_related" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Software Utility</a> -->
-          <!-- <a href="/slurm_facility" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Slurm Facility</a> -->
-          <!-- <a href="/user/settings" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">User Settings</a> -->
-          <a href="/logout" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Logout</a>
+      <!-- Inventory Child List in Mobile -->
+      <details class="border-t border-gray-200">
+        <summary class="px-4 py-2 text-gray-800 cursor-pointer">Inventory</summary>
+        <div class="pl-6 py-2 space-y-2 text-gray-700">
+          <a href="/student_info">Student Registration</a><br>
+          <a href="/allotted_roll_check">Student Allotment Options</a><br>
+          <a href="/allotted_roll_check">Allotted Machine List</a><br>
+          <a href="/equipment_list">List of IT Equipment</a><br>
+          <a href="/assets">List of Workstations</a><br>
+          <a href="/it_equipment_by_location_faculty_staff">Equipment List Lab-wise</a><br>
+          <a href="/inventory_search">Inventory Search</a>
+        </div>
+      </details>
 
-        {% elif current_user.role == "admin" %}
-          <a href="/login_home" class="block nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Home</a>
-          <a href="/cse_labs" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Labs</a>
-          <a href="/inventory" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Inventory</a>
-          <a href="/student_dashboard" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Search</a>
-          <!-- <a href="/students_directory" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Students Directory</a> -->
-          <a href="/utilization" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Lab Utilization</a>
-          <!-- <a href="/os_related" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Software Utility</a> -->
-          <!-- <a href="/slurm_facility" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Slurm Facility</a> -->
-          <!-- <a href="/admin/approve" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Approve Users</a> -->
-          <!-- <a href="/registered_users" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Registered Users</a> -->
-          <!-- <a href="/user/settings" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">User Settings</a> -->
-          <a href="/logout" class="block nav-link text-gray-600 hover:text-blue-600 px-3 py-2">Logout</a>
-        {% endif %}
-      {% endif %}
+      <a href="/student_dashboard" class="block px-4 py-2 text-gray-800">Search</a>
+      <a href="/utilization" class="block px-4 py-2 text-gray-800">Lab Utilization</a>
+      <a href="/logout" class="block px-4 py-2 text-gray-800">Logout</a>
     </div>
+
   </div>
 </nav>
+
 
 <script>
   // Mobile menu toggle
