@@ -1,212 +1,139 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Student Report - {{ student.name }}</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 11px;
-      margin: 10px;
-      color: #1e293b;
-    }
+{% extends "login_home.html" %}
+{% block title %}Student Details{% endblock %}
+{% block content %}
 
-    h1 {
-      text-align: center;
-      font-size: 16px;
-      margin-bottom: 15px;
-    }
+<div class="max-w-6xl mx-auto py-10">
 
-    h2 {
-      font-size: 12px;
-      margin: 10px 0 5px;
-      border-left: 3px solid #0284c7;
-      padding-left: 5px;
-    }
+  <div class="bg-blue-900 text-white text-center py-3 rounded-lg shadow-md mb-6">
+      <h1 class="text-xl font-semibold tracking-wide">
+        {{ student.name }} ({{ student.roll }}) — Lab Allocation & Inventory Report
+      </h1>
+  </div>
 
-    .card {
-      background: #f9fafb;
-      border: 1px solid #d1d5db;
-      border-radius: 4px;
-      padding: 6px 8px;
-      margin-bottom: 10px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 5px;
-      font-size: 10px;
-    }
-
-    th, td {
-      border: 1px solid #cbd5e1;
-      padding: 4px 6px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #e0f2fe;
-      color: #0c4a6e;
-    }
-
-    .status-active {
-      color: green;
-      font-weight: bold;
-    }
-
-    .status-returned {
-      color: #f07676;
-      font-weight: bold;
-    }
-    .st
-    {
-      background-color: #00155ae1;
-      padding: 2px 4px;
-      border-radius: 3px;
-      font-weight: bold;
-      text-transform: capitalize;
-      text-decoration: double;
-      color: rgb(242, 243, 243);
-    }
-    .width {
-      width: 26%;
-    }
-
-  </style>
-</head>
-<body>
-  <div class="st">
-  <h1> {{ student.name }} - Roll : {{ student.roll }} <br>
-     Lab Allocation and Inventory Report 
-  </h1>
-</div>
-   <br>
   <!-- 👤 Student Profile -->
-  <div class="card">
-    <h2>👤 Student Profile</h2>
-    <table>
-      <tr><th>Name</th><td>{{ student.name }}</td></tr>
-      <tr><th>Roll</th><td>{{ student.roll }}</td></tr>
-      <tr><th>Course</th><td>{{ student.course }}</td></tr>
-      <tr><th>Year</th><td>{{ student.year }}</td></tr>
-      <tr><th>Email</th><td>{{ student.email }}</td></tr>
-      <tr><th>Phone</th><td>{{ student.phone }}</td></tr>
-    </table>
-  </div>
-
-  <!-- 🪑 Cubicle Allocation -->
-  <div class="card">
-    <h2>🪑 Cubicle</h2>
-    {% if student.cubicle %}
-    <table>
-      <tr><th class="width">Lab</th><td>{{ student.cubicle.room_lab.name }}</td></tr>
-      <tr><th>Cubicle No</th><td>{{ student.cubicle.number }}</td></tr>
-      <tr><th>Faculty</th><td>{{ student.faculty }}</td></tr>
-      <tr><th>Staff In-Charge</th><td>{{ student.cubicle.room_lab.staff_incharge }}</td></tr>
-    </table>
-    {% else %}
-    <p class="status-returned">❌ Not Assigned</p>
-    {% endif %}
-  </div>
-
-  <!-- 💻 Workstation Assignments -->
-  <div class="card">
-    <h2>💻 Workstations</h2>
-    {% if student.workstation_assignments %}
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Category</th>
-          <th>Serial</th>
-          <th>Status</th>
-          <th>Issued</th>
-          <th>Required Till</th>
-          <th>Returned</th>
-          <th>Assigned by</th>
-        </tr>
-      </thead>
+  <div class="bg-white border rounded-lg shadow-sm p-5 mb-6">
+    <h2 class="text-lg font-semibold text-blue-800 mb-3">👤 Student Profile</h2>
+    <table class="w-full text-sm border border-gray-300">
       <tbody>
-        {% for ws in student.workstation_assignments %}
-        <tr>
-          <td>{{ ws.asset.manufacturer or ws.asset.otherManufacturer }}</td>
-          <td>{{ ws.asset.model }}</td>
-          <td>{{ ws.asset.serial }}</td>
-          <td>{% if ws.is_active %}<span class="status-active">Active 🟢</span>{% else %}<span class="status-returned">Returned </span>{% endif %}</td>
-          <td>{{ ws.issue_date }}</td>
-          <td>{{ ws.system_required_till }}</td>
-          <td>{{ ws.end_date or '—' }}</td>
-          <td>{{ ws.student.cubicle.room_lab.staff_incharge if ws.student.cubicle else '—' }}</td>
+        <tr><th class="border px-3 py-2 bg-gray-50">Name</th><td class="border px-3 py-2">{{ student.name }}</td></tr>
+        <tr><th class="border px-3 py-2 bg-gray-50">Roll</th><td class="border px-3 py-2">{{ student.roll }}</td></tr>
+        <tr><th class="border px-3 py-2 bg-gray-50">Course</th><td class="border px-3 py-2">{{ student.course }}</td></tr>
+        <tr><th class="border px-3 py-2 bg-gray-50">Year</th><td class="border px-3 py-2">{{ student.year }}</td></tr>
+        <tr><th class="border px-3 py-2 bg-gray-50">Email</th><td class="border px-3 py-2">{{ student.email }}</td></tr>
+        <tr><th class="border px-3 py-2 bg-gray-50">Phone</th><td class="border px-3 py-2">{{ student.phone }}</td></tr>
+      </tbody>
+    </table>
+  </div>
 
-        </tr>
-        {% endfor %}
+  <!-- 🪑 Cubicle -->
+  <div class="bg-white border rounded-lg shadow-sm p-5 mb-6">
+    <h2 class="text-lg font-semibold text-green-800 mb-3">🪑 Cubicle Allocation</h2>
+    {% if student.cubicle %}
+    <table class="w-full text-sm border border-gray-300">
+      <tbody>
+        <tr><th class="border px-3 py-2 bg-gray-50">Lab</th><td class="border px-3 py-2">{{ student.cubicle.room_lab.name }}</td></tr>
+        <tr><th class="border px-3 py-2 bg-gray-50">Cubicle No</th><td class="border px-3 py-2">{{ student.cubicle.number }}</td></tr>
+        <tr><th class="border px-3 py-2 bg-gray-50">Faculty</th><td class="border px-3 py-2">{{ student.faculty }}</td></tr>
+        <tr><th class="border px-3 py-2 bg-gray-50">Staff In-Charge</th><td class="border px-3 py-2">{{ student.cubicle.room_lab.staff_incharge }}</td></tr>
       </tbody>
     </table>
     {% else %}
-    <p class="status-returned">❌ None</p>
+    <p class="text-red-600 font-semibold">❌ Not Assigned</p>
+    {% endif %}
+  </div>
+
+  <!-- 💻 Workstations -->
+  <div class="bg-white border rounded-lg shadow-sm p-5 mb-6">
+    <h2 class="text-lg font-semibold text-purple-800 mb-3">💻 Workstation Allocation</h2>
+    {% if workstation_assignments %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border border-gray-300">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="border px-3 py-2">Name</th>
+            <th class="border px-3 py-2">Category</th>
+            <th class="border px-3 py-2">Serial</th>
+            <th class="border px-3 py-2">Status</th>
+            <th class="border px-3 py-2">Issued</th>
+            <th class="border px-3 py-2">Required Till</th>
+            <th class="border px-3 py-2">Returned</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for ws in workstation_assignments %}
+          <tr>
+            <td class="border px-3 py-2">{{ ws.asset.manufacturer or ws.asset.otherManufacturer }}</td>
+            <td class="border px-3 py-2">{{ ws.asset.model }}</td>
+            <td class="border px-3 py-2">{{ ws.asset.serial }}</td>
+            <td class="border px-3 py-2">
+              {% if ws.is_active %}<span class="text-green-600 font-semibold">🟢 Active</span>
+              {% else %}<span class="text-red-600 font-semibold">Returned</span>{% endif %}
+            </td>
+            <td class="border px-3 py-2">{{ ws.issue_date }}</td>
+            <td class="border px-3 py-2">{{ ws.system_required_till }}</td>
+            <td class="border px-3 py-2">{{ ws.end_date or '—' }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-red-600 font-semibold">❌ None</p>
     {% endif %}
   </div>
 
   <!-- 🖥 Equipment -->
-  <div class="card">
-    <h2>🖥 Equipment</h2>
+  <div class="bg-white border rounded-lg shadow-sm p-5 mb-6">
+    <h2 class="text-lg font-semibold text-indigo-800 mb-3">🖥 IT Equipment Allocation</h2>
     {% if equipment_history %}
-    <table>
-      <thead>
+    <table class="w-full text-sm border border-gray-300">
+      <thead class="bg-gray-100">
         <tr>
-          <th>Name</th>
-          <th>Category</th>
-          <th>Serial</th>
-          <th>Status</th>
-          <th>Issued</th>
-          <th>Returned</th>
-          <th>Assigned by</th>
+          <th class="border px-3 py-2">Name</th>
+          <th class="border px-3 py-2">Category</th>
+          <th class="border px-3 py-2">Serial</th>
+          <th class="border px-3 py-2">Issued</th>
+          <th class="border px-3 py-2">Returned</th>
+          <th class="border px-3 py-2">Status</th>
+          <th class="border px-3 py-2">Assigned By</th>
         </tr>
       </thead>
       <tbody>
-        {% for h in equipment_history %}
+      {% for h in equipment_history %}
         <tr>
-        <td>{{ h.equipment_obj.name if h.equipment_obj else '—' }}</td>
-<td>{{ h.equipment_obj.category if h.equipment_obj else '—' }}</td>
-<td>{{ h.equipment_obj.serial_number if h.equipment_obj else '—' }}</td>
-
-<td>
-  {% if not h.unassigned_date %}
-    <span class="status-active">Active 🟢</span>
-  {% else %}
-    <span class="status-returned">Returned </span>
-  {% endif %}
-</td>
-<td>{{ h.assigned_date.strftime('%d-%b-%Y') if h.assigned_date else '—' }}</td>
-
-<td>{{ h.unassigned_date.strftime('%d-%b-%Y') if h.unassigned_date else '—' }}</td>
-<td>{{ h.staff_incharge or '—' }}</td>
-
+          <td class="border px-3 py-2">{{ h.equipment_obj.name }}</td>
+          <td class="border px-3 py-2">{{ h.equipment_obj.category }}</td>
+          <td class="border px-3 py-2">{{ h.equipment_obj.serial_number }}</td>
+          <td class="border px-3 py-2">{{ h.assigned_date or '—' }}</td>
+          <td class="border px-3 py-2">{{ h.unassigned_date or '—' }}</td>
+          <td class="border px-3 py-2">
+            {% if h.unassigned_date %}<span class="text-red-600 font-semibold">Returned</span>
+            {% else %}<span class="text-green-600 font-semibold">🟢 Active</span>{% endif %}
+          </td>
+          <td class="border px-3 py-2">{{ h.staff_incharge }}</td>
         </tr>
-        {% endfor %}
+      {% endfor %}
       </tbody>
     </table>
     {% else %}
-    <p class="status-returned">❌ None</p>
+    <p class="text-red-600 font-semibold">❌ None</p>
     {% endif %}
   </div>
 
   <!-- ⚡ Slurm -->
-  <div class="card">
-    <h2>⚡ Slurm</h2>
+  <div class="bg-white border rounded-lg shadow-sm p-5">
+    <h2 class="text-lg font-semibold text-yellow-700 mb-3">⚡ Slurm Account</h2>
     {% if slurm_exists %}
-      <p class="status-active">✅ Exists: {{ slurm_status }}</p>
+      <p class="text-green-700 font-semibold">✅ Exists — Status: {{ slurm_status }}</p>
     {% else %}
-      <p class="status-returned">❌ Not Found</p>
+      <p class="text-red-600 font-semibold">❌ No Slurm Account</p>
     {% endif %}
   </div>
-<br>
-<br>
 
-<div style="text-align: right;">
-  Staff In-Charge: {{ student.cubicle.room_lab.staff_incharge if student.cubicle else '—' }}
+  <p class="text-right mt-6 text-gray-600 italic">
+    Staff In-Charge: {{ student.cubicle.room_lab.staff_incharge if student.cubicle else '—' }}
+  </p>
+
 </div>
 
-</body>
-</html>
+{% endblock %}

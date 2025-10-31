@@ -3,14 +3,18 @@
 {% block content %}
 
 <style>
-  .reset-wrapper {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    min-height: 100vh;
+.reset-wrapper {
+   background: linear-gradient(135deg, #667eea, #e8e8e9);
+    min-height: 100vh-80px; /* Adjust for footer height */
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-  }
+    padding-top: 10dvb;        /* <-- Adjust how high it sits */
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-bottom: 26rem;
+}
+
 
   .glass-card {
     backdrop-filter: blur(12px);
@@ -19,7 +23,7 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     padding: 2.5rem;
     width: 100%;
-    max-width: 420px;
+    max-width: 520px;
     color: #333;
   }
 

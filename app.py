@@ -99,8 +99,9 @@ app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")  # from .env
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")  # from .env (Gmail app password)
+app.config["MAIL_PASSWORD"] = os.getenv("")  # from .env (Gmail app password)
 app.config["MAIL_DEFAULT_SENDER"] = ("CSE Lab Admin", os.getenv("MAIL_USERNAME"))
+app.config["EMAIL_SENDING_ENABLED"] = False    
 
 mail = Mail(app)
 
@@ -119,6 +120,11 @@ def send_async_email(app, msg):
 
 def send_notification_email(to_email, subject, body, cc=None):
     """Send notification email (supports HTML + CC)"""
+    if not app.config.get("EMAIL_SENDING_ENABLED", True):
+        print(f"⚠️ Email sending disabled. Would have sent to: {to_email}")
+        print("Subject:", subject)
+        print("Body:", body)
+        return
     if not to_email:
         print("⚠️ Skipping email: no recipient")
         return
@@ -2877,7 +2883,10 @@ CSE Lab Management Team
         send_notification_email(student.email, subject, body)  # ✅ your existing function
 
         flash("Student successfully registered and Wait for admin approval before you can log in.", "success")
-        return redirect(url_for("login", roll=roll))
+        if current_user.is_authenticated:
+            return redirect(url_for("student_info"))
+        else:
+            return redirect(url_for("login"))
 
     return render_template("student_info.html", prefill_roll=prefill_roll)
 

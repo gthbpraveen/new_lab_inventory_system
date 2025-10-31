@@ -25,7 +25,7 @@
 
     <!-- Horizontal scroll on mobile, grid on large -->
     <div class="flex gap-5  overflow-x-auto snap-x snap-mandatory lg:grid lg:grid-cols-2 lg:gap-6 lg:overflow-visible">
-      <a href="/student_info" class=" snap-center min-w-[280px] lg:min-w-0 flex-1 p-6 rounded-xl bg-purple-50 hover:bg-purple-100 transition shadow-sm">
+      <a href="{{ url_for('student_info', mode='admin') }}" class=" snap-center min-w-[280px] lg:min-w-0 flex-1 p-6 rounded-xl bg-purple-50 hover:bg-purple-100 transition shadow-sm">
         <h3 class="font-medium text-indigo-800">1. Student Registration</h3>
         <p class="text-sm text-gray-600">Register a student and allot cubicle space.</p>
       </a>

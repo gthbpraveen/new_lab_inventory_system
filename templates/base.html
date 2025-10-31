@@ -108,23 +108,36 @@
         });
       </script>
 
-      {% with messages = get_flashed_messages() %}
-        {% if messages %}
-          <div id="alert-box" class="max-w-md mx-auto mb-4 bg-red-50 text-red-800 border border-orange-200 rounded-lg px-4 py-3 flex items-start justify-between shadow-sm">
-            <div class="flex items-center">
-              <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
-              </svg>
-              <span class="text-sm">{{ messages[0] }}</span>
-            </div>
-            <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 transition">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10l-4.95-4.95A1 1 0 115.05 3.636L10 8.586z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
+ {% with messages = get_flashed_messages(with_categories=True) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div id="alert-box"
+        class="max-w-md mx-auto mb-4 rounded-lg px-4 py-3 flex items-start justify-between shadow-sm border
+        {% if category == 'success' %} bg-green-50 text-green-800 border-green-200
+        {% elif category == 'warning' %} bg-yellow-50 text-yellow-800 border-yellow-200
+        {% else %} bg-red-50 text-red-800 border-red-200
         {% endif %}
-      {% endwith %}
+      ">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-2
+            {% if category == 'success' %} text-green-400
+            {% elif category == 'warning' %} text-yellow-400
+            {% else %} text-red-400
+            {% endif %}
+          " fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/>
+          </svg>
+          <span class="text-sm">{{ message }}</span>
+        </div>
+        <button onclick="this.parentElement.remove()" class="opacity-60 hover:opacity-100">
+          ✖
+        </button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 
       {% block content %}{% endblock %}
     </div>

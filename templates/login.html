@@ -1,118 +1,113 @@
 {% extends "base.html" %}
 {% block title %}Login{% endblock %}
-
 {% block content %}
+
 <style>
-  .login-page {
-    position: relative;
-    min-height: 100vh;
-    background-image: url("{{ url_for('static', filename='images/bui2.jpg') }}");
-    background-size: cover;
-    background-position: center;
+.login-page {
+  position: relative;
+  min-height: calc(100vh - 80px); /* Fix scroll height */
+  background-image: url("{{ url_for('static', filename='images/bui2.jpg') }}");
+  background-size: cover;
+  background-position: center;
+  
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-   
-  }
+    padding-top: 10dvb;        /* <-- Adjust how high it sits */
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-bottom: 10rem;
+}
 
-  .login-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6); /* dark overlay for readability */
-    z-index: 1;
-  }
+.login-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1;
+}
 
-  .login-card {
-    position: relative;
-    z-index: 2;
-    backdrop-filter: blur(15px);
-    background: rgb(244, 250, 250);
-    border-radius: 1rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    padding: 2.5rem;
-    width: 100%;
-    max-width: 400px;
-    color: #333;
-  }
+.login-card {
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(15px);
+  background: rgb(244, 250, 250);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 400px;
+  color: #333;
+}
 
-  .login-card h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    text-align: center;
-    color: #4f46e5;
-  }
+.login-card h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: #4f46e5;
+}
 
-  .login-card p {
-    font-size: 0.95rem;
-    text-align: center;
-    margin-bottom: 2rem;
-    color: #555;
-  }
+.login-card p {
+  font-size: 0.95rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #555;
+}
 
-  .form-group {
-    margin-bottom: 1.25rem;
-  }
+.form-group {
+  margin-bottom: 1.25rem;
+}
 
-  .form-group input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-    background: rgba(255, 255, 255, 0.95);
-    color: #333;
-    border: 1px solid #ccc;
-    font-size: 1rem;
-  }
+.form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
 
-  .form-group input:focus {
-    outline: none;
-    border-color: #4f46e5;
-    background: rgba(255, 255, 255, 0.9);
-  }
+.form-group input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: rgba(255, 255, 255, 0.9);
+}
 
-  .login-btn {
-    width: 100%;
-    padding: 0.75rem;
-    background: #4f46e5;
-    border: none;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    color: white;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
+.login-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #4f46e5;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
 
-  .login-btn:hover {
-    background: #4338ca;
-  }
+.login-btn:hover {
+  background: #4338ca;
+}
 
-  .register-text {
-    font-size: 0.875rem;
-    text-align: center;
-    margin-top: 1.5rem;
-    color: #4f46e5;
-  }
+.register-text {
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 1.5rem;
+  color: #4f46e5;
+}
 
-  .register-text a {
-    color: #4f46e5;
-    font-weight: 500;
-    text-decoration: underline;
-  }
-
-  @media (max-width: 768px) {
-    .login-card {
-      padding: 2rem;
-    }
-  }
+.register-text a {
+  color: #4f46e5;
+  font-weight: 500;
+  text-decoration: underline;
+}
 </style>
 
 <div class="login-page">
-  <!-- Dark overlay -->
   <div class="login-overlay"></div>
 
-  <!-- Glass login card -->
   <div class="login-card">
     <h2>Welcome Back</h2>
     <p>Login to access your dashboard</p>
@@ -139,8 +134,8 @@
   </div>
 </div>
 
-<!-- Footer -->
 <footer class="bg-white text-center py-4 text-gray-500 text-sm">
   © {{ current_year or "2025" }} CSE Department, IITH. All rights reserved.
 </footer>
+
 {% endblock %}
