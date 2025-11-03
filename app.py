@@ -102,9 +102,9 @@ app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")  # from .env
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")  # from .env (Gmail app password)
+app.config["MAIL_PASSWORD"] = os.getenv("")  # from .env (Gmail app password)
 app.config["MAIL_DEFAULT_SENDER"] = ("CSE Lab Admin", os.getenv("MAIL_USERNAME"))
-app.config["EMAIL_SENDING_ENABLED"] = True    
+app.config["EMAIL_SENDING_ENABLED"] = False
 
 mail = Mail(app)
 
@@ -2314,14 +2314,16 @@ def students_directory():
 
     # Dropdown filters
     faculty_list = [
-        "Prof. Antony Franklin", "Dr. Ashish Mishra", "Prof. Bheemarjuna Reddy Tamma",
-        "Prof. C. Krishna Mohan", "Dr. J. Saketha Nath", "Dr. Jyothi Vedurada",
-        "Dr. Kotaro Kataoka", "Prof. M. V. Panduranga Rao", "Dr. Manish Singh",
-        "Dr. Maria Francis", "Prof. Maunendra Sankar Desarkar", "Dr. N. R. Aravind",
-        "Dr. Nitin Saurabh", "Dr. Praveen Tammana", "Dr. Rajesh Kedia", "Dr. Rakesh Venkat",
-        "Dr. Ramakrishna Upadrasta", "Dr. Rameshwar Pratap", "Dr. Rogers Mathew",
-        "Prof. Sathya Peri", "Dr. Saurabh Kumar", "Dr. Shirshendu Das", "Dr. Sobhan Babu",
-        "Dr. Srijith P. K.", "Prof. Subrahmanyam Kalyanasundaram", "Prof. Vineeth N. Balasubramanian"
+        'Antony Franklin', 'Ashish Mishra', 'Bheemarjuna Reddy Tamma',
+    'KrishnaMohan C', 'Saketha Nath J', 'Jyothi Vedurada',
+    'Kotaro Kataoka', 'PandurangaRao M.V', 'Manish Singh',
+    'Maria Francis', 'Maunendra Sankar Desarkar', 'Aravind N.R',
+    'Nitin Saurabh', 'Praveen Tammana', 'Rajesh Kedia',
+    'Rakesh Venkat', 'Ramakrishna Upadrasta', 'Rameshwar Pratap',
+    'Rogers Mathew', 'Sathya Peri', 'Saurabh Kumar',
+    'Shirshendu Das', 'Sobhan Babu', 'Srijith P. K.',
+    'Subrahmanyam Kalyanasundaram', 'Vineeth N. Balasubramanian',
+    'Abhijit Das', 'Sandipan D', 'Anupam Sanghi'
     ]
 
     labs = [room.name for room in RoomLab.query.all()]
@@ -5274,29 +5276,62 @@ from flask import request, redirect, render_template, url_for, flash
 from werkzeug.utils import secure_filename
 import os
 
+# @app.route("/edit_student/<roll>", methods=["GET", "POST"])
+# @login_required
+# def edit_student(roll):
+#     # student = Student.query.filter_by(roll=roll).first_or_404()
+#     # user = User.query.get(student.user_id)
+#     student = Student.query.filter_by(roll=roll).first_or_404()
+#     user = User.query.filter_by(email=student.email).first()  
+#     if request.method == "POST":
+#         student.name = request.form["name"]
+#         student.course = request.form["course"]
+#         student.year = request.form["year"]
+#         student.joining_year = request.form["joining_year"]
+#         student.faculty = request.form["faculty"]
+#         student.phone = request.form.get("phone")
+
+#         # Optional Photo Update
+#         new_photo = request.files.get("profile_photo")
+#         if new_photo and new_photo.filename != "":
+#             filename = secure_filename(new_photo.filename)
+#             new_photo.save(os.path.join("static/uploads", filename))
+#             student.profile_photo = filename
+
+#         # Sync Email Automatically (No edit allowed)
+#         user.email = student.email
+
+#         db.session.commit()
+#         flash("Student details updated successfully", "success")
+#         return redirect(url_for("allotment_options", roll=student.roll))
+
+#     return render_template("edit_student.html", student=student)
 @app.route("/edit_student/<roll>", methods=["GET", "POST"])
 @login_required
 def edit_student(roll):
     student = Student.query.filter_by(roll=roll).first_or_404()
-    user = User.query.get(student.user_id)
+    user = User.query.filter_by(email=student.email).first()
 
+    # Ensure joining_year is int for template matching
+    if isinstance(student.joining_year, str):
+        student.joining_year = int(student.joining_year)
+    if student.faculty:
+        student.faculty = student.faculty.strip()
     if request.method == "POST":
         student.name = request.form["name"]
         student.course = request.form["course"]
         student.year = request.form["year"]
-        student.joining_year = request.form["joining_year"]
+        student.joining_year = int(request.form["joining_year"])
         student.faculty = request.form["faculty"]
         student.phone = request.form.get("phone")
 
-        # Optional Photo Update
         new_photo = request.files.get("profile_photo")
         if new_photo and new_photo.filename != "":
             filename = secure_filename(new_photo.filename)
             new_photo.save(os.path.join("static/uploads", filename))
             student.profile_photo = filename
 
-        # Sync Email Automatically (No edit allowed)
-        user.email = student.email
+        user.email = student.email  # sync
 
         db.session.commit()
         flash("Student details updated successfully", "success")
