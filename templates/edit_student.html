@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+{% block title %}Edit Student Information{% endblock %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto bg-white rounded shadow p-6 page-transition">
+  <h1 class="border rounded px-3 py-2 text-xl bg-blue-50 mb-14 text-center font-bold">
+    Edit Student Details
+  </h1>
+
+  <form action="{{ url_for('edit_student', roll=student.roll) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Full Name -->
+      <div class="md:col-span-2">
+        <label class="required-field block">Full Name</label>
+        <input type="text" name="name" value="{{ student.name }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+
+      <!-- Joining Year -->
+      <div>
+        <label class="required-field block">Joining Year</label>
+        <select name="joining_year" class="w-full border rounded px-3 py-2" required>
+          {% for y in range(2010, 2051) %}
+            <option value="{{ y }}" {% if student.joining_year == y %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Course -->
+      <div>
+        <label class="required-field block">Course</label>
+        <select name="course" class="w-full border rounded px-3 py-2" required>
+          <option {% if student.course=='B.Tech' %}selected{% endif %}>B.Tech</option>
+          <option {% if student.course=='M.Tech TA' %}selected{% endif %}>M.Tech TA</option>
+          <option {% if student.course=='M.Tech RA' %}selected{% endif %}>M.Tech RA</option>
+          <option {% if student.course=='Ph.D.' %}selected{% endif %}>Ph.D.</option>
+          <option {% if student.course=='Intern' %}selected{% endif %}>Intern</option>
+        </select>
+      </div>
+
+      <!-- Studying Year -->
+      <div>
+        <label class="required-field block">Studying Year</label>
+        <select name="year" class="w-full border rounded px-3 py-2" required>
+          {% for y in ['I','II','III','IV','V'] %}
+            <option value="{{ y }}" {% if student.year == y %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Roll Number (READONLY) -->
+      <div class="md:col-span-2">
+        <label class="block">Roll Number</label>
+        <input type="text" value="{{ student.roll }}" readonly
+               class="w-full border rounded px-3 py-2 bg-gray-100 text-gray-700">
+      </div>
+
+      <!-- Phone -->
+      <div>
+        <label class="block">Phone</label>
+        <input type="text" name="phone" value="{{ student.phone }}" class="w-full border rounded px-3 py-2">
+      </div>
+
+      <!-- Faculty -->
+      <div>
+        <label class="required-field block">Faculty In-charge</label>
+        <select name="faculty" class="w-full border rounded px-3 py-2" required>
+          {% set faculty_list = [
+          'Antony Franklin', 'Ashish Mishra', 'Bheemarjuna Reddy Tamma',
+    'KrishnaMohan C', 'Saketha Nath J', 'Jyothi Vedurada',
+    'Kotaro Kataoka', 'PandurangaRao M.V', 'Manish Singh',
+    'Maria Francis', 'Maunendra Sankar Desarkar', 'Aravind N.R',
+    'Nitin Saurabh', 'Praveen Tammana', 'Rajesh Kedia',
+    'Rakesh Venkat', 'Ramakrishna Upadrasta', 'Rameshwar Pratap',
+    'Rogers Mathew', 'Sathya Peri', 'Saurabh Kumar',
+    'Shirshendu Das', 'Sobhan Babu', 'Srijith P. K.',
+    'Subrahmanyam Kalyanasundaram', 'Vineeth N. Balasubramanian',
+    'Abhijit Das', 'Sandipan D', 'Anupam Sanghi'
+          ] %}
+          {% for f in faculty_list %}
+            <option value="{{ f }}" {% if student.faculty == f %}selected{% endif %}>{{ f }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Current Photo Preview -->
+      <div class="md:col-span-2">
+        <label class="block">Current Profile Photo</label>
+        {% if student.profile_photo %}
+          <img src="{{ url_for('static', filename='uploads/' ~ student.profile_photo) }}" class="w-32 border rounded">
+        {% else %}
+          <p class="text-red-600">No photo uploaded</p>
+        {% endif %}
+      </div>
+
+      <!-- Upload New Photo -->
+      <div class="md:col-span-2">
+        <label class="block">Upload New Photo (Optional)</label>
+        <input type="file" name="profile_photo" accept="image/png, image/jpeg" class="w-full border rounded px-3 py-2">
+        <p class="text-xs text-gray-500 mt-1">(If you leave this empty, current photo stays unchanged)</p>
+      </div>
+
+    </div>
+
+    <div class="mt-6 flex space-x-3">
+      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Update</button>
+      <a href="{{ url_for('student_details', roll=student.roll) }}" class="bg-gray-200 px-4 py-2 rounded">Cancel</a>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}
+
+         

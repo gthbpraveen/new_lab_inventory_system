@@ -132,21 +132,29 @@
   <div id="tab-contents" class="mt-4">
 
     <!-- Profile -->
-    <div id="profile" class="tab-content">
-      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
-        <h3 class="text-xl font-bold text-indigo-800 mb-4">🎓 Student Information</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-800">
-          <p><strong>Roll:</strong> {{ student.roll }}</p>
-          <p><strong>Name:</strong> {{ student.name }}</p>
-          <p><strong>Course:</strong> {{ student.course }}</p>
-          <p><strong>Year:</strong> {{ student.year }}</p>
-          <p><strong>Joining Year:</strong> {{ student.joining_year }}</p>
-          <p><strong>Faculty:</strong> {{ student.faculty }}</p>
-          <p><strong>Email:</strong> {{ student.email }}</p>
-          <p><strong>Phone:</strong> {{ student.phone or "—" }}</p>
-        </div>
-      </div>
+<div id="profile" class="tab-content">
+  <div class="bg-white rounded-2xl shadow p-6 border border-gray-200 relative">
+    <h3 class="text-xl font-bold text-indigo-800 mb-4">🎓 Student Information</h3>
+
+    <!-- Edit Button -->
+    <a href="{{ url_for('edit_student', roll=student.roll) }}"
+       class="absolute top-6 right-6 inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-lg shadow-sm transition">
+      ✏️ Edit
+    </a>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-800 mt-6">
+      <p><strong>Roll:</strong> {{ student.roll }}</p>
+      <p><strong>Name:</strong> {{ student.name }}</p>
+      <p><strong>Course:</strong> {{ student.course }}</p>
+      <p><strong>Year:</strong> {{ student.year }}</p>
+      <p><strong>Joining Year:</strong> {{ student.joining_year }}</p>
+      <p><strong>Faculty:</strong> {{ student.faculty }}</p>
+      <p><strong>Email:</strong> {{ student.email }}</p>
+      <p><strong>Phone:</strong> {{ student.phone or "—" }}</p>
     </div>
+  </div>
+</div>
+
 
     <!-- Space -->
     <div id="space" class="tab-content hidden">

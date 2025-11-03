@@ -36,7 +36,7 @@ class User(db.Model, UserMixin):
     approved_at = db.Column(db.DateTime, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
 
-    students = db.relationship('Student', back_populates='user', cascade='all, delete')
+    student = db.relationship('Student', back_populates='user', uselist=False, cascade='all, delete')
 
 
     def __repr__(self) -> str:
@@ -78,9 +78,38 @@ class Cubicle(db.Model):
 # -------------------------
 # Students
 # -------------------------
+# class Student(db.Model):
+#     __tablename__ = "student"
+#     roll = db.Column(db.String(20), primary_key=True)  # e.g., cs24mtech11091
+#     name = db.Column(db.String(100), nullable=False)
+#     course = db.Column(db.String(20))
+#     year = db.Column(db.String(10))
+#     joining_year = db.Column(db.String(10))
+#     faculty = db.Column(db.String(100))
+#     email = db.Column(db.String(100), unique=True)
+#     phone = db.Column(db.String(20))
+
+#     # 🔑 Link to User table
+#     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+#     user = db.relationship("User", back_populates="students")
+
+
+#     # Seat (one cubicle at a time)
+#     cubicle = db.relationship("Cubicle", backref="student", uselist=False)
+
+#     # Equipment assigned to this student
+#     assigned_equipment = db.relationship("Equipment", backref="student", lazy=True)
+
+#     # Workstation assignment history (zero or many over time)
+#     workstation_assignments = db.relationship(
+#         "WorkstationAssignment",
+#         backref="student",
+#         cascade="all, delete-orphan",
+#         lazy=True,
+#     )
 class Student(db.Model):
     __tablename__ = "student"
-    roll = db.Column(db.String(20), primary_key=True)  # e.g., cs24mtech11091
+    roll = db.Column(db.String(20), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     course = db.Column(db.String(20))
     year = db.Column(db.String(10))
@@ -89,24 +118,20 @@ class Student(db.Model):
     email = db.Column(db.String(100), unique=True)
     phone = db.Column(db.String(20))
 
-    # 🔑 Link to User table
+    profile_photo = db.Column(db.String(200), nullable=True)   # ✅ NEW COLUMN
+
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
-    user = db.relationship("User", back_populates="students")
+    user = db.relationship("User", back_populates='student')
 
-
-    # Seat (one cubicle at a time)
     cubicle = db.relationship("Cubicle", backref="student", uselist=False)
-
-    # Equipment assigned to this student
     assigned_equipment = db.relationship("Equipment", backref="student", lazy=True)
-
-    # Workstation assignment history (zero or many over time)
     workstation_assignments = db.relationship(
         "WorkstationAssignment",
         backref="student",
         cascade="all, delete-orphan",
         lazy=True,
     )
+
 
     @property
     def active_assignment(self):

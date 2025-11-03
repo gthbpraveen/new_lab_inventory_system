@@ -1,3 +1,4 @@
+from werkzeug.utils import secure_filename
 import os
 import secrets
 from datetime import datetime, timedelta, date
@@ -36,6 +37,8 @@ if db_url.startswith("postgres://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or secrets.token_hex(32)
+app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
+
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -99,9 +102,9 @@ app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")  # from .env
-app.config["MAIL_PASSWORD"] = os.getenv("")  # from .env (Gmail app password)
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")  # from .env (Gmail app password)
 app.config["MAIL_DEFAULT_SENDER"] = ("CSE Lab Admin", os.getenv("MAIL_USERNAME"))
-app.config["EMAIL_SENDING_ENABLED"] = False    
+app.config["EMAIL_SENDING_ENABLED"] = True    
 
 mail = Mail(app)
 
@@ -952,6 +955,16 @@ from flask_login import login_required, current_user
 from flask import render_template
 from models import User  # Ensure User model is imported
 
+# @app.route('/registered_users')
+# @login_required
+# def registered_users():
+#     if current_user.email != "admin@cse.iith.ac.in":
+#         flash("Access denied.", "danger")
+#         return redirect("/login_home")
+
+#     users = User.query.order_by(User.registered_at.desc()).all()
+#     return render_template("registered_users.html", all_users=users)
+
 @app.route('/registered_users')
 @login_required
 def registered_users():
@@ -960,8 +973,11 @@ def registered_users():
         return redirect("/login_home")
 
     users = User.query.order_by(User.registered_at.desc()).all()
-    return render_template("registered_users.html", all_users=users)
 
+    # ✅ Map email → matching student entry (if exists)
+    student_map = { s.email: s for s in Student.query.all() }
+
+    return render_template("registered_users.html", all_users=users, student_map=student_map)
 
 
 
@@ -2812,6 +2828,8 @@ def random_password(length=8):
 
 #     return render_template("student_info.html", prefill_roll=prefill_roll)
 
+
+
 @app.route("/student_info", methods=["GET", "POST"])
 def student_info():
     prefill_roll = (request.args.get("roll") or "").strip()
@@ -2820,12 +2838,40 @@ def student_info():
         roll = request.form['roll'].strip()
         email = request.form['email'].strip()
 
+        # Validate profile photo
+        file = request.files.get("profile_photo")
+        if not file:
+            flash("Please upload profile photo.", "danger")
+            return redirect(url_for("student_info"))
+
+        if file.filename == "":
+            flash("Please select a valid image.", "danger")
+            return redirect(url_for("student_info"))
+
+        # Validation: allowed formats
+        if not (file.filename.lower().endswith(".jpg") or file.filename.lower().endswith(".jpeg") or file.filename.lower().endswith(".png")):
+            flash("Only JPG or PNG images allowed!", "danger")
+            return redirect(url_for("student_info"))
+
+        # Validation: max size 50 KB
+        file.seek(0, os.SEEK_END)
+        size = file.tell()
+        if size > 50 * 1024:
+            flash("Image must be less than 50 KB!", "danger")
+            return redirect(url_for("student_info"))
+        file.seek(0)
+
+        # Save image
+        filename = secure_filename(f"{roll}_{file.filename}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
         # Duplicate check
         if Student.query.get(roll):
             flash("Student already exists!", "warning")
             return redirect(url_for("student_info", roll=roll))
 
-        # ✅ Create User (if not exists)
+        # Create or Fetch User
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             user = existing_user
@@ -2836,14 +2882,13 @@ def student_info():
                 email=email,
                 password=generate_password_hash(temp_pw),
                 role="student",
-                is_approved=False,     # admin approval needed
-                # first_login=True,      # flag to force password change
+                is_approved=False,
                 registered_at=datetime.utcnow()
             )
             db.session.add(user)
             db.session.flush()
 
-        # ✅ Create Student linked to User
+        # Create Student
         student = Student(
             roll=roll,
             name=request.form['name'],
@@ -2853,7 +2898,8 @@ def student_info():
             faculty=request.form['faculty'],
             email=email,
             phone=request.form.get('phone'),
-            user_id=user.id
+            user_id=user.id,
+            profile_photo=filename   # ✅ Save photo file name
         )
         db.session.add(student)
         db.session.commit()
@@ -2889,7 +2935,6 @@ CSE Lab Management Team
             return redirect(url_for("login"))
 
     return render_template("student_info.html", prefill_roll=prefill_roll)
-
     
 
 # ------------------------
@@ -5225,8 +5270,41 @@ def lab_allotments(lab_code):
         stats=stats
     )
 
+from flask import request, redirect, render_template, url_for, flash
+from werkzeug.utils import secure_filename
+import os
 
-    
+@app.route("/edit_student/<roll>", methods=["GET", "POST"])
+@login_required
+def edit_student(roll):
+    student = Student.query.filter_by(roll=roll).first_or_404()
+    user = User.query.get(student.user_id)
+
+    if request.method == "POST":
+        student.name = request.form["name"]
+        student.course = request.form["course"]
+        student.year = request.form["year"]
+        student.joining_year = request.form["joining_year"]
+        student.faculty = request.form["faculty"]
+        student.phone = request.form.get("phone")
+
+        # Optional Photo Update
+        new_photo = request.files.get("profile_photo")
+        if new_photo and new_photo.filename != "":
+            filename = secure_filename(new_photo.filename)
+            new_photo.save(os.path.join("static/uploads", filename))
+            student.profile_photo = filename
+
+        # Sync Email Automatically (No edit allowed)
+        user.email = student.email
+
+        db.session.commit()
+        flash("Student details updated successfully", "success")
+        return redirect(url_for("allotment_options", roll=student.roll))
+
+    return render_template("edit_student.html", student=student)
+
+   
 @app.route("/student/<string:roll>", methods=["GET", "POST"])
 @login_required
 @roles_required('admin', 'staff' , 'faculty')
@@ -5253,6 +5331,8 @@ def student_details(roll):
         slurm_exists=slurm_exists,
         slurm_status=slurm_status
     )
+
+
 
 
 from flask import make_response, render_template
