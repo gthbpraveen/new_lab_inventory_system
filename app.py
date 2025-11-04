@@ -40,6 +40,7 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or secrets.token_hex(32)
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
 
 
+
 db.init_app(app)
 migrate = Migrate(app, db)
 
