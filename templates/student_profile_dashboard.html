@@ -54,12 +54,14 @@
   <h2 class="text-xl font-bold text-purple-800 mb-4">💻 Workstation Allocation</h2>
   {% if student.workstation_assignments %}
     <div class="overflow-x-auto">
-      <table class="w-full text-sm border border-gray-300 rounded-lg">
+      <table class="w-full text-sm border border-gray-300 rounded-lg text-center">
         <thead class="bg-gray-100 text-gray-800">
-          <tr>
-            <th class="px-4 py-2">Asset Serial</th>
-            <th class="px-4 py-2">Issue Date</th>
-            <th class="px-4 py-2">Required Till</th>
+          <tr class="align:left">
+             <th class="px-4 py-2">Name</th>
+            <th class="px-4 py-2">Category</th>
+            <th class="px-4 py-2">Serial</th>
+            <!-- <th class="px-4 py-2">Asset Serial</th> -->
+            <th class="px-4 py-2">Assigned Date</th>
             <th class="px-4 py-2">Return Date</th>
             <th class="px-4 py-2">Status</th>
           </tr>
@@ -67,9 +69,10 @@
         <tbody class="divide-y divide-gray-200">
           {% for ws in student.workstation_assignments %}
           <tr>
-            <td class="px-4 py-2">{{ ws.asset.serial }}</td>
+               <td class="px-4 py-2">{{ ws.asset.manufacturer }}</td>
+            <td class="px-4 py-2">{{ ws.asset.model}}</td>
+            <td class="px-4 py-2">{{ ws.asset.serial}}</td>
             <td class="px-4 py-2">{{ ws.issue_date }}</td>
-            <td class="px-4 py-2">{{ ws.system_required_till }}</td>
             <td class="px-4 py-2">{{ ws.end_date or "-" }}</td>
             <td class="px-4 py-2">
               {% if ws.end_date %}
@@ -94,7 +97,7 @@
   <h2 class="text-xl font-bold text-indigo-800 mb-4">🖥️ IT Equipment Allocation</h2>
   {% if student_equipment_history %}
     <div class="overflow-x-auto">
-      <table class="w-full text-sm border border-gray-300 rounded-lg">
+      <table class="w-full text-sm border border-gray-300 rounded-lg text-center">
         <thead class="bg-gray-100 text-gray-800">
           <tr>
             <th class="px-4 py-2">Name</th>

@@ -159,11 +159,11 @@ nav {
               </div>
             </div>
           </div>
-          
-          {% endif %}
-
           <a href="/student_dashboard" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Search</a>
           <a href="/utilization" class="nav-link text-gray-800 hover:text-blue-600 px-3 py-2">Lab Utilization</a>
+          {% endif %}
+
+       
           <a href="/logout" class="nav-link text-gray-800 hover:text-red-600 px-3 py-2">Logout</a>
 
         {% endif %}
@@ -280,7 +280,7 @@ nav {
 {% if current_user.is_authenticated %}
   {% if current_user.role == "student" %}
     {% set tools = [
-      {"name": "My Dashboard", "icon": "📖", "url": "/student_dashboard/" ~ current_user.student.roll},
+      {"name": "My Dashboard", "icon": "📖", "url": "/student_profile_dashboard/" ~ current_user.student.roll},
       {"name": "Labs", "icon": "💻", "url": "/cse_labs"},
       {"name": "User Settings", "icon": "🛠️", "url": "/user/settings"},
    

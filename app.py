@@ -627,13 +627,41 @@ def student_dashboard():
 @app.route("/student_profile_dashboard/<roll>")
 @login_required
 def student_profile_dashboard(roll):
-    # Only allow self-access for students
+    # ✅ Only allow self-access for students
     if current_user.role == "student" and current_user.student.roll != roll:
         flash("Access denied.", "danger")
         return redirect(url_for("login_home"))
 
     student = Student.query.get_or_404(roll)
-    return render_template("student_profile_dashboard.html", student=student)
+
+    # ✅ Fetch IT Equipment History
+    student_equipment_history = (
+        db.session.query(EquipmentHistory, Equipment)
+        .join(Equipment, Equipment.id == EquipmentHistory.equipment_id)
+        .filter(EquipmentHistory.assigned_to_roll == student.roll)
+        .order_by(EquipmentHistory.assigned_date.desc())
+        .all()
+    )
+
+    # ✅ Check Slurm Account Status
+    slurm_exists = False
+    slurm_status = None
+
+    slurm = SlurmAccount.query.filter(
+        SlurmAccount.roll.ilike(student.roll)
+    ).first()
+
+    if slurm:
+        slurm_exists = True
+        slurm_status = slurm.status
+
+    return render_template(
+        "student_profile_dashboard.html",
+        student=student,
+        student_equipment_history=student_equipment_history,
+        slurm_exists=slurm_exists,
+        slurm_status=slurm_status
+    )
 
 
 from flask import render_template

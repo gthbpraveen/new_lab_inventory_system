@@ -209,7 +209,7 @@ class EquipmentHistory(db.Model):
     unassigned_date = db.Column(db.DateTime, nullable=True)
     status_snapshot = db.Column(db.String(50), nullable=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
+   
     def __repr__(self) -> str:
         return f"<EquipmentHistory eq={self.equipment_id} to={self.assigned_to_roll}>"
 
