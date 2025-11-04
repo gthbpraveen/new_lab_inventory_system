@@ -102,7 +102,11 @@
         {% for student in students_pagination.items %}
         <tr class="text-sm text-gray-800 hover:bg-gray-50">
           <td class="py-2 px-4 border">{{ student.name }}</td>
-          <td class="py-2 px-4 border">{{ student.roll }}</td>
+          <td class="py-2 px-4 border">
+  <a href="{{ url_for('allotment_options', roll=student.roll) }}" class="text-blue-600 hover:underline">
+    {{ student.roll }}
+  </a>
+</td>
           <td class="py-2 px-4 border">{{ student.course }}</td>
           <td class="py-2 px-4 border">{{ student.year }}</td>
           <td class="py-2 px-4 border">{{ student.joining_year }}</td>
