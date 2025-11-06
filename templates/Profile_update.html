@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+{% block title %}Profile Settings{% endblock %}
+{% block content %}
+
+<style>
+  .wrapper {
+    background: linear-gradient(135deg, #667eea, #e8e8e9);
+    min-height: calc(100vh - 80px); /* adjust for footer */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8rem 2rem 10rem;
+  }
+
+  .glass-card {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    color: #333;
+  }
+
+  .glass-card h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #4f46e5;
+  }
+
+  .glass-card p {
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    color: #555;
+  }
+
+  .action-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: #4f46e5;
+    color: white;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .action-btn:hover {
+    background: #4338ca;
+    transform: scale(1.03);
+  }
+</style>
+
+<div class="wrapper">
+  <div class="glass-card">
+    <h2>Profile Settings</h2>
+    <p>Choose what you’d like to manage</p>
+
+    <!-- Update Profile Button -->
+  <a href="{{ url_for('edit_student', roll=student.roll) }}" class="action-btn">
+  🧑‍💻 Update Profile
+</a>
+
+
+    <!-- Change Password Button -->
+    <a href="{{ url_for('user_settings') }}" class="action-btn">
+      🔒 Change Password
+    </a>
+  </div>
+</div>
+
+<footer class="bg-white text-center py-4 text-gray-500 text-sm mt-2">
+  © {{ current_year or "2025" }} CSE Department, IITH. All rights reserved.
+</footer>
+
+{% endblock %}

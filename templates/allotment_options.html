@@ -15,13 +15,23 @@
         <!-- Left: Student Details -->
         <div class="md:w-1/2 w-full">
           <div class="flex items-center gap-4">
-            <div class="h-14 w-14 rounded-full bg-indigo-100 flex items-center justify-center shadow">
-              <!-- User Icon -->
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M20 21a8 8 0 10-16 0"/>
-                <circle cx="12" cy="8" r="4" stroke-width="1.6"/>
-              </svg>
-            </div>
+<div class="h-32 w-32 overflow-hidden rounded-xl shadow-lg border border-gray-300 bg-white group cursor-pointer">
+  {% if student.profile_photo %}
+    <img src="{{ url_for('static', filename='uploads/' ~ student.profile_photo) }}"
+         alt="Profile Photo"
+         class="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-150">
+  {% else %}
+    <!-- Default User Icon -->
+    <div class="h-full w-full flex items-center justify-center bg-indigo-100 transition-transform duration-500 ease-in-out group-hover:scale-110">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M20 21a8 8 0 10-16 0"/>
+        <circle cx="12" cy="8" r="4" stroke-width="1.6"/>
+      </svg>
+    </div>
+  {% endif %}
+</div>
+
+
             <div>
               <h2 class="text-3xl font-extrabold text-indigo-800 tracking-wide">{{ student.name }}</h2>
               <p class="mt-1 text-gray-700">

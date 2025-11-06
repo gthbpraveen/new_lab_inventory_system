@@ -2870,32 +2870,33 @@ def student_info():
         email = request.form['email'].strip()
 
         # Validate profile photo
+        # Validate profile photo
+# Handle optional profile photo
         file = request.files.get("profile_photo")
-        if not file:
-            flash("Please upload profile photo.", "danger")
-            return redirect(url_for("student_info"))
+        filename = None
 
-        if file.filename == "":
-            flash("Please select a valid image.", "danger")
-            return redirect(url_for("student_info"))
+        if file and file.filename != "":
+            # Validate format
+            if not (file.filename.lower().endswith((".jpg", ".jpeg", ".png"))):
+                flash("Only JPG or PNG images allowed!", "danger")
+                return redirect(url_for("student_info"))
 
-        # Validation: allowed formats
-        if not (file.filename.lower().endswith(".jpg") or file.filename.lower().endswith(".jpeg") or file.filename.lower().endswith(".png")):
-            flash("Only JPG or PNG images allowed!", "danger")
-            return redirect(url_for("student_info"))
+            # Validate size
+            file.seek(0, os.SEEK_END)
+            size = file.tell()
+            if size > 50 * 1024:
+                flash("Image must be less than 50 KB!", "danger")
+                return redirect(url_for("student_info"))
+            file.seek(0)
 
-        # Validation: max size 50 KB
-        file.seek(0, os.SEEK_END)
-        size = file.tell()
-        if size > 50 * 1024:
-            flash("Image must be less than 50 KB!", "danger")
-            return redirect(url_for("student_info"))
-        file.seek(0)
+            # Save image
+            filename = secure_filename(f"{roll}_{file.filename}")
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+        else:
+            # No photo uploaded — skip without error
+            filename = None
 
-        # Save image
-        filename = secure_filename(f"{roll}_{file.filename}")
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
 
         # Duplicate check
         if Student.query.get(roll):
@@ -2967,6 +2968,14 @@ CSE Lab Management Team
 
     return render_template("student_info.html", prefill_roll=prefill_roll)
     
+@app.route("/Profile_update")
+@login_required
+def profile_update():
+    student = Student.query.filter_by(email=current_user.email).first()
+    return render_template("Profile_update.html",
+                           student=student,
+                           current_year=datetime.now().year)
+
 
 # ------------------------
 # 2. Cubicle Allocation
