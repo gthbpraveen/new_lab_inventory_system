@@ -1,0 +1,114 @@
+{% extends "login_home.html" %}
+{% block title %}Faculty Directory{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">CSE Faculty Directory</h1>
+
+  <form method="GET" action="{{ url_for('faculty_directory') }}" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 bg-white shadow p-4 rounded-lg mb-6">
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Name</label>
+      <input type="text" name="name" value="{{ selected_name or '' }}" class="w-full mt-1 px-3 py-2 border rounded" placeholder="Search by name">
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Faculty ID</label>
+      <input type="text" name="faculty_id" value="{{ selected_faculty_id or '' }}" class="w-full mt-1 px-3 py-2 border rounded" placeholder="e.g. FAC123">
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Joining Year</label>
+      <select name="joining_year" class="w-full mt-1 px-3 py-2 border rounded">
+        <option value="" {% if not selected_joining_year %}selected{% endif %}>All</option>
+        {% for y in joining_years %}
+          <option value="{{ y }}" {% if selected_joining_year == y|string %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Room</label>
+      <select name="room_lab_name" class="w-full mt-1 px-3 py-2 border rounded">
+        <option value="" {% if not selected_room %}selected{% endif %}>All</option>
+        {% for r in labs %}
+          <option value="{{ r }}" {% if selected_room == r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Designation</label>
+      <select name="designation" class="w-full mt-1 px-3 py-2 border rounded">
+        <option value="" {% if not selected_designation %}selected{% endif %}>All</option>
+        {% for d in designations %}
+          <option value="{{ d }}" {% if selected_designation == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="md:col-span-2 flex items-end">
+      <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">Search</button>
+    </div>
+  </form>
+
+  {% if faculty_pagination.items %}
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white border border-gray-300">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="py-2 px-4 border">Name</th>
+          <th class="py-2 px-4 border">Faculty ID</th>
+          <th class="py-2 px-4 border">Joining Year</th>
+          <th class="py-2 px-4 border">Room</th>
+          <th class="py-2 px-4 border">Designation</th>
+          <th class="py-2 px-4 border">Email</th>
+          <th class="py-2 px-4 border">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in faculty_pagination.items %}
+        <tr class="text-sm text-gray-800 hover:bg-gray-50">
+          <td class="py-2 px-4 border">{{ f.name }}</td>
+          <td class="py-2 px-4 border">
+            <a href="{{ url_for('allotment_options_faculty', fid=f.id) }}" class="text-blue-600 hover:underline">{{ f.faculty_id or '' }}</a> 
+            
+
+  
+        </td>
+          <td class="py-2 px-4 border">{{ f.doj.year if f.doj else '' }}</td>
+          <td class="py-2 px-4 border">{{ f.room or '' }}</td>
+          <td class="py-2 px-4 border">{{ f.designation or '' }}</td>
+          <td class="py-2 px-4 border">{{ f.email or '' }}</td>
+          <td class="py-2 px-4 border">
+            <a href="{{ url_for('faculty_edit', fid=f.id) }}" class="px-3 py-1 bg-green-600 text-white rounded text-xs">Edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex justify-center mt-6 space-x-2">
+    {% if faculty_pagination.has_prev %}
+      <a href="{{ url_for('faculty_directory', page=faculty_pagination.prev_num,
+                          name=selected_name, faculty_id=selected_faculty_id,
+                          joining_year=selected_joining_year, room_lab_name=selected_room,
+                          designation=selected_designation) }}"
+         class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">Previous</a>
+    {% endif %}
+    <span class="px-4 py-2 bg-gray-100 rounded">Page {{ faculty_pagination.page }} of {{ faculty_pagination.pages }}</span>
+    {% if faculty_pagination.has_next %}
+      <a href="{{ url_for('faculty_directory', page=faculty_pagination.next_num,
+                          name=selected_name, faculty_id=selected_faculty_id,
+                          joining_year=selected_joining_year, room_lab_name=selected_room,
+                          designation=selected_designation) }}"
+         class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">Next</a>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <p class="text-gray-600 text-center mt-8">No faculty found matching your search criteria.</p>
+  {% endif %}
+
+</div>
+{% endblock %}

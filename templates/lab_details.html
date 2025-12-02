@@ -55,7 +55,7 @@
         {% for seat in seats %}
           {% if seat.occupied %}
             <!-- Occupied Seat -->
-            <a href="{{ url_for('student_details', roll=seat.roll_number) }}"
+            <a href="#"
                class="relative group w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white font-semibold hover:scale-110 transition"
                title="Click to view student profile">
               {{ seat.number }}

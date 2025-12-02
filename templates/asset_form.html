@@ -224,69 +224,7 @@
       </div>
     </div>
 
-    <!-- Peripherals -->
-    <!-- <div class="form-section bg-green-50 rounded-lg p-6 mb-8">
-      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Peripherals</h2>
 
-      <!-- Keyboard -->
-      <!-- <div class="mb-6">
-        <label class="block mb-2">Keyboard Provided?</label>
-        <select id="keyboard_provided" name="keyboard_provided" onchange="togglePeripheral('keyboard')"
-                class="block w-full px-4 py-2 border rounded-md">
-          <option value="">Select</option>
-          <option value="yes" {% if asset and asset.keyboard_provided=='yes' %}selected{% endif %}>Yes</option>
-          <option value="no" {% if asset and asset.keyboard_provided=='no' %}selected{% endif %}>No</option>
-        </select>
-        <div id="keyboard-details-container"
-             class="mt-2 {% if not (asset and asset.keyboard_provided=='yes') %}hidden{% endif %}">
-          <input type="text" id="keyboard_details" name="keyboard_details" value="{{ asset.keyboard_details if asset else '' }}"
-            placeholder="Keyboard details" class="block w-full px-4 py-2 border rounded-md">
-        </div>
-      </div>  -->
-
-      <!-- Mouse -->
-      <!-- <div class="mb-6">
-        <label class="block mb-2">Mouse Provided?</label>
-        <select id="mouse_provided" name="mouse_provided" onchange="togglePeripheral('mouse')"
-                class="block w-full px-4 py-2 border rounded-md">
-          <option value="">Select</option>
-          <option value="yes" {% if asset and asset.mouse_provided=='yes' %}selected{% endif %}>Yes</option>
-          <option value="no" {% if asset and asset.mouse_provided=='no' %}selected{% endif %}>No</option>
-        </select>
-        <div id="mouse-details-container"
-             class="mt-2 {% if not (asset and asset.mouse_provided=='yes') %}hidden{% endif %}">
-          <input type="text" id="mouse_details" name="mouse_details" value="{{ asset.mouse_details if asset else '' }}"
-            placeholder="Mouse details" class="block w-full px-4 py-2 border rounded-md">
-        </div>
-      </div> -->
-
-      <!-- Monitor -->
-      <!-- <div>
-        <label class="block mb-2">Monitor Provided?</label>
-        <select id="monitor_provided" name="monitor_provided" onchange="togglePeripheral('monitor')"
-                class="block w-full px-4 py-2 border rounded-md">
-          <option value="">Select</option>
-          <option value="yes" {% if asset and asset.monitor_provided=='yes' %}selected{% endif %}>Yes</option>
-          <option value="no" {% if asset and asset.monitor_provided=='no' %}selected{% endif %}>No</option>
-          <option value="laptop" {% if asset and asset.monitor_provided=='laptop' %}selected{% endif %}>Laptop Screen</option>
-        </select>
-        <div id="monitor-details-container"
-             class="mt-2 {% if not (asset and asset.monitor_provided=='yes') %}hidden{% endif %}">
-          <input type="text" id="monitor_details" name="monitor_details" value="{{ asset.monitor_details if asset else '' }}"
-            placeholder="Monitor details" class="block w-full px-4 py-2 border rounded-md">
-        </div>
-        <div id="monitor-size-container"
-             class="mt-2 {% if not (asset and asset.monitor_provided=='yes') %}hidden{% endif %}">
-          <input type="number" id="monitor_size" name="monitor_size" value="{{ asset.monitor_size if asset else '' }}"
-            placeholder="Size in inches" class="block w-full px-4 py-2 border rounded-md">
-        </div>
-        <div id="monitor-serial-container"
-             class="mt-2 {% if not (asset and asset.monitor_provided=='yes') %}hidden{% endif %}">
-          <input type="text" id="monitor_serial" name="monitor_serial" value="{{ asset.monitor_serial if asset else '' }}"
-            placeholder="Serial Number" class="block w-full px-4 py-2 border rounded-md">
-        </div>
-      </div>
-    </div> -->
 
     <!-- Location & Indenter -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

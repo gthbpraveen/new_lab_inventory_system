@@ -38,31 +38,42 @@
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
             {{ "Super Admin" if user.email == "admin@cse.iith.ac.in" else user.role }}
           </td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm">
+    <td class="px-6 py-4 whitespace-nowrap text-sm">
 
   {% if user.email == "admin@cse.iith.ac.in" %}
     <span class="text-gray-500 text-xs italic">Super Admin (No Actions)</span>
-
   {% else %}
+
     {% set stu = student_map.get(user.email) %}
+    {% set fac = faculty_map.get(user.email) %}
+    {% set stf = staff_map.get(user.email) %}
 
     {% if stu %}
-      <!-- Edit Student -->
       <a href="{{ url_for('edit_student', roll=stu.roll) }}"
          class="inline-block px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs mr-2">
-        Edit
+        Edit Student
       </a>
-    {% else %}
-      <span class="text-gray-400 text-xs mr-2">No Student Record</span>
     {% endif %}
 
-    <!-- Block / Unblock -->
+    {% if fac %}
+      <a href="{{ url_for('faculty_edit', fid=fac.id) }}"
+         class="inline-block px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs mr-2">
+        Edit Faculty
+      </a>
+    {% endif %}
+
+    {% if stf %}
+      <a href="{{ url_for('staff_edit', sid=stf.id) }}"
+         class="inline-block px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs mr-2">
+        Edit Staff
+      </a>
+    {% endif %}
+
     <a href="{{ url_for('toggle_user', user_id=user.id) }}"
        class="inline-block px-3 py-1 rounded text-white text-xs {{ 'bg-yellow-500' if user.is_active else 'bg-green-600' }}">
       {{ 'Block' if user.is_active else 'Unblock' }}
     </a>
 
-    <!-- Delete -->
     <a href="{{ url_for('delete_user', user_id=user.id) }}"
        class="inline-block px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs ml-2"
        onclick="return confirm('Are you sure you want to delete this user?');">

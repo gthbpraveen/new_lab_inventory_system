@@ -1,10 +1,24 @@
 {% extends "login_home.html" %}
 {% block content %}
 <div class="container mx-auto px-6 py-6">
-  <h1 class="text-2xl font-bold text-indigo-800 mb-6">Assign Workstation</h1>
+  <h1 class="text-2xl font-bold text-indigo-800 mb-6">
+    Assign Workstation
+    {% if owner_type == "faculty" %}to Faculty{% elif owner_type == "staff" %}to Staff{% else %}to Student{% endif %}
+  </h1>
 
   <!-- Filter Form -->
   <form method="get" class="flex flex-wrap items-end gap-4 bg-blue-50 p-4 rounded-lg mb-6">
+    <input type="hidden" name="owner_type" value="{{ owner_type or 'student' }}">
+    {% if prefill_roll %}
+      <input type="hidden" name="student_roll" value="{{ prefill_roll }}">
+    {% endif %}
+    {% if prefill_faculty %}
+      <input type="hidden" name="faculty_id" value="{{ prefill_faculty.id }}">
+    {% endif %}
+    {% if prefill_staff %}
+      <input type="hidden" name="staff_id" value="{{ prefill_staff.id }}">
+    {% endif %}
+
     <!-- Location -->
     <div>
       <label for="location" class="block text-gray-700 font-medium mb-1">Location</label>
@@ -34,6 +48,8 @@
 
   <!-- Assignment Form -->
   <form method="post" class="bg-white shadow rounded-lg p-6">
+    <input type="hidden" name="owner_type" value="{{ owner_type or 'student' }}">
+
     <div class="mb-4">
       <label for="workstation_id" class="block text-gray-700 font-medium mb-2">Available Workstations</label>
       <select name="workstation_id" id="workstation_id" required class="border rounded-md px-3 py-2 w-full">
@@ -46,16 +62,36 @@
       </select>
     </div>
 
-<div class="mb-4">
-  <label for="student_roll" class="block text-gray-700 font-medium mb-2">Student Roll</label>
-  <input type="text" name="student_roll" id="student_roll"
-       value="{{ prefill_roll }}" 
-       class="border rounded-md px-3 py-2 w-full bg-gray-100"
-       {% if prefill_roll %}readonly{% endif %}
-       required>
+    {# ------- OWNER BLOCK ------- #}
+    {% if owner_type == "faculty" and prefill_faculty %}
+      <div class="mb-4">
+        <label class="block text-gray-700 font-medium mb-2">Faculty</label>
+        <div class="border rounded-md px-3 py-2 w-full bg-gray-100">
+          {{ prefill_faculty.faculty_id }} — {{ prefill_faculty.name }}
+        </div>
+        <input type="hidden" name="faculty_id" value="{{ prefill_faculty.id }}">
+      </div>
 
-</div>
+    {% elif owner_type == "staff" and prefill_staff %}
+      <div class="mb-4">
+        <label class="block text-gray-700 font-medium mb-2">Staff</label>
+        <div class="border rounded-md px-3 py-2 w-full bg-gray-100">
+          {{ prefill_staff.staff_id }} — {{ prefill_staff.name }}
+        </div>
+        <input type="hidden" name="staff_id" value="{{ prefill_staff.id }}">
+      </div>
 
+    {% else %}
+      {# default / student case #}
+      <div class="mb-4">
+        <label for="student_roll" class="block text-gray-700 font-medium mb-2">Student/Faculty/Staff ID</label>
+        <input type="text" name="student_roll" id="student_roll"
+               value="{{ prefill_roll }}"
+               class="border rounded-md px-3 py-2 w-full {% if prefill_roll %}bg-gray-100{% endif %}"
+               {% if prefill_roll %}readonly{% endif %}
+               {% if owner_type == "student" %}required{% endif %}>
+      </div>
+    {% endif %}
 
     <div class="mb-4">
       <label for="issue_date" class="block text-gray-700 font-medium mb-2">Issue Date</label>
@@ -72,31 +108,37 @@
       <textarea name="remarks" id="remarks" rows="3" class="border rounded-md px-3 py-2 w-full"></textarea>
     </div>
 
-    
-  <div class="flex items-center gap-3 mt-6">
-  <!-- Submit -->
-  <button type="submit" 
-          class="bg-green-600 text-white px-4 py-2 rounded-md shadow hover:bg-green-700">
-    Assign Asset
-  </button>
+    <div class="flex items-center gap-3 mt-6">
+      <!-- Submit -->
+      <button type="submit"
+              class="bg-green-600 text-white px-4 py-2 rounded-md shadow hover:bg-green-700">
+        Assign Asset
+      </button>
 
-  <!-- Back to Student Allotment -->
-  {% if prefill_roll %}
-    <a href="{{ url_for('allotment_options', roll=prefill_roll) }}"
-       class="bg-gray-500 text-white px-4 py-2 rounded-md shadow hover:bg-gray-600">
-      Back to Allotment Options
-    </a>
-  {% endif %}
+      <!-- Back to Allotment -->
+      {% if owner_type == "student" and prefill_roll %}
+        <a href="{{ url_for('allotment_options', roll=prefill_roll) }}"
+           class="bg-gray-500 text-white px-4 py-2 rounded-md shadow hover:bg-gray-600">
+          Back to Allotment Options
+        </a>
+      {% elif owner_type == "faculty" and prefill_faculty %}
+        <a href="{{ url_for('allotment_options_faculty', fid=prefill_faculty.id) }}"
+           class="bg-gray-500 text-white px-4 py-2 rounded-md shadow hover:bg-gray-600">
+          Back to Allotment Options
+        </a>
+      {% elif owner_type == "staff" and prefill_staff %}
+        <a href="{{ url_for('allotment_options_staff', sid=prefill_staff.id) }}"
+           class="bg-gray-500 text-white px-4 py-2 rounded-md shadow hover:bg-gray-600">
+          Back to Allotment Options
+        </a>
+      {% endif %}
 
-  <!-- Assignment List -->
-  <a href="{{ url_for('assignments_list') }}" 
-     class="bg-indigo-600 text-white px-4 py-2 rounded-md shadow hover:bg-indigo-700">
-    View Assignment List
-  </a>
-</div>
-
-
-
+      <!-- Assignment List -->
+      <a href="{{ url_for('assignments_list') }}"
+         class="bg-indigo-600 text-white px-4 py-2 rounded-md shadow hover:bg-indigo-700">
+        View Assignment List
+      </a>
+    </div>
   </form>
 </div>
 {% endblock %}

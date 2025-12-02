@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% block title %}Edit Staff Information{% endblock %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto bg-white rounded shadow p-6 page-transition">
+  <h1 class="border rounded px-3 py-2 text-xl bg-blue-50 mb-14 text-center font-bold">
+    Edit Staff Details
+  </h1>
+
+  <form action="{{ url_for('staff_edit', sid=staff.id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <label class="required-field block">Full Name</label>
+        <input type="text" name="name" value="{{ staff.name }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+
+      <div>
+        <label class="required-field block">Staff ID</label>
+        <input name="staff_id" value="{{ staff.staff_id }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+
+      <div>
+        <label class="required-field block">Date of Joining</label>
+        <input type="date" name="doj" value="{{ staff.doj }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="required-field block">Email</label>
+        <input name="email" type="email" value="{{ staff.email }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+
+      <div>
+        <label class="block">Mobile</label>
+        <input name="mobile" value="{{ staff.mobile or '' }}" class="w-full border rounded px-3 py-2">
+      </div>
+
+      <div>
+        <label class="block">Room Number</label>
+        <input name="room" value="{{ staff.room or '' }}" class="w-full border rounded px-3 py-2">
+      </div>
+
+      <div>
+        <label class="block">Years of Experience</label>
+        <input name="years_exp" value="{{ staff.years_exp or '' }}" readonly class="w-full border rounded px-3 py-2">
+      </div>
+
+      <div>
+        <label class="required-field block">Designation</label>
+        <select name="designation" class="w-full border rounded px-3 py-2" required>
+          <option value="">Select</option>
+          <option value="Lab Engineer" {% if staff.designation == 'Lab Engineer' %}selected{% endif %}>Lab Engineer</option>
+          <option value="Staff" {% if staff.designation == 'Staff' %}selected{% endif %}>Staff</option>
+          <option value="Technical Assistant" {% if staff.designation == 'Technical Assistant' %}selected{% endif %}>Technical Assistant</option>
+        </select>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="required-field block">Lab Incharge (hold Ctrl/Cmd to select multiple)</label>
+        <select name="lab_incharge" multiple class="w-full border rounded px-3 py-2">
+          {% for lab in labs %}
+            <option value="{{ lab.id }}" {% if lab in staff.lab_incharge %}selected{% endif %}>{{ lab.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block">Current Profile Photo</label>
+        {% if staff.profile_photo %}
+          <img src="{{ url_for('static', filename='uploads/' ~ staff.profile_photo) }}" class="w-32 border rounded">
+        {% else %}
+          <p class="text-red-600">No photo uploaded</p>
+        {% endif %}
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block">Upload New Photo (Optional)</label>
+        <input type="file" name="profile_photo" accept="image/png, image/jpeg" class="w-full border rounded px-3 py-2">
+        <p class="text-xs text-gray-500 mt-1">(Leave empty to keep current photo)</p>
+      </div>
+    </div>
+
+    <div class="mt-6 flex space-x-3">
+      <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Update</button>
+      <a href="{{ url_for('staff_register') }}" class="bg-gray-200 px-4 py-2 rounded">Cancel</a>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}

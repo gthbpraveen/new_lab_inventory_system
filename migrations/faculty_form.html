@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+{% block title %}Faculty Information{% endblock %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto bg-white rounded shadow p-6 page-transition">
+  <h1 class="border rounded px-3 py-2 text-xl bg-green-50 mb-14 text-center font-bold">
+    New Faculty Registration
+  </h1>
+
+  <form action="{{ url_for('faculty_register') }}" method="POST" enctype="multipart/form-data" class="space-y-4" id="facultyForm" novalidate>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- 1) Full Name -->
+      <div class="md:col-span-2">
+  <label for="name" class="required-field block">Full Name</label>
+  <select name="name" id="name" class="w-full border rounded px-3 py-2" required>
+    <option value="">Select Faculty Name</option>
+
+    {% set faculty_list = [
+      'Antony Franklin', 'Ashish Mishra', 'Bheemarjuna Reddy Tamma',
+      'KrishnaMohan C', 'Saketha Nath J', 'Jyothi Vedurada',
+      'Kotaro Kataoka', 'PandurangaRao M.V', 'Manish Singh',
+      'Maria Francis', 'Maunendra Sankar Desarkar', 'Aravind N.R',
+      'Nitin Saurabh', 'Praveen Tammana', 'Rajesh Kedia',
+      'Rakesh Venkat', 'Ramakrishna Upadrasta', 'Rameshwar Pratap',
+      'Rogers Mathew', 'Sathya Peri', 'Saurabh Kumar',
+      'Shirshendu Das', 'Sobhan Babu', 'Srijith P. K.',
+      'Subrahmanyam Kalyanasundaram', 'Vineeth N. Balasubramanian',
+      'Abhijit Das', 'Sandipan D', 'Anupam Sanghi'
+    ] %}
+
+    {% for f in faculty_list %}
+      <option value="{{ f }}" {% if faculty and faculty.name == f %}selected{% endif %}>
+        {{ f }}
+      </option>
+    {% endfor %}
+  </select>
+</div>
+
+      <!-- 2) Faculty ID -->
+      <div>
+        <label for="faculty_id" class="required-field block">Faculty ID</label>
+        <input name="faculty_id" id="faculty_id" value="{{ faculty.faculty_id if faculty else '' }}" class="w-full border rounded px-3 py-2" required>
+        <p class="text-xs text-gray-500 mt-1">Unique identifier used for internal records (e.g., FAC1234).</p>
+      </div>
+
+      <!-- 3) Date of Joining -->
+      <div>
+        <label for="doj" class="required-field block">Date of Joining</label>
+        <input type="date" name="doj" id="doj" value="{{ faculty.doj if faculty else '' }}" class="w-full border rounded px-3 py-2" required>
+        <p class="text-xs text-gray-500 mt-1">Used to compute years of experience automatically.</p>
+      </div>
+
+      <!-- 4) Email -->
+      <div class="md:col-span-2">
+        <label for="email" class="required-field block">Email</label>
+        <input name="email" id="email" value="{{ faculty.email if faculty else '' }}" type="email" class="w-full border rounded px-3 py-2" required placeholder="example@iith.ac.in" autocomplete="email">
+      </div>
+
+      <!-- 5) Mobile -->
+      <div>
+        <label for="mobile" class="block">Mobile</label>
+        <input name="mobile" id="mobile" value="{{ faculty.mobile if faculty else '' }}" class="w-full border rounded px-3 py-2" inputmode="tel" autocomplete="tel">
+      </div>
+
+      <!-- 6) Room Number -->
+      <div>
+        <label for="room" class="block">Room Number</label>
+        <input name="room" id="room" value="{{ faculty.room if faculty else '' }}" class="w-full border rounded px-3 py-2">
+      </div>
+
+      <!-- 7) Years of Experience (auto) -->
+      <div>
+        <label for="years_exp" class="block">Years of Experience</label>
+        <input name="years_exp" id="years_exp" value="{{ faculty.years_exp if faculty else '' }}" class="w-full border rounded px-3 py-2" readonly>
+        <p class="text-xs text-gray-500 mt-1">Automatically calculated from Date of Joining. You may edit if needed.</p>
+      </div>
+
+      <!-- 8) Designation -->
+      <div>
+        <label for="designation" class="required-field block">Designation</label>
+        <select name="designation" id="designation" class="w-full border rounded px-3 py-2" required>
+          <option value="">Select Designation</option>
+          <option value="Professor" {% if faculty and faculty.designation=='Professor' %}selected{% endif %}>Professor</option>
+          <option value="Associate Professor" {% if faculty and faculty.designation=='Associate Professor' %}selected{% endif %}>Associate Professor</option>
+          <option value="Assistant Professor" {% if faculty and faculty.designation=='Assistant Professor' %}selected{% endif %}>Assistant Professor</option>
+          <option value="Visiting Professor" {% if faculty and faculty.designation=='Visiting Professor' %}selected{% endif %}>Visiting Professor</option>
+          <option value="Adjunct Professor" {% if faculty and faculty.designation=='Adjunct Professor' %}selected{% endif %}>Adjunct Professor</option>
+        </select>
+      </div>
+
+      <!-- 9) Faculty Photo -->
+      <div class="md:col-span-2">
+        <label class="block required-field">Profile Photo (JPEG/PNG, max 50 KB)</label>
+        <input type="file" name="profile_photo" id="profile_photo" accept="image/png, image/jpeg" class="w-full border rounded px-3 py-2">
+        <p class="text-xs text-gray-500 mt-1">Upload a clear passport-size photo.</p>
+      </div>
+
+    </div>
+
+    <div class="mt-6 flex space-x-3">
+      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Save & Continue</button>
+      <a href="{{ url_for('faculty_register') }}" class="bg-gray-200 px-4 py-2 rounded">Back</a>
+    </div>
+  </form>
+</div>
+
+<!-- Client-side scripts: compute years from DOJ and validate photo size -->
+<script>
+(function () {
+  const dojEl = document.getElementById('doj');
+  const yearsEl = document.getElementById('years_exp');
+  const photoEl = document.getElementById('profile_photo');
+  const form = document.getElementById('facultyForm');
+
+  function computeYears() {
+    if (!dojEl || !yearsEl) return;
+    const v = dojEl.value;
+    if (!v) { yearsEl.value = ''; return; }
+    const doj = new Date(v);
+    const now = new Date();
+    let years = now.getFullYear() - doj.getFullYear();
+    const m = now.getMonth() - doj.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < doj.getDate())) years--; 
+    yearsEl.value = years >= 0 ? String(years) : '';
+  }
+
+  if (dojEl) dojEl.addEventListener('change', computeYears);
+  computeYears();
+
+  // Photo size validation (50 KB)
+  if (photoEl) {
+    photoEl.addEventListener('change', function () {
+      const f = this.files && this.files[0];
+      if (!f) return;
+      const max = 50 * 1024; // 50 KB
+      if (f.size > max) {
+        alert('Profile photo must be <= 50 KB. Please choose a smaller image.');
+        this.value = '';
+      }
+    });
+  }
+
+  // Final form validation: ensure required fields
+  form.addEventListener('submit', function (e) {
+    if (!document.getElementById('faculty_id').value) {
+      e.preventDefault(); alert('Please enter Faculty ID'); return;
+    }
+    if (!document.getElementById('doj').value) {
+      e.preventDefault(); alert('Please select Date of Joining'); return;
+    }
+    if (!document.getElementById('designation').value) {
+      e.preventDefault(); alert('Please select a designation'); return;
+    }
+  });
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "login_home.html" %}
+{% block title %}Staff Directory{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">CSE Staff Directory</h1>
+
+  <form method="GET" action="{{ url_for('staff_directory') }}" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 bg-white shadow p-4 rounded-lg mb-6">
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Name</label>
+      <input type="text" name="name" value="{{ selected_name or '' }}" class="w-full mt-1 px-3 py-2 border rounded" placeholder="Search by name">
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Staff ID</label>
+      <input type="text" name="staff_id" value="{{ selected_staff_id or '' }}" class="w-full mt-1 px-3 py-2 border rounded" placeholder="e.g. ST123">
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Joining Year</label>
+      <select name="joining_year" class="w-full mt-1 px-3 py-2 border rounded">
+        <option value="" {% if not selected_joining_year %}selected{% endif %}>All</option>
+        {% for y in joining_years %}
+          <option value="{{ y }}" {% if selected_joining_year == y|string %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Room</label>
+      <select name="room_lab_name" class="w-full mt-1 px-3 py-2 border rounded">
+        <option value="" {% if not selected_room %}selected{% endif %}>All</option>
+        {% for r in labs %}
+          <option value="{{ r }}" {% if selected_room == r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Designation</label>
+      <select name="designation" class="w-full mt-1 px-3 py-2 border rounded">
+        <option value="" {% if not selected_designation %}selected{% endif %}>All</option>
+        {% for d in designations %}
+          <option value="{{ d }}" {% if selected_designation == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="md:col-span-2 flex items-end">
+      <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">Search</button>
+    </div>
+  </form>
+
+  {% if staff_pagination.items %}
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white border border-gray-300">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="py-2 px-4 border">Name</th>
+          <th class="py-2 px-4 border">Staff ID</th>
+          <th class="py-2 px-4 border">Joining Year</th>
+          <th class="py-2 px-4 border">Room</th>
+          <th class="py-2 px-4 border">Designation</th>
+          <th class="py-2 px-4 border">Lab Incharge</th>
+          <th class="py-2 px-4 border">Email</th>
+          <th class="py-2 px-4 border">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in staff_pagination.items %}
+        <tr class="text-sm text-gray-800 hover:bg-gray-50">
+          <td class="py-2 px-4 border">{{ s.name }}</td>
+          <td class="py-2 px-4 border">
+            <a href="{{ url_for('allotment_options_staff', sid=s.id) }}" class="text-blue-600 hover:underline">{{ s.staff_id or '' }}</a>
+          </td>
+          <td class="py-2 px-4 border">{{ s.doj.year if s.doj else '' }}</td>
+          <td class="py-2 px-4 border">{{ s.room or '' }}</td>
+          <td class="py-2 px-4 border">{{ s.designation or '' }}</td>
+          <td class="py-2 px-4 border">
+            {% for lab in s.lab_incharge %}
+              <span class="inline-block px-2 py-1 text-xs bg-gray-100 rounded mr-1">{{ lab.name }}</span>
+            {% endfor %}
+          </td>
+          <td class="py-2 px-4 border">{{ s.email or '' }}</td>
+          <td class="py-2 px-4 border">
+            <a href="{{ url_for('staff_edit', sid=s.id) }}" class="px-3 py-1 bg-indigo-600 text-white rounded text-xs">Edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex justify-center mt-6 space-x-2">
+    {% if staff_pagination.has_prev %}
+      <a href="{{ url_for('staff_directory', page=staff_pagination.prev_num,
+                          name=selected_name, staff_id=selected_staff_id,
+                          joining_year=selected_joining_year, room_lab_name=selected_room,
+                          designation=selected_designation, lab=selected_lab) }}"
+         class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">Previous</a>
+    {% endif %}
+    <span class="px-4 py-2 bg-gray-100 rounded">Page {{ staff_pagination.page }} of {{ staff_pagination.pages }}</span>
+    {% if staff_pagination.has_next %}
+      <a href="{{ url_for('staff_directory', page=staff_pagination.next_num,
+                          name=selected_name, staff_id=selected_staff_id,
+                          joining_year=selected_joining_year, room_lab_name=selected_room,
+                          designation=selected_designation, lab=selected_lab) }}"
+         class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">Next</a>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <p class="text-gray-600 text-center mt-8">No staff found matching your search criteria.</p>
+  {% endif %}
+
+</div>
+{% endblock %}

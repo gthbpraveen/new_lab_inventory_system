@@ -1,0 +1,298 @@
+{% extends "login_home.html" %}
+{% block title %}Faculty Hub{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+  {% if faculty %}
+  <!-- Header -->
+  <div class="bg-white/90 backdrop-blur shadow-xl rounded-2xl border border-gray-200 overflow-hidden mb-8">
+    <div class="bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-700 h-2"></div>
+    <div class="p-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+        <div class="md:w-1/2 w-full">
+          <div class="flex items-center gap-4">
+            <div class="h-14 w-14 rounded-full bg-indigo-100 flex items-center justify-center shadow">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M20 21a8 8 0 10-16 0"/>
+                <circle cx="12" cy="8" r="4" stroke-width="1.6"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-3xl font-extrabold text-indigo-800 tracking-wide">{{ faculty.name }}</h2>
+              <p class="mt-1 text-gray-700">
+                <span class="inline-flex items-center gap-2 mr-3">
+                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">Faculty ID</span>
+                  <span class="font-semibold text-gray-900">{{ faculty.faculty_id or '—' }}</span>
+                </span>
+                <span class="inline-flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">Designation</span>
+                  <span class="text-indigo-700 font-medium">{{ faculty.designation or '—' }}</span>
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="md:w-1/2 w-full">
+          {% if current_room %}
+          <div class="relative overflow-hidden rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white shadow-lg p-6">
+            <div>
+              <p class="text-xs uppercase tracking-wider text-indigo-200">Office</p>
+              <p class="mt-1 text-lg text-indigo-100">Room</p>
+              <p class="text-2xl font-bold">{{ current_room }}</p>
+            </div>
+          </div>
+          {% else %}
+          <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 text-center p-6">
+            <p class="text-gray-500 italic">No office assigned</p>
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="bg-white rounded-2xl shadow p-6 border border-gray-200 mb-6">
+    <h3 class="text-xl font-bold text-indigo-800 mb-4">⚡ Quick Allotment Options</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <a href="{{ url_for('space_allocation_faculty', pid=faculty.id) }}" class="group block rounded-xl border border-blue-100 bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 shadow hover:shadow-lg transition">
+        <div class="flex items-center justify-center mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-95" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18h12M8 12h8v6H8v-6zM8 4h8v6H8z"/></svg>
+        </div>
+        <h4 class="font-semibold text-lg">Allocate / Reassign Office</h4>
+        <p class="mt-1 text-sm text-blue-100/90">Assign faculty to an office</p>
+      </a>
+
+      <a href="{{ url_for('assignments_list_faculty', pid=faculty.id) }}" class="group block rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white p-6 shadow hover:shadow-lg transition">
+        <div class="flex items-center justify-center mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-95" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8" stroke-linecap="round"/></svg>
+        </div>
+        <h4 class="font-semibold text-lg">Workstation Assignments</h4>
+        <p class="mt-1 text-sm text-emerald-100/90">View or issue workstations</p>
+      </a>
+
+      <a href="{{ url_for('it_equipment_assign_faculty', pid=faculty.id) }}" class="group block rounded-xl border border-purple-100 bg-gradient-to-br from-purple-600 to-purple-700 text-white p-6 shadow hover:shadow-lg transition">
+        <div class="flex items-center justify-center mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-95" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M8 18v2h8v-2"/></svg>
+        </div>
+        <h4 class="font-semibold text-lg">IT Equipment</h4>
+        <p class="mt-1 text-sm text-purple-100/90">Manage devices & accessories</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="mt-8">
+    <nav class="flex flex-wrap gap-2">
+      <button data-tab="profile" class="tab-link px-4 py-2 rounded-full border border-indigo-200 text-indigo-700 bg-indigo-50 font-medium">Profile</button>
+      <button data-tab="space" class="tab-link px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50">Office</button>
+      <button data-tab="workstations" class="tab-link px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50">Workstations</button>
+      <button data-tab="equipment" class="tab-link px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50">Equipment</button>
+    </nav>
+  </div>
+
+  <!-- Tab Contents -->
+  <div id="tab-contents" class="mt-4">
+
+    <!-- Profile -->
+    <div id="profile" class="tab-content">
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200 relative">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">👨‍🏫 Faculty Information</h3>
+        <a href="{{ url_for('faculty_edit', fid=faculty.id) }}" class="absolute top-6 right-6 inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-lg">✏️ Edit</a>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-800 mt-6">
+          <p><strong>Faculty ID:</strong> {{ faculty.faculty_id or '—' }}</p>
+          <p><strong>Name:</strong> {{ faculty.name }}</p>
+          <p><strong>Designation:</strong> {{ faculty.designation or '—' }}</p>
+          <p><strong>Room:</strong> {{ faculty.room or '—' }}</p>
+          <p><strong>Email:</strong> {{ faculty.email or '—' }}</p>
+          <p><strong>Phone:</strong> {{ faculty.mobile or '—' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Office / Space -->
+    <div id="space" class="tab-content hidden">
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">🏢 Office Allocation</h3>
+
+        {% if current_room %}
+          <div class="rounded-lg bg-indigo-50 border border-indigo-100 p-4 text-indigo-900">
+            <span class="font-semibold">Current:</span>
+            <span class="ml-1">{{ current_room }}</span>
+          </div>
+        {% else %}
+          <p class="text-gray-500 mb-3">❌ No current office allocated</p>
+        {% endif %}
+
+        <a href="{{ url_for('space_allocation_faculty', pid=faculty.id) }}" class="mt-4 inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Manage Office</a>
+      </div>
+    </div>
+
+    <!-- Workstations -->
+    <div id="workstations" class="tab-content hidden">
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">💻 Workstation Assignments</h3>
+
+        <h4 class="font-semibold text-gray-800 mb-2">Current</h4>
+        {% if workstation_active %}
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full text-center">
+              <thead class="bg-gray-50 text-gray-700">
+                <tr>
+                  <th class="px-4 py-2 border-b">Manufacturer</th>
+                  <th class="px-4 py-2 border-b">Model</th>
+                  <th class="px-4 py-2 border-b">Serial</th>
+                  <th class="px-4 py-2 border-b">Assigned Date</th>
+                  <th class="px-4 py-2 border-b">Return Date</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {% for ws in workstation_active %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-2">{{ ws.asset.manufacturer or ws.asset.otherManufacturer }}</td>
+                  <td class="px-4 py-2">{{ ws.asset.model }}</td>
+                  <td class="px-4 py-2">{{ ws.asset.serial }}</td>
+                  <td class="px-4 py-2">{{ ws.issue_date[:10] if ws.issue_date else '—' }}</td>
+                  <td class="px-4 py-2">{{ ws.system_required_till[:10] if ws.system_required_till else '—' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-gray-500 mb-4">No active workstations</p>
+        {% endif %}
+
+        <h4 class="font-semibold text-gray-800 mt-6 mb-2">History</h4>
+        {% if workstation_history %}
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full text-center">
+              <thead class="bg-gray-50 text-gray-700">
+                <tr>
+                  <th class="px-4 py-2 border-b">Manufacturer</th>
+                  <th class="px-4 py-2 border-b">Model</th>
+                  <th class="px-4 py-2 border-b">Serial</th>
+                  <th class="px-4 py-2 border-b">Assigned Date</th>
+                  <th class="px-4 py-2 border-b">Return Date</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {% for ws in workstation_history %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-2">{{ ws.asset.manufacturer or ws.asset.otherManufacturer }}</td>
+                  <td class="px-4 py-2">{{ ws.asset.model }}</td>
+                  <td class="px-4 py-2">{{ ws.asset.serial }}</td>
+                  <td class="px-4 py-2">{{ ws.issue_date[:10] if ws.issue_date else '—' }}</td>
+                  <td class="px-4 py-2">{{ ws.end_date[:10] if ws.end_date else '—' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-gray-500">No workstation history</p>
+        {% endif %}
+
+        <a href="{{ url_for('assignment_new_faculty', pid=faculty.id) }}" class="mt-6 inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Assign New Workstation</a>
+      </div>
+    </div>
+
+    <!-- Equipment -->
+    <div id="equipment" class="tab-content hidden">
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">🖥️ IT Equipment</h3>
+
+        <h4 class="font-semibold text-gray-800 mb-2">Current</h4>
+        {% if equipment_active %}
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full text-center">
+              <thead class="bg-gray-50 text-gray-700">
+                <tr>
+                  <th class="px-4 py-2 border-b">Name</th>
+                  <th class="px-4 py-2 border-b">Category</th>
+                  <th class="px-4 py-2 border-b">Serial</th>
+                  <th class="px-4 py-2 border-b">Assigned Date</th>
+                  <th class="px-4 py-2 border-b">Return Date</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {% for eq in equipment_active %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-2">{{ eq.name }}</td>
+                  <td class="px-4 py-2">{{ eq.category }}</td>
+                  <td class="px-4 py-2">{{ eq.serial_number }}</td>
+                  <td class="px-4 py-2">{{ eq.assigned_date or '—' }}</td>
+                  <td class="px-4 py-2">{{ eq.expected_return_date or '—' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-gray-500 mb-4">No active equipment</p>
+        {% endif %}
+
+        <h4 class="font-semibold text-gray-800 mt-6 mb-2">History</h4>
+        {% if equipment_history %}
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="min-w-full text-center">
+              <thead class="bg-gray-50 text-gray-700">
+                <tr>
+                  <th class="px-4 py-2 border-b">Name</th>
+                  <th class="px-4 py-2 border-b">Category</th>
+                  <th class="px-4 py-2 border-b">Serial</th>
+                  <th class="px-4 py-2 border-b">Assigned Date</th>
+                  <th class="px-4 py-2 border-b">Return Date</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {% for eq in equipment_history %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-2">{{ eq.equipment_obj.name if eq.equipment_obj else '—' }}</td>
+                  <td class="px-4 py-2">{{ eq.equipment_obj.category if eq.equipment_obj else '—' }}</td>
+                  <td class="px-4 py-2">{{ eq.equipment_obj.serial_number if eq.equipment_obj else '—' }}</td>
+                  <td class="px-4 py-2">{{ eq.assigned_date or '—' }}</td>
+                  <td class="px-4 py-2">{{ eq.unassigned_date or '—' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-gray-500">No equipment history</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom actions -->
+  <div class="mt-10 flex justify-center gap-4">
+    <a href="{{ url_for('faculty_list') }}" class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-5 py-2.5 rounded-lg shadow-sm">← Back to Faculty</a>
+    <a href="{{ url_for('login_home') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow">🏠 Dashboard</a>
+  </div>
+
+  {% endif %}
+</div>
+
+<script>
+  const tabLinks = document.querySelectorAll(".tab-link");
+  const tabContents = document.querySelectorAll(".tab-content");
+  function setActiveTab(tab) {
+    tabLinks.forEach(l => {
+      l.classList.remove("bg-indigo-50","border-indigo-200","text-indigo-700","font-medium");
+      l.classList.add("border-gray-200","text-gray-600");
+      if (l.dataset.tab === tab) {
+        l.classList.remove("border-gray-200","text-gray-600");
+        l.classList.add("bg-indigo-50","border-indigo-200","text-indigo-700","font-medium");
+      }
+    });
+    tabContents.forEach(c => c.classList.toggle("hidden", c.id !== tab));
+  }
+  tabLinks.forEach(link => link.addEventListener("click", () => setActiveTab(link.dataset.tab)));
+  setActiveTab("profile");
+</script>
+{% endblock %}

@@ -1,23 +1,67 @@
 {% extends "login_home.html" %}
 {% block title %}Assignments{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto py-8 px-4 space-y-6">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-gray-800">Active Workstation Assignments</h1>
-    {% if roll %}
-<a href="{{ url_for('assignment_new', student_roll=roll) }}" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">+ New Assignment</a>
-{% else %}
-<a href="{{ url_for('assignment_new') }}" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">+ New Assignment</a>
-{% endif %}
 
-    <!-- <a href="{{ url_for('assignment_new') }}" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">+ New Assignment</a> -->
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Active Workstation Assignments</h1>
+      {% if owner_type and owner %}
+        <p class="text-sm text-gray-600 mt-1">
+          For
+          {% if owner_type == 'student' %}
+            Student:
+            <span class="font-semibold">{{ owner.name }}</span>
+            (<span class="font-mono">{{ owner.roll }}</span>)
+          {% elif owner_type == 'staff' %}
+            Staff:
+            <span class="font-semibold">{{ owner.name }}</span>
+            (<span class="font-mono">{{ owner.staff_id }}</span>)
+          {% else %}
+            Faculty:
+            <span class="font-semibold">{{ owner.name }}</span>
+            (<span class="font-mono">{{ owner.faculty_id }}</span>)
+          {% endif %}
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- New Assignment button -->
+    <div>
+      {% if owner_type == 'student' and owner %}
+        <a href="{{ url_for('assignment_new', student_roll=owner.roll) }}"
+           class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+          + New Assignment
+        </a>
+      {% elif owner_type == 'staff' and owner %}
+        <a href="{{ url_for('assignment_new_staff', pid=owner.id) }}"
+           class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+          + New Assignment
+        </a>
+      {% elif owner_type == 'faculty' and owner %}
+        <a href="{{ url_for('assignment_new_faculty', pid=owner.id) }}"
+           class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+          + New Assignment
+        </a>
+      {% else %}
+        <a href="{{ url_for('assignment_new') }}"
+           class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+          + New Assignment
+        </a>
+      {% endif %}
+    </div>
   </div>
 
-  <form method="GET" class="flex gap-3 items-end">
+  <!-- Filters -->
+  <form method="GET" class="flex flex-wrap gap-3 items-end">
+    {% if not owner_type or owner_type == 'student' %}
     <div>
       <label class="block text-sm">Filter by Roll</label>
-      <input name="roll" value="{{ roll or '' }}" class="border rounded px-2 py-1" />
+      <input name="roll" value="{{ roll or '' or pid}}" class="border rounded px-2 py-1" />
     </div>
+    {% endif %}
     <div>
       <label class="block text-sm">Filter by Serial</label>
       <input name="serial" value="{{ serial or '' }}" class="border rounded px-2 py-1" />
@@ -25,12 +69,15 @@
     <button class="px-3 py-2 bg-blue-600 text-white rounded">Filter</button>
   </form>
 
+  <!-- Table -->
   <div class="overflow-auto border rounded">
     <table class="min-w-full text-sm">
       <thead class="bg-gray-100">
         <tr>
           <th class="px-3 py-2 text-left">ID</th>
-          <th class="px-3 py-2 text-left">Roll</th>
+          <th class="px-3 py-2 text-left">Owner Type</th>
+          <th class="px-3 py-2 text-left">Owner ID</th>
+          <th class="px-3 py-2 text-left">Owner Name</th>
           <th class="px-3 py-2 text-left">Serial</th>
           <th class="px-3 py-2 text-left">Model</th>
           <th class="px-3 py-2 text-left">Issue</th>
@@ -40,11 +87,33 @@
       </thead>
       <tbody>
         {% for a in assignments %}
+        {% set otype = 'student' if a.student_roll else ('staff' if a.staff_id else ('faculty' if a.faculty_id else '')) %}
+
+        {% if otype == 'student' %}
+          {% set o = a.student_owner %}
+        {% elif otype == 'staff' %}
+          {% set o = a.staff_owner %}
+        {% elif otype == 'faculty' %}
+          {% set o = a.faculty_owner %}
+        {% else %}
+          {% set o = None %}
+        {% endif %}
+
         <tr class="border-t">
           <td class="px-3 py-2">{{ a.id }}</td>
-          <td class="px-3 py-2">{{ a.student_roll }}</td>
+          <td class="px-3 py-2 capitalize">{{ otype or '-' }}</td>
+          <td class="px-3 py-2">
+            {% if otype == 'student' and o %}{{ o.roll }}
+            {% elif otype == 'staff' and o %}{{ o.staff_id }}
+            {% elif otype == 'faculty' and o %}{{ o.faculty_id }}
+            {% else %}-{% endif %}
+          </td>
+          <td class="px-3 py-2">{{ o.name if o else '-' }}</td>
           <td class="px-3 py-2">{{ a.asset.serial if a.asset else '-' }}</td>
-          <td class="px-3 py-2">{{ a.asset.manufacturer if a.asset else '' }} {{ a.asset.model if a.asset else '' }}</td>
+          <td class="px-3 py-2">
+            {{ a.asset.manufacturer if a.asset else '' }}
+            {{ a.asset.model if a.asset else '' }}
+          </td>
           <td class="px-3 py-2">{{ a.issue_date or '-' }}</td>
           <td class="px-3 py-2">{{ a.system_required_till or '-' }}</td>
           <td class="px-3 py-2">
@@ -59,11 +128,18 @@
     </table>
   </div>
 
+  <!-- Bottom links -->
   <div class="mt-6 flex gap-4">
     <a href="{{ url_for('assets_list') }}" class="underline text-blue-700">Back to Assets →</a>
 
-    {% if roll %}
-      <a href="{{ url_for('allotment_options', roll=roll) }}" 
+    {% if owner_type == 'student' and owner %}
+      <a href="{{ url_for('allotment_options', roll=owner.roll) }}"
+         class="underline text-purple-700">Back to Allotment Options →</a>
+    {% elif owner_type == 'staff' and owner %}
+      <a href="{{ url_for('allotment_options_staff', sid=owner.id) }}"
+         class="underline text-purple-700">Back to Allotment Options →</a>
+    {% elif owner_type == 'faculty' and owner %}
+      <a href="{{ url_for('allotment_options_faculty', fid=owner.id) }}"
          class="underline text-purple-700">Back to Allotment Options →</a>
     {% endif %}
   </div>

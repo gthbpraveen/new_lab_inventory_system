@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+{% block title %}Edit Faculty Information{% endblock %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto bg-white rounded shadow p-6 page-transition">
+  <h1 class="border rounded px-3 py-2 text-xl bg-green-50 mb-14 text-center font-bold">
+    Edit Faculty Details
+  </h1>
+
+  <form action="{{ url_for('faculty_edit', fid=faculty.id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Full Name -->
+      <div class="md:col-span-2">
+        <label class="required-field block">Full Name</label>
+        <input type="text" name="name" value="{{ faculty.name }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+
+      <!-- Faculty ID -->
+      <div>
+        <label class="required-field block">Faculty ID</label>
+        <input name="faculty_id" value="{{ faculty.faculty_id }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+
+      <!-- Date of Joining -->
+      <div>
+        <label class="required-field block">Date of Joining</label>
+        <input type="date" name="doj" value="{{ faculty.doj }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+
+      <!-- Email -->
+      <div class="md:col-span-2">
+        <label class="required-field block">Email</label>
+        <input name="email" type="email" value="{{ faculty.email }}" class="w-full border rounded px-3 py-2" required>
+      </div>
+
+      <!-- Mobile -->
+      <div>
+        <label class="block">Mobile</label>
+        <input name="mobile" value="{{ faculty.mobile or '' }}" class="w-full border rounded px-3 py-2">
+      </div>
+
+      <!-- Room -->
+      <div>
+        <label class="block">Room Number</label>
+        <input name="room" value="{{ faculty.room or '' }}" class="w-full border rounded px-3 py-2">
+      </div>
+
+      <!-- Years -->
+      <div>
+        <label class="block">Years of Experience</label>
+        <input name="years_exp" value="{{ faculty.years_exp or '' }}" readonly class="w-full border rounded px-3 py-2">
+      </div>
+
+      <!-- Designation -->
+      <div>
+        <label class="required-field block">Designation</label>
+        <select name="designation" class="w-full border rounded px-3 py-2" required>
+          <option value="">Select</option>
+          <option value="Professor" {% if faculty.designation == 'Professor' %}selected{% endif %}>Professor</option>
+          <option value="Associate Professor" {% if faculty.designation == 'Associate Professor' %}selected{% endif %}>Associate Professor</option>
+          <option value="Assistant Professor" {% if faculty.designation == 'Assistant Professor' %}selected{% endif %}>Assistant Professor</option>
+          <option value="Visiting Professor" {% if faculty.designation == 'Visiting Professor' %}selected{% endif %}>Visiting Professor</option>
+          <option value="Adjunct Professor" {% if faculty.designation == 'Adjunct Professor' %}selected{% endif %}>Adjunct Professor</option>
+        </select>
+      </div>
+
+      <!-- Current Photo Preview -->
+      <div class="md:col-span-2">
+        <label class="block">Current Profile Photo</label>
+        {% if faculty.profile_photo %}
+          <img src="{{ url_for('static', filename='uploads/' ~ faculty.profile_photo) }}" class="w-32 border rounded">
+        {% else %}
+          <p class="text-red-600">No photo uploaded</p>
+        {% endif %}
+      </div>
+
+      <!-- Upload New Photo -->
+      <div class="md:col-span-2">
+        <label class="block">Upload New Photo (Optional)</label>
+        <input type="file" name="profile_photo" accept="image/png, image/jpeg" class="w-full border rounded px-3 py-2">
+        <p class="text-xs text-gray-500 mt-1">(Leave empty to keep current photo)</p>
+      </div>
+    </div>
+
+    <div class="mt-6 flex space-x-3">
+      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Update</button>
+      <a href="{{ url_for('faculty_register') }}" class="bg-gray-200 px-4 py-2 rounded">Cancel</a>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}
