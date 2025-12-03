@@ -10,73 +10,79 @@
   <form action="{{ url_for('faculty_register') }}" method="POST" enctype="multipart/form-data" class="space-y-4" id="facultyForm" novalidate>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- 1) Full Name -->
+      <!-- Full Name (dropdown list) -->
       <div class="md:col-span-2">
-  <label for="name" class="required-field block">Full Name</label>
-  <select name="name" id="name" class="w-full border rounded px-3 py-2" required>
-    <option value="">Select Faculty Name</option>
+        <label for="name" class="required-field block">Full Name</label>
+        {% set faculty_list = [
+          'Antony Franklin','Ashish Mishra','Bheemarjuna Reddy Tamma',
+          'KrishnaMohan C','Saketha Nath J','Jyothi Vedurada',
+          'Kotaro Kataoka','PandurangaRao M.V','Manish Singh',
+          'Maria Francis','Maunendra Sankar Desarkar','Aravind N.R',
+          'Nitin Saurabh','Praveen Tammana','Rajesh Kedia',
+          'Rakesh Venkat','Ramakrishna Upadrasta','Rameshwar Pratap',
+          'Rogers Mathew','Sathya Peri','Saurabh Kumar',
+          'Shirshendu Das','Sobhan Babu','Srijith P. K.',
+          'Subrahmanyam Kalyanasundaram','Vineeth N. Balasubramanian',
+          'Abhijit Das','Sandipan D','Anupam Sanghi'
+        ] %}
+        <select name="name" id="name" class="w-full border rounded px-3 py-2" required>
+          <option value="">Select Faculty Name</option>
+          {% for f in faculty_list %}
+            <option value="{{ f }}" {% if faculty and faculty.name == f %}selected{% endif %}>{{ f }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    {% set faculty_list = [
-      'Antony Franklin', 'Ashish Mishra', 'Bheemarjuna Reddy Tamma',
-      'KrishnaMohan C', 'Saketha Nath J', 'Jyothi Vedurada',
-      'Kotaro Kataoka', 'PandurangaRao M.V', 'Manish Singh',
-      'Maria Francis', 'Maunendra Sankar Desarkar', 'Aravind N.R',
-      'Nitin Saurabh', 'Praveen Tammana', 'Rajesh Kedia',
-      'Rakesh Venkat', 'Ramakrishna Upadrasta', 'Rameshwar Pratap',
-      'Rogers Mathew', 'Sathya Peri', 'Saurabh Kumar',
-      'Shirshendu Das', 'Sobhan Babu', 'Srijith P. K.',
-      'Subrahmanyam Kalyanasundaram', 'Vineeth N. Balasubramanian',
-      'Abhijit Das', 'Sandipan D', 'Anupam Sanghi'
-    ] %}
-
-    {% for f in faculty_list %}
-      <option value="{{ f }}" {% if faculty and faculty.name == f %}selected{% endif %}>
-        {{ f }}
-      </option>
-    {% endfor %}
-  </select>
-</div>
-
-      <!-- 2) Faculty ID -->
+      <!-- Faculty ID -->
       <div>
         <label for="faculty_id" class="required-field block">Faculty ID</label>
         <input name="faculty_id" id="faculty_id" value="{{ faculty.faculty_id if faculty else '' }}" class="w-full border rounded px-3 py-2" required>
-        <p class="text-xs text-gray-500 mt-1">Unique identifier used for internal records (e.g., FAC1234).</p>
       </div>
 
-      <!-- 3) Date of Joining -->
+      <!-- Date of Joining -->
       <div>
         <label for="doj" class="required-field block">Date of Joining</label>
         <input type="date" name="doj" id="doj" value="{{ faculty.doj if faculty else '' }}" class="w-full border rounded px-3 py-2" required>
         <p class="text-xs text-gray-500 mt-1">Used to compute years of experience automatically.</p>
       </div>
 
-      <!-- 4) Email -->
+      <!-- Email -->
       <div class="md:col-span-2">
-        <label for="email" class="required-field block">Email</label>
-        <input name="email" id="email" value="{{ faculty.email if faculty else '' }}" type="email" class="w-full border rounded px-3 py-2" required placeholder="example@iith.ac.in" autocomplete="email">
+        <label for="email" class="required-field block">Email (@cse.iith.ac.in)</label>
+        <input name="email" id="email" value="{{ faculty.email if faculty else '' }}" type="email" class="w-full border rounded px-3 py-2" required placeholder="example@cse.iith.ac.in" autocomplete="email">
       </div>
 
-      <!-- 5) Mobile -->
+      <!-- Mobile -->
       <div>
         <label for="mobile" class="block">Mobile</label>
         <input name="mobile" id="mobile" value="{{ faculty.mobile if faculty else '' }}" class="w-full border rounded px-3 py-2" inputmode="tel" autocomplete="tel">
       </div>
 
-      <!-- 6) Room Number -->
+      <!-- Room dropdown -->
       <div>
         <label for="room" class="block">Room Number</label>
-        <input name="room" id="room" value="{{ faculty.room if faculty else '' }}" class="w-full border rounded px-3 py-2">
+        {% set office_rooms = [
+          'CS-102','CS-203','CS-205',
+          'CS-302','CS-303','CS-304','CS-305','CS-306','CS-307','CS-308','CS-309','CS-310','CS-311','CS-312','CS-313','CS-314','CS-315','CS-316',
+          'CS-402','CS-403','CS-404','CS-405','CS-406','CS-407','CS-408',
+          'CS-502','CS-503','CS-504','CS-505','CS-506','CS-507','CS-508','CS-509','CS-510','CS-511','CS-512','CS-513','CS-514','CS-515','CS-516','CS-517',
+          'CS-602','CS-603','CS-604','CS-606','CS-607','CS-608','CS-610'
+        ] %}
+        <select name="room" id="room" class="w-full border rounded px-3 py-2">
+          <option value="">-- Select Room --</option>
+          {% for r in office_rooms %}
+            <option value="{{ r }}" {% if faculty and faculty.room == r %}selected{% endif %}>{{ r }}</option>
+          {% endfor %}
+        </select>
       </div>
 
-      <!-- 7) Years of Experience (auto) -->
+      <!-- Years of Experience -->
       <div>
         <label for="years_exp" class="block">Years of Experience</label>
         <input name="years_exp" id="years_exp" value="{{ faculty.years_exp if faculty else '' }}" class="w-full border rounded px-3 py-2" readonly>
-        <p class="text-xs text-gray-500 mt-1">Automatically calculated from Date of Joining. You may edit if needed.</p>
       </div>
 
-      <!-- 8) Designation -->
+      <!-- Designation -->
       <div>
         <label for="designation" class="required-field block">Designation</label>
         <select name="designation" id="designation" class="w-full border rounded px-3 py-2" required>
@@ -89,13 +95,12 @@
         </select>
       </div>
 
-      <!-- 9) Faculty Photo -->
+      <!-- Photo -->
       <div class="md:col-span-2">
         <label class="block required-field">Profile Photo (JPEG/PNG, max 50 KB)</label>
         <input type="file" name="profile_photo" id="profile_photo" accept="image/png, image/jpeg" class="w-full border rounded px-3 py-2">
         <p class="text-xs text-gray-500 mt-1">Upload a clear passport-size photo.</p>
       </div>
-
     </div>
 
     <div class="mt-6 flex space-x-3">
@@ -105,7 +110,6 @@
   </form>
 </div>
 
-<!-- Client-side scripts: compute years from DOJ and validate photo size -->
 <script>
 (function () {
   const dojEl = document.getElementById('doj');
@@ -121,19 +125,18 @@
     const now = new Date();
     let years = now.getFullYear() - doj.getFullYear();
     const m = now.getMonth() - doj.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < doj.getDate())) years--; 
+    if (m < 0 || (m === 0 && now.getDate() < doj.getDate())) years--;
     yearsEl.value = years >= 0 ? String(years) : '';
   }
 
   if (dojEl) dojEl.addEventListener('change', computeYears);
   computeYears();
 
-  // Photo size validation (50 KB)
   if (photoEl) {
     photoEl.addEventListener('change', function () {
       const f = this.files && this.files[0];
       if (!f) return;
-      const max = 50 * 1024; // 50 KB
+      const max = 50 * 1024;
       if (f.size > max) {
         alert('Profile photo must be <= 50 KB. Please choose a smaller image.');
         this.value = '';
@@ -141,7 +144,6 @@
     });
   }
 
-  // Final form validation: ensure required fields
   form.addEventListener('submit', function (e) {
     if (!document.getElementById('faculty_id').value) {
       e.preventDefault(); alert('Please enter Faculty ID'); return;

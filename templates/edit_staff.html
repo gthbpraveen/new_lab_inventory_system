@@ -26,7 +26,7 @@
       </div>
 
       <div class="md:col-span-2">
-        <label class="required-field block">Email</label>
+        <label class="required-field block">Email (@cse.iith.ac.in)</label>
         <input name="email" type="email" value="{{ staff.email }}" class="w-full border rounded px-3 py-2" required>
       </div>
 
@@ -35,9 +35,22 @@
         <input name="mobile" value="{{ staff.mobile or '' }}" class="w-full border rounded px-3 py-2">
       </div>
 
+      <!-- Room dropdown -->
       <div>
         <label class="block">Room Number</label>
-        <input name="room" value="{{ staff.room or '' }}" class="w-full border rounded px-3 py-2">
+        {% set office_rooms = [
+          'CS-102','CS-103','CS-203','CS-205',
+          'CS-302','CS-303','CS-304','CS-305','CS-306','CS-307','CS-308','CS-309','CS-310','CS-311','CS-312','CS-313','CS-314','CS-315','CS-316',
+          'CS-402','CS-403','CS-404','CS-405','CS-406','CS-407','CS-408',
+          'CS-502','CS-503','CS-504','CS-505','CS-506','CS-507','CS-508','CS-509','CS-510','CS-511','CS-512','CS-513','CS-514','CS-515','CS-516','CS-517',
+          'CS-602','CS-603','CS-604','CS-606','CS-607','CS-608','CS-610'
+        ] %}
+        <select name="room" class="w-full border rounded px-3 py-2">
+          <option value="">-- Select Room --</option>
+          {% for r in office_rooms %}
+            <option value="{{ r }}" {% if staff.room == r %}selected{% endif %}>{{ r }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <div>
@@ -45,13 +58,19 @@
         <input name="years_exp" value="{{ staff.years_exp or '' }}" readonly class="w-full border rounded px-3 py-2">
       </div>
 
+      <!-- Designation dropdown -->
       <div>
         <label class="required-field block">Designation</label>
+        {% set staff_designations = [
+          'Junior Technician','Technician','Junior Technical Superintendent','Technical Superintendent',
+          'Senior Technical Superintendent','Technical Officer','Junior Assistant','Assistant',
+          'Senior Assistant','Section Officer'
+        ] %}
         <select name="designation" class="w-full border rounded px-3 py-2" required>
           <option value="">Select</option>
-          <option value="Lab Engineer" {% if staff.designation == 'Lab Engineer' %}selected{% endif %}>Lab Engineer</option>
-          <option value="Staff" {% if staff.designation == 'Staff' %}selected{% endif %}>Staff</option>
-          <option value="Technical Assistant" {% if staff.designation == 'Technical Assistant' %}selected{% endif %}>Technical Assistant</option>
+          {% for d in staff_designations %}
+            <option value="{{ d }}" {% if staff.designation == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
         </select>
       </div>
 
@@ -67,7 +86,7 @@
       <div class="md:col-span-2">
         <label class="block">Current Profile Photo</label>
         {% if staff.profile_photo %}
-          <img src="{{ url_for('static', filename='uploads/' ~ staff.profile_photo) }}" class="w-32 border rounded">
+          <img src="{{ url_for('static', filename=staff.profile_photo) }}" class="w-32 border rounded">
         {% else %}
           <p class="text-red-600">No photo uploaded</p>
         {% endif %}

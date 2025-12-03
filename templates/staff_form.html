@@ -25,7 +25,7 @@
       </div>
 
       <div class="md:col-span-2">
-        <label for="email" class="required-field block">Email</label>
+        <label for="email" class="required-field block">Email (@cse.iith.ac.in)</label>
         <input name="email" id="email" value="{{ staff.email if staff else '' }}" type="email" class="w-full border rounded px-3 py-2" required>
       </div>
 
@@ -34,9 +34,22 @@
         <input name="mobile" id="mobile" value="{{ staff.mobile if staff else '' }}" class="w-full border rounded px-3 py-2" inputmode="tel">
       </div>
 
+      <!-- Room dropdown -->
       <div>
         <label for="room" class="block">Room Number</label>
-        <input name="room" id="room" value="{{ staff.room if staff else '' }}" class="w-full border rounded px-3 py-2">
+        {% set office_rooms = [
+          'CS-102','CS-203','CS-205',
+          'CS-302','CS-303','CS-304','CS-305','CS-306','CS-307','CS-308','CS-309','CS-310','CS-311','CS-312','CS-313','CS-314','CS-315','CS-316',
+          'CS-402','CS-403','CS-404','CS-405','CS-406','CS-407','CS-408',
+          'CS-502','CS-503','CS-504','CS-505','CS-506','CS-507','CS-508','CS-509','CS-510','CS-511','CS-512','CS-513','CS-514','CS-515','CS-516','CS-517',
+          'CS-602','CS-603','CS-604','CS-606','CS-607','CS-608','CS-610'
+        ] %}
+        <select name="room" id="room" class="w-full border rounded px-3 py-2">
+          <option value="">-- Select Room --</option>
+          {% for r in office_rooms %}
+            <option value="{{ r }}" {% if staff and staff.room == r %}selected{% endif %}>{{ r }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <div>
@@ -44,13 +57,19 @@
         <input name="years_exp" id="years_exp" value="{{ staff.years_exp if staff else '' }}" class="w-full border rounded px-3 py-2" readonly>
       </div>
 
+      <!-- New designation dropdown -->
       <div>
         <label for="designation" class="required-field block">Designation</label>
+        {% set staff_designations = [
+          'Junior Technician','Technician','Junior Technical Superintendent','Technical Superintendent',
+          'Senior Technical Superintendent','Technical Officer','Junior Assistant','Assistant',
+          'Senior Assistant','Section Officer'
+        ] %}
         <select name="designation" id="designation" class="w-full border rounded px-3 py-2" required>
           <option value="">Select Designation</option>
-          <option value="Lab Engineer" {% if staff and staff.designation=='Lab Engineer' %}selected{% endif %}>Lab Engineer</option>
-          <option value="Staff" {% if staff and staff.designation=='Staff' %}selected{% endif %}>Staff</option>
-          <option value="Technical Assistant" {% if staff and staff.designation=='Technical Assistant' %}selected{% endif %}>Technical Assistant</option>
+          {% for d in staff_designations %}
+            <option value="{{ d }}" {% if staff and staff.designation == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
         </select>
       </div>
 
@@ -97,7 +116,7 @@
     const now = new Date();
     let years = now.getFullYear() - doj.getFullYear();
     const m = now.getMonth() - doj.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < doj.getDate())) years--; 
+    if (m < 0 || (m === 0 && now.getDate() < doj.getDate())) years--;
     yearsEl.value = years >= 0 ? String(years) : '';
   }
 
@@ -117,7 +136,6 @@
     });
   }
 
-  // Final form validation
   form.addEventListener('submit', function (e) {
     if (!document.getElementById('staff_id').value) {
       e.preventDefault(); alert('Please enter Staff ID'); return;

@@ -10,7 +10,7 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 import requests
 from flask_mail import Mail, Message
-
+from sqlalchemy.exc import IntegrityError
 
 # Models
 from models import (
@@ -161,6 +161,35 @@ def test_email():
     except Exception as e:
         return f"❌ Email test failed: {e}"
 
+# List of faculty/staff office rooms
+OFFICE_ROOMS = [
+    "CS-102", "CS-103",
+    "CS-203", "CS-205",
+    "CS-302", "CS-303", "CS-304", "CS-305", "CS-306", "CS-307", "CS-308", "CS-309",
+    "CS-310", "CS-311", "CS-312", "CS-313", "CS-314", "CS-315", "CS-316",
+    "CS-402", "CS-403", "CS-404", "CS-405", "CS-406", "CS-407", "CS-408",
+    "CS-502", "CS-503", "CS-504", "CS-505", "CS-506", "CS-507", "CS-508", "CS-509",
+    "CS-510", "CS-511", "CS-512", "CS-513", "CS-514", "CS-515", "CS-516", "CS-517",
+    "CS-602", "CS-603", "CS-604", "CS-606", "CS-607", "CS-608", "CS-610",
+]
+
+def build_office_status():
+    """
+    For each room code, return who is sitting there.
+    """
+    office_list = []
+    for code in OFFICE_ROOMS:
+        fac_list = Faculty.query.filter_by(room=code).all()
+        staff_list = Staff.query.filter_by(room=code).all()
+        office_list.append({
+            "room": code,
+            "occupied": bool(fac_list or staff_list),
+            "faculty": fac_list,
+            "staff": staff_list,
+            "total": len(fac_list) + len(staff_list),
+        })
+    return office_list
+
 
 
 def compute_years_from_date(d):
@@ -186,8 +215,6 @@ def login_home():
 def faculty_register():
     """
     Register a faculty profile and link/create a User with role 'faculty'.
-    - If user exists, link and set role='faculty'
-    - If not, create user with a random password (hashed) and flash the initial password
     """
     if request.method == "POST":
         faculty_id = request.form.get("faculty_id", "").strip()
@@ -203,6 +230,23 @@ def faculty_register():
             flash("Please fill all required fields.", "danger")
             return redirect(url_for("faculty_register"))
 
+        # Email domain check
+        if not email.endswith("@cse.iith.ac.in"):
+            flash("Faculty email must be an @cse.iith.ac.in address.", "danger")
+            return redirect(url_for("faculty_register"))
+
+        # Unique Faculty ID check
+        existing_faculty = Faculty.query.filter_by(faculty_id=faculty_id).first()
+        if existing_faculty:
+            flash(f"Faculty ID {faculty_id} already exists.", "danger")
+            return redirect(url_for("faculty_register"))
+
+        # Faculty email uniqueness (in Faculty table)
+        existing_faculty_email = Faculty.query.filter_by(email=email).first()
+        if existing_faculty_email:
+            flash(f"A faculty profile with email {email} already exists.", "danger")
+            return redirect(url_for("faculty_register"))
+
         # parse date
         try:
             doj = date.fromisoformat(doj_raw)
@@ -211,22 +255,16 @@ def faculty_register():
             return redirect(url_for("faculty_register"))
 
         # handle photo
-        # handle photo
         photo = request.files.get("profile_photo")
         photo_path = None
-
         if photo and photo.filename:
             filename = secure_filename(f"{faculty_id}_{photo.filename}")   # include faculty id
             save_path = os.path.join(app.config['UPLOAD_FOLDER'], "faculty")
-            os.makedirs(save_path, exist_ok=True)  # create folder if missing
+            os.makedirs(save_path, exist_ok=True)
             full_path = os.path.join(save_path, filename)
             photo.save(full_path)
-
-            # store relative path for template rendering
             photo_path = f"uploads/faculty/{filename}"
 
-
-        # create Faculty
         f = Faculty(
             faculty_id=faculty_id,
             name=name,
@@ -254,7 +292,13 @@ def faculty_register():
         else:
             raw_pass = secrets.token_urlsafe(10)
             pw_hash = generate_password_hash(raw_pass)
-            user = User(email=email, password=pw_hash, role="faculty", is_approved=True, approved_at=datetime.utcnow())
+            user = User(
+                email=email,
+                password=pw_hash,
+                role="faculty",
+                is_approved=True,
+                approved_at=datetime.utcnow()
+            )
             db.session.add(user)
             db.session.flush()  # populate user.id
             f.user = user
@@ -265,6 +309,8 @@ def faculty_register():
 
     # GET
     return render_template("faculty_form.html", faculty=None)
+
+
 # ---------- Faculty edit ----------
 @app.route("/faculty/edit/<int:fid>", methods=["GET", "POST"])
 @login_required  # optional: require login; remove if you don't use flask-login
@@ -342,6 +388,9 @@ def faculty_edit(fid):
 
 
 # ---------- Staff registration ----------
+
+
+
 @app.route("/staff/register", methods=["GET", "POST"])
 def staff_register():
     """
@@ -360,10 +409,29 @@ def staff_register():
         designation = request.form.get("designation", "").strip()
         lab_ids = request.form.getlist("lab_incharge") or []
 
+        # ---- Required fields ----
         if not (staff_id and name and doj_raw and email and designation):
             flash("Please fill all required fields.", "danger")
             return redirect(url_for("staff_register"))
 
+        # ---- Email domain check ----
+        if not email.endswith("@cse.iith.ac.in"):
+            flash("Staff email must be an @cse.iith.ac.in address.", "danger")
+            return redirect(url_for("staff_register"))
+
+        # ---- Unique Staff ID check ----
+        existing_staff = Staff.query.filter_by(staff_id=staff_id).first()
+        if existing_staff:
+            flash(f"Staff ID {staff_id} already exists.", "danger")
+            return redirect(url_for("staff_register"))
+
+        # ---- Staff email uniqueness (in Staff table) ----
+        existing_staff_email = Staff.query.filter_by(email=email).first()
+        if existing_staff_email:
+            flash(f"A staff profile with email {email} already exists.", "danger")
+            return redirect(url_for("staff_register"))
+
+        # parse date
         try:
             doj = date.fromisoformat(doj_raw)
         except Exception:
@@ -371,20 +439,15 @@ def staff_register():
             return redirect(url_for("staff_register"))
 
         # handle photo
-        # handle photo
         photo = request.files.get("profile_photo")
         photo_path = None
-
         if photo and photo.filename:
             filename = secure_filename(f"{staff_id}_{photo.filename}")   # include staff id
             save_path = os.path.join(app.config['UPLOAD_FOLDER'], "staff")
-            os.makedirs(save_path, exist_ok=True)  # create folder if missing
+            os.makedirs(save_path, exist_ok=True)
             full_path = os.path.join(save_path, filename)
             photo.save(full_path)
-
-            # store relative path
             photo_path = f"uploads/staff/{filename}"
-
 
         s = Staff(
             staff_id=staff_id,
@@ -411,6 +474,7 @@ def staff_register():
         # find or create user
         user = User.query.filter_by(email=email).first()
         if user:
+            # user already exists → just set as staff
             user.role = "staff"
             user.is_approved = True
             user.approved_at = datetime.utcnow()
@@ -420,9 +484,16 @@ def staff_register():
             flash("Staff profile created and linked to existing user.", "success")
             return redirect(url_for("staff_register"))
         else:
+            # new user
             raw_pass = secrets.token_urlsafe(10)
             pw_hash = generate_password_hash(raw_pass)
-            user = User(email=email, password=pw_hash, role="staff", is_approved=True, approved_at=datetime.utcnow())
+            user = User(
+                email=email,
+                password=pw_hash,
+                role="staff",
+                is_approved=True,
+                approved_at=datetime.utcnow()
+            )
             db.session.add(user)
             db.session.flush()
             s.user = user
@@ -432,6 +503,7 @@ def staff_register():
             return redirect(url_for("staff_register"))
 
     return render_template("staff_form.html", staff=None, labs=labs)
+
 
 
 # ---------- Staff edit ----------
@@ -1242,10 +1314,18 @@ def registered_users():
 
     users = User.query.order_by(User.registered_at.desc()).all()
 
-    # ✅ Map email → matching student entry (if exists)
-    student_map = { s.email: s for s in Student.query.all() }
+    # ✅ Map email → matching entries
+    student_map = {s.email: s for s in Student.query.all()}
+    faculty_map = {f.email: f for f in Faculty.query.all()}
+    staff_map   = {st.email: st for st in Staff.query.all()}
 
-    return render_template("registered_users.html", all_users=users, student_map=student_map)
+    return render_template(
+        "registered_users.html",
+        all_users=users,
+        student_map=student_map,
+        faculty_map=faculty_map,
+        staff_map=staff_map,
+    )
 
 
 
@@ -2949,31 +3029,328 @@ from flask_login import login_required, current_user
 from datetime import datetime
 from sqlalchemy import or_
 
+# @app.route("/it_equipment_assign/<roll>", methods=["GET", "POST"])
+# @login_required
+# def it_equipment_assign(roll):
+#     student = Student.query.filter_by(roll=roll).first_or_404()
+
+    # if request.method == "POST" and "return_equipment_id" in request.form:
+    #     equipment_id = request.form.get("return_equipment_id", type=int)
+    #     eq = Equipment.query.get_or_404(equipment_id)
+
+    #     if not eq.assigned_to_roll:
+    #         flash("This equipment is not currently assigned.", "warning")
+    #     else:
+          
+    #         assigned_date = eq.assigned_date
+    #         expected_return = getattr(eq, "expected_return", None)
+    #         return_date = datetime.utcnow()
+
+    #         eq.assigned_to_roll = None
+    #         eq.status = "Available"
+
+            
+    #         last_hist = EquipmentHistory.query.filter_by(
+    #             equipment_id=eq.id,
+    #             assigned_to_roll=student.roll
+    #         ).order_by(EquipmentHistory.id.desc()).first()
+    #         if last_hist and last_hist.unassigned_date is None:
+    #             last_hist.unassigned_date = return_date
+    #             last_hist.status_snapshot = "Returned"
+
+    #         db.session.commit()
+    #         flash(f"Returned {eq.serial_number} successfully.", "success")
+
+           
+    #         faculty_incharge = student.faculty or "Not Assigned"
+    #         staff_incharge = student.cubicle.room_lab.staff_incharge \
+    #             if student.cubicle and student.cubicle.room_lab else "Not Assigned"
+
+    #         email_subject = f"Equipment Returned: {eq.manufacturer} {eq.model}"
+    #         email_body = f"""
+    # <html>
+    # <body>
+    # <p>Hello {student.name},</p>
+    # <p>The following equipment has been returned:</p>
+    # <table border="1" cellpadding="6">
+    # <tr><th>Field</th><th>Value</th></tr>
+    # <tr><td>Category</td><td>{eq.category}</td></tr>
+    # <tr><td>Serial</td><td>{eq.serial_number}</td></tr>
+    # <tr><td>Model</td><td>{eq.manufacturer} {eq.model}</td></tr>
+    # <tr><td>Location</td><td>{eq.location}</td></tr>
+    # <tr><td>Assigned Date</td><td>{assigned_date.strftime('%Y-%m-%d %H:%M') if assigned_date else '-'}</td></tr>
+    # <tr><td>Expected Return Date</td><td>{expected_return if expected_return else '-'}</td></tr>
+    # <tr><td>Actual Return Date</td><td>{return_date.strftime('%Y-%m-%d %H:%M')}</td></tr>
+    # <tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
+    # <tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
+    # </table>
+    # <p>Regards,<br>CSE Lab Admin</p>
+    # </body>
+    # </html>
+    # """
+    #         msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
+    #         threading.Thread(target=send_async_email, args=[app, msg]).start()
+
+
+    
+    # if request.method == "POST" and "equipment_id" in request.form:
+    #     equipment_id = request.form.get("equipment_id", type=int)
+    #     issue_date = request.form.get("ifEQUIPMENTssue_date")        
+    #     expected_return = request.form.get("expected_return")  
+    #     eq = Equipment.query.get_or_404(equipment_id)
+
+    #     if eq.assigned_to_roll:
+    #         flash("Equipment already assigned.", "danger")
+    #     else:
+    #         eq.assigned_to_roll = student.roll
+    #         eq.assigned_by = getattr(current_user, "email", None)
+    #         eq.assigned_date = datetime.strptime(issue_date, "%Y-%m-%d") if issue_date else datetime.utcnow()
+    #         eq.expected_return = expected_return
+    #         eq.status = "Issued"
+
+    #         hist = EquipmentHistory(
+    #             equipment_id=eq.id,
+    #             assigned_to_roll=student.roll,
+    #             assigned_by=eq.assigned_by,
+    #             assigned_date=eq.assigned_date,
+    #             status_snapshot=eq.status,
+    #         )
+    #         db.session.add(hist)
+    #         db.session.commit()
+    #         flash(f"Assigned {eq.serial_number} to {student.name}.", "success")
+
+           
+    #         faculty_incharge = student.faculty or "Not Assigned"
+    #         staff_incharge = student.cubicle.room_lab.staff_incharge \
+    #             if student.cubicle and student.cubicle.room_lab else "Not Assigned"
+
+    #         email_subject = f"Equipment Assigned: {eq.manufacturer} {eq.model}"
+    #         email_body = f"""
+    # <html>
+    # <body>
+    # <p>Hello {student.name},</p>
+    # <p>The following equipment has been assigned to you:</p>
+    # <table border="1" cellpadding="6">
+    # <tr><th>Field</th><th>Value</th></tr>
+    # <tr><td>Category</td><td>{eq.category}</td></tr>
+    # <tr><td>Serial</td><td>{eq.serial_number}</td></tr>
+    # <tr><td>Model</td><td>{eq.manufacturer} {eq.model}</td></tr>
+    # <tr><td>Location</td><td>{eq.location}</td></tr>
+    # <tr><td>Assigned Date</td><td>{eq.assigned_date.strftime('%Y-%m-%d %H:%M')}</td></tr>
+    # <tr><td>Expected Return Date</td><td>{expected_return if expected_return else '-'}</td></tr>
+    # <tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
+    # <tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
+    # </table>
+    # <p>Please contact your faculty or staff in-charge for any questions.</p>
+    # <p>Regards,<br>CSE Lab Admin</p>
+    # </body>
+    # </html>
+    # """
+    #         msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
+    #         threading.Thread(target=send_async_email, args=[app, msg]).start()
+
+
+    # location = (request.args.get("location") or "").strip()
+    # intender_name = (request.args.get("intender_name") or "").strip()
+
+    # base_q = Equipment.query
+    # if location:
+    #     base_q = base_q.filter(Equipment.location == location)
+    # if intender_name:
+    #     base_q = base_q.filter(Equipment.intender_name == intender_name)
+
+    # available_equipment = base_q.filter(
+    #     Equipment.assigned_to_roll.is_(None),
+    #     or_(Equipment.status.is_(None), Equipment.status == "Available")
+    # ).order_by(Equipment.manufacturer, Equipment.model).all()
+
+    # student_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll) \
+    #     .order_by(Equipment.assigned_date.desc().nullslast()) \
+    #     .all()
+
+    # return render_template(
+    #     "it_equipment_assign.html",
+    #     student=student,
+    #     available_equipment=available_equipment,
+    #     student_equipment=student_equipment,
+    # )
+
+
+  
+    # location = (request.args.get("location") or "").strip()
+    # intender_name = (request.args.get("intender_name") or "").strip()
+
+    # base_q = Equipment.query
+    # if location:
+    #     base_q = base_q.filter(Equipment.location == location)
+    # if intender_name:
+    #     base_q = base_q.filter(Equipment.intender_name == intender_name)
+
+    # available_equipment = base_q.filter(
+    #     Equipment.assigned_to_roll.is_(None),
+    #     or_(Equipment.status.is_(None), Equipment.status == "Available")
+    # ).order_by(Equipment.manufacturer, Equipment.model).all()
+
+ 
+    # student_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll) \
+    #     .order_by(Equipment.assigned_date.desc().nullslast()) \
+    #     .all()
+
+    # return render_template(
+    #     "it_equipment_assign.html",
+    #     student=student,
+    #     available_equipment=available_equipment,
+    #     student_equipment=student_equipment,
+    # )
+
+# STUDENT
 @app.route("/it_equipment_assign/<roll>", methods=["GET", "POST"])
 @login_required
 def it_equipment_assign(roll):
-    student = Student.query.filter_by(roll=roll).first_or_404()
-# ---------- Return Equipment ----------
+    return it_equipment_assign_generic("student", roll)
+
+# STAFF
+@app.route("/staff/equipment/<int:pid>", methods=["GET", "POST"])
+@login_required
+def it_equipment_assign_staff(pid):
+    return it_equipment_assign_generic("staff", pid)
+
+# FACULTY
+@app.route("/faculty/equipment/<int:pid>", methods=["GET", "POST"])
+@login_required
+def it_equipment_assign_faculty(pid):
+    return it_equipment_assign_generic("faculty", pid)
+
+from sqlalchemy import or_
+from datetime import datetime
+from flask import request, render_template, redirect, url_for, flash
+from flask_login import login_required, current_user
+
+# STUDENT, STAFF, FACULTY generic equipment assignment
+def it_equipment_assign_generic(owner_type, key):
+    """
+    owner_type: 'student' | 'staff' | 'faculty'
+    key:
+        - student: roll (string)
+        - staff:   staff.id (int)
+        - faculty: faculty.id (int)
+    """
+    # ------- Resolve person & set fields -------
+    if owner_type == "student":
+        person = Student.query.filter_by(roll=key).first_or_404()
+        id_value = person.roll
+        id_label = "Roll"
+        back_url = url_for("allotment_options", roll=person.roll)
+
+        def is_owner(eq):
+            return eq.assigned_to_roll == person.roll
+
+        def clear_owner(eq):
+            eq.assigned_to_roll = None
+
+        def set_owner(eq):
+            eq.assigned_to_roll = person.roll
+
+        def hist_filter_for(eid):
+            return EquipmentHistory.query.filter_by(
+                equipment_id=eid,
+                assigned_to_roll=person.roll
+            )
+
+        def make_history(eq):
+            return EquipmentHistory(
+                equipment_id=eq.id,
+                assigned_to_roll=person.roll,
+                assigned_by=eq.assigned_by,
+                assigned_date=eq.assigned_date,
+                status_snapshot=eq.status,
+            )
+
+        current_q = Equipment.query.filter_by(assigned_to_roll=person.roll)
+
+    elif owner_type == "staff":
+        person = Staff.query.get_or_404(key)
+        id_value = person.staff_id
+        id_label = "Staff ID"
+        back_url = url_for("allotment_options_staff", sid=person.id)
+
+        def is_owner(eq):
+            return eq.assigned_to_staff_id == person.id
+
+        def clear_owner(eq):
+            eq.assigned_to_staff_id = None
+
+        def set_owner(eq):
+            eq.assigned_to_staff_id = person.id
+
+        def hist_filter_for(eid):
+            return EquipmentHistory.query.filter_by(
+                equipment_id=eid,
+                assigned_to_staff_id=person.id
+            )
+
+        def make_history(eq):
+            return EquipmentHistory(
+                equipment_id=eq.id,
+                assigned_to_staff_id=person.id,
+                assigned_by=eq.assigned_by,
+                assigned_date=eq.assigned_date,
+                status_snapshot=eq.status,
+            )
+
+        current_q = Equipment.query.filter_by(assigned_to_staff_id=person.id)
+
+    elif owner_type == "faculty":
+        person = Faculty.query.get_or_404(key)
+        id_value = person.faculty_id
+        id_label = "Faculty ID"
+        back_url = url_for("allotment_options_faculty", fid=person.id)
+
+        def is_owner(eq):
+            return eq.assigned_to_faculty_id == person.id
+
+        def clear_owner(eq):
+            eq.assigned_to_faculty_id = None
+
+        def set_owner(eq):
+            eq.assigned_to_faculty_id = person.id
+
+        def hist_filter_for(eid):
+            return EquipmentHistory.query.filter_by(
+                equipment_id=eid,
+                assigned_to_faculty_id=person.id
+            )
+
+        def make_history(eq):
+            return EquipmentHistory(
+                equipment_id=eq.id,
+                assigned_to_faculty_id=person.id,
+                assigned_by=eq.assigned_by,
+                assigned_date=eq.assigned_date,
+                status_snapshot=eq.status,
+            )
+
+        current_q = Equipment.query.filter_by(assigned_to_faculty_id=person.id)
+
+    else:
+        abort(400)
+
+    # ---------- Return Equipment ----------
     if request.method == "POST" and "return_equipment_id" in request.form:
         equipment_id = request.form.get("return_equipment_id", type=int)
         eq = Equipment.query.get_or_404(equipment_id)
 
-        if not eq.assigned_to_roll:
-            flash("This equipment is not currently assigned.", "warning")
+        if not is_owner(eq):
+            flash("This equipment is not currently assigned to this person.", "warning")
         else:
-            # Save assigned_date & expected_return before clearing
             assigned_date = eq.assigned_date
             expected_return = getattr(eq, "expected_return", None)
             return_date = datetime.utcnow()
 
-            eq.assigned_to_roll = None
+            clear_owner(eq)
             eq.status = "Available"
 
-            # Update last history record
-            last_hist = EquipmentHistory.query.filter_by(
-                equipment_id=eq.id,
-                assigned_to_roll=student.roll
-            ).order_by(EquipmentHistory.id.desc()).first()
+            last_hist = hist_filter_for(eq.id).order_by(EquipmentHistory.id.desc()).first()
             if last_hist and last_hist.unassigned_date is None:
                 last_hist.unassigned_date = return_date
                 last_hist.status_snapshot = "Returned"
@@ -2981,93 +3358,100 @@ def it_equipment_assign(roll):
             db.session.commit()
             flash(f"Returned {eq.serial_number} successfully.", "success")
 
-            # ---------- Send Email ----------
-            faculty_incharge = student.faculty or "Not Assigned"
-            staff_incharge = student.cubicle.room_lab.staff_incharge \
-                if student.cubicle and student.cubicle.room_lab else "Not Assigned"
+            # Email: only for student, keep your original logic
+            if owner_type == "student":
+                student = person
+                faculty_incharge = student.faculty or "Not Assigned"
+                staff_incharge = (
+                    student.cubicle.room_lab.staff_incharge
+                    if student.cubicle and student.cubicle.room_lab
+                    else "Not Assigned"
+                )
 
-            email_subject = f"Equipment Returned: {eq.manufacturer} {eq.model}"
-            email_body = f"""
-    <html>
-    <body>
-    <p>Hello {student.name},</p>
-    <p>The following equipment has been returned:</p>
-    <table border="1" cellpadding="6">
-    <tr><th>Field</th><th>Value</th></tr>
-    <tr><td>Category</td><td>{eq.category}</td></tr>
-    <tr><td>Serial</td><td>{eq.serial_number}</td></tr>
-    <tr><td>Model</td><td>{eq.manufacturer} {eq.model}</td></tr>
-    <tr><td>Location</td><td>{eq.location}</td></tr>
-    <tr><td>Assigned Date</td><td>{assigned_date.strftime('%Y-%m-%d %H:%M') if assigned_date else '-'}</td></tr>
-    <tr><td>Expected Return Date</td><td>{expected_return if expected_return else '-'}</td></tr>
-    <tr><td>Actual Return Date</td><td>{return_date.strftime('%Y-%m-%d %H:%M')}</td></tr>
-    <tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
-    <tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
-    </table>
-    <p>Regards,<br>CSE Lab Admin</p>
-    </body>
-    </html>
-    """
-            msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
-            threading.Thread(target=send_async_email, args=[app, msg]).start()
-
+                email_subject = f"Equipment Returned: {eq.manufacturer} {eq.model}"
+                email_body = f"""
+<html>
+<body>
+<p>Hello {student.name},</p>
+<p>The following equipment has been returned:</p>
+<table border="1" cellpadding="6">
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td>Category</td><td>{eq.category}</td></tr>
+<tr><td>Serial</td><td>{eq.serial_number}</td></tr>
+<tr><td>Model</td><td>{eq.manufacturer} {eq.model}</td></tr>
+<tr><td>Location</td><td>{eq.location}</td></tr>
+<tr><td>Assigned Date</td><td>{assigned_date.strftime('%Y-%m-%d %H:%M') if assigned_date else '-'}</td></tr>
+<tr><td>Expected Return Date</td><td>{expected_return if expected_return else '-'}</td></tr>
+<tr><td>Actual Return Date</td><td>{return_date.strftime('%Y-%m-%d %H:%M')}</td></tr>
+<tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
+<tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
+</table>
+<p>Regards,<br>CSE Lab Admin</p>
+</body>
+</html>
+"""
+                msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
+                threading.Thread(target=send_async_email, args=[app, msg]).start()
 
     # ---------- Assign Equipment ----------
     if request.method == "POST" and "equipment_id" in request.form:
         equipment_id = request.form.get("equipment_id", type=int)
-        issue_date = request.form.get("ifEQUIPMENTssue_date")          # optional
-        expected_return = request.form.get("expected_return")  # optional
+        issue_date_str = request.form.get("issue_date")      # note: name="issue_date" in template
+        expected_return = request.form.get("expected_return")
         eq = Equipment.query.get_or_404(equipment_id)
 
-        if eq.assigned_to_roll:
+        # Check if already assigned to anyone
+        if eq.assigned_to_roll or eq.assigned_to_staff_id or eq.assigned_to_faculty_id:
             flash("Equipment already assigned.", "danger")
         else:
-            eq.assigned_to_roll = student.roll
+            set_owner(eq)
             eq.assigned_by = getattr(current_user, "email", None)
-            eq.assigned_date = datetime.strptime(issue_date, "%Y-%m-%d") if issue_date else datetime.utcnow()
+            if issue_date_str:
+                eq.assigned_date = datetime.strptime(issue_date_str, "%Y-%m-%d")
+            else:
+                eq.assigned_date = datetime.utcnow()
             eq.expected_return = expected_return
             eq.status = "Issued"
 
-            hist = EquipmentHistory(
-                equipment_id=eq.id,
-                assigned_to_roll=student.roll,
-                assigned_by=eq.assigned_by,
-                assigned_date=eq.assigned_date,
-                status_snapshot=eq.status,
-            )
+            hist = make_history(eq)
             db.session.add(hist)
             db.session.commit()
-            flash(f"Assigned {eq.serial_number} to {student.name}.", "success")
+            flash(f"Assigned {eq.serial_number} to {person.name}.", "success")
 
-            # ---------- Send Email ----------
-            faculty_incharge = student.faculty or "Not Assigned"
-            staff_incharge = student.cubicle.room_lab.staff_incharge \
-                if student.cubicle and student.cubicle.room_lab else "Not Assigned"
+            # Email only for students (reuse your block)
+            if owner_type == "student":
+                student = person
+                faculty_incharge = student.faculty or "Not Assigned"
+                staff_incharge = (
+                    student.cubicle.room_lab.staff_incharge
+                    if student.cubicle and student.cubicle.room_lab
+                    else "Not Assigned"
+                )
 
-            email_subject = f"Equipment Assigned: {eq.manufacturer} {eq.model}"
-            email_body = f"""
-    <html>
-    <body>
-    <p>Hello {student.name},</p>
-    <p>The following equipment has been assigned to you:</p>
-    <table border="1" cellpadding="6">
-    <tr><th>Field</th><th>Value</th></tr>
-    <tr><td>Category</td><td>{eq.category}</td></tr>
-    <tr><td>Serial</td><td>{eq.serial_number}</td></tr>
-    <tr><td>Model</td><td>{eq.manufacturer} {eq.model}</td></tr>
-    <tr><td>Location</td><td>{eq.location}</td></tr>
-    <tr><td>Assigned Date</td><td>{eq.assigned_date.strftime('%Y-%m-%d %H:%M')}</td></tr>
-    <tr><td>Expected Return Date</td><td>{expected_return if expected_return else '-'}</td></tr>
-    <tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
-    <tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
-    </table>
-    <p>Please contact your faculty or staff in-charge for any questions.</p>
-    <p>Regards,<br>CSE Lab Admin</p>
-    </body>
-    </html>
-    """
-            msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
-            threading.Thread(target=send_async_email, args=[app, msg]).start()
+                email_subject = f"Equipment Assigned: {eq.manufacturer} {eq.model}"
+                email_body = f"""
+<html>
+<body>
+<p>Hello {student.name},</p>
+<p>The following equipment has been assigned to you:</p>
+<table border="1" cellpadding="6">
+<tr><th>Field</th><th>Value</th></tr>
+<tr><td>Category</td><td>{eq.category}</td></tr>
+<tr><td>Serial</td><td>{eq.serial_number}</td></tr>
+<tr><td>Model</td><td>{eq.manufacturer} {eq.model}</td></tr>
+<tr><td>Location</td><td>{eq.location}</td></tr>
+<tr><td>Assigned Date</td><td>{eq.assigned_date.strftime('%Y-%m-%d %H:%M')}</td></tr>
+<tr><td>Expected Return Date</td><td>{expected_return if expected_return else '-'}</td></tr>
+<tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
+<tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
+</table>
+<p>Please contact your faculty or staff in-charge for any questions.</p>
+<p>Regards,<br>CSE Lab Admin</p>
+</body>
+</html>
+"""
+                msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
+                threading.Thread(target=send_async_email, args=[app, msg]).start()
 
     # ---------- Filters ----------
     location = (request.args.get("location") or "").strip()
@@ -3079,53 +3463,26 @@ def it_equipment_assign(roll):
     if intender_name:
         base_q = base_q.filter(Equipment.intender_name == intender_name)
 
+    # Only Available equipment and not assigned to anyone
     available_equipment = base_q.filter(
         Equipment.assigned_to_roll.is_(None),
+        Equipment.assigned_to_staff_id.is_(None),
+        Equipment.assigned_to_faculty_id.is_(None),
         or_(Equipment.status.is_(None), Equipment.status == "Available")
     ).order_by(Equipment.manufacturer, Equipment.model).all()
 
-    student_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll) \
-        .order_by(Equipment.assigned_date.desc().nullslast()) \
-        .all()
+    current_equipment = current_q.order_by(Equipment.assigned_date.desc().nullslast()).all()
 
     return render_template(
         "it_equipment_assign.html",
-        student=student,
+        owner_type=owner_type,
+        person=person,
+        id_label=id_label,
+        id_value=id_value,
         available_equipment=available_equipment,
-        student_equipment=student_equipment,
+        current_equipment=current_equipment,
+        back_url=back_url,
     )
-
-
-    # ---------- Filters ----------
-    location = (request.args.get("location") or "").strip()
-    intender_name = (request.args.get("intender_name") or "").strip()
-
-    # Base query with optional filters applied
-    base_q = Equipment.query
-    if location:
-        base_q = base_q.filter(Equipment.location == location)
-    if intender_name:
-        base_q = base_q.filter(Equipment.intender_name == intender_name)
-
-    # ✅ Only Available equipment
-    available_equipment = base_q.filter(
-        Equipment.assigned_to_roll.is_(None),
-        or_(Equipment.status.is_(None), Equipment.status == "Available")
-    ).order_by(Equipment.manufacturer, Equipment.model).all()
-
-    # Student’s current assignments (history panel)
-    student_equipment = Equipment.query.filter_by(assigned_to_roll=student.roll) \
-        .order_by(Equipment.assigned_date.desc().nullslast()) \
-        .all()
-
-    return render_template(
-        "it_equipment_assign.html",
-        student=student,
-        available_equipment=available_equipment,
-        student_equipment=student_equipment,
-    )
-
-
 
 
 # --- IT Equipment by Location + Intender ---
@@ -4536,38 +4893,106 @@ def space_allocation():
 @login_required
 def space_allocation_staff(pid):
     staff = Staff.query.get_or_404(pid)
-    rooms = RoomLab.query.all()
+    office_rooms = build_office_status()
+    current_room = staff.room
 
     if request.method == "POST":
-        room_id = request.form.get("room_id")
-        if not room_id:
+        new_room = (request.form.get("room_code") or "").strip()
+
+        if not new_room:
             flash("Please select a room.", "danger")
             return redirect(url_for("space_allocation_staff", pid=pid))
 
-        room = RoomLab.query.get(room_id)
-        if not room:
+        if new_room not in OFFICE_ROOMS:
             flash("Invalid room selected.", "danger")
             return redirect(url_for("space_allocation_staff", pid=pid))
 
-        # assign staff.room to room.name (or room.id if you prefer)
-        staff.room = room.name
+        # ---------- business rules ----------
+        if new_room == "CS-103":
+            # CS-103: can have multiple staff, but no faculty
+            fac_occupant = Faculty.query.filter_by(room=new_room).first()
+            if fac_occupant:
+                flash(f"Room {new_room} is reserved for staff; faculty already present.", "danger")
+                return redirect(url_for("space_allocation_staff", pid=pid))
+        else:
+            # All other rooms: at most one person (staff or faculty)
+            fac_occupant = Faculty.query.filter_by(room=new_room).first()
+            other_staff = Staff.query.filter(
+                Staff.room == new_room,
+                Staff.id != staff.id
+            ).first()
+
+            if fac_occupant or other_staff:
+                flash(f"Room {new_room} is already assigned to someone.", "danger")
+                return redirect(url_for("space_allocation_staff", pid=pid))
+
+        # ---------- assign / reassign ----------
+        old_room = staff.room
+        staff.room = new_room
         db.session.commit()
 
-        # optional: send notification email to staff.email (if stored)
-        if getattr(staff, "email", None):
-            subject = f"Office Allocation — {room.name}"
-            body = f"Dear {staff.name},\n\nYou have been assigned to {room.name}.\n\nRegards"
-            send_notification_email(staff.email, subject, body)
-        flash(f"Assigned {staff.name} to {room.name}", "success")
-        return redirect(url_for("allotment_options_staff", sid=pid))
+        # Optional: update locations of workstations + equipment
+        new_location = new_room
 
-    # For GET render a simple person allocation page (reuse person type template below)
+        active_assignments = WorkstationAssignment.query.filter_by(
+            staff_id=staff.id, is_active=True
+        ).all()
+        for assign in active_assignments:
+            ws = WorkstationAsset.query.get(assign.workstation_id)
+            if ws and ws.location != new_location:
+                ws.location = new_location
+
+        assigned_items = Equipment.query.filter_by(assigned_to_staff_id=staff.id).all()
+        for item in assigned_items:
+            if item.location != new_location:
+                item.location = new_location
+
+        db.session.commit()
+
+        flash(f"Room {new_room} assigned to {staff.name}.", "success")
+        return redirect(url_for("space_allocation_staff", pid=pid))
+
     return render_template(
-        "space_allocation_person.html",
+        "space_allocation_office.html",
+        owner_type="staff",
         person=staff,
-        person_role="staff",
-        rooms=rooms,
+        office_rooms=office_rooms,
+        current_room=current_room,
     )
+
+    
+@app.route("/space/release/staff/<int:pid>", methods=["POST"])
+@login_required
+def space_release_staff(pid):
+    staff = Staff.query.get_or_404(pid)
+    old_room = staff.room
+
+    if not old_room:
+        flash("This staff member has no room assigned.", "warning")
+        return redirect(url_for("space_allocation_staff", pid=pid))
+
+    # Clear the room assignment
+    staff.room = None
+    db.session.commit()
+
+    flash(f"Released room {old_room} from {staff.name}.", "success")
+    return redirect(url_for("space_allocation_staff", pid=pid))
+
+
+
+@app.route("/space/release/faculty/<int:pid>", methods=["POST"])
+@login_required
+def space_release_faculty(pid):
+    faculty = Faculty.query.get_or_404(pid)
+    old_room = faculty.room
+    if not old_room:
+        flash("Faculty has no room assigned.", "warning")
+        return redirect(url_for("space_allocation_faculty", pid=pid))
+
+    faculty.room = None
+    db.session.commit()
+    flash(f"Released room {old_room} from {faculty.name}.", "success")
+    return redirect(url_for("space_allocation_faculty", pid=pid))
 
 
 # STAFF
@@ -4821,9 +5246,9 @@ def assignment_return(assign_id):
     if assign.student_roll:
         return redirect(url_for("assignments_list", roll=assign.student_roll))
     elif assign.staff_id:
-        return redirect(url_for("assignments_list_staff", pid=assign.staff_id))
+        return redirect(url_for("staff_assignments", sid=assign.staff_id))
     elif assign.faculty_id:
-        return redirect(url_for("assignments_list_faculty", pid=assign.faculty_id))
+        return redirect(url_for("faculty_assignments", fid=assign.faculty_id))
     else:
         return redirect(url_for("assignments_list"))
 
@@ -4833,58 +5258,88 @@ def assignment_return(assign_id):
 
 
 
-@app.route("/staff/equipment/<int:pid>")
-@login_required
-def it_equipment_assign_staff(pid):
-    # If you have a generic view named like it_equipment_assign_generic(role,pid):
-    try:
-        return it_equipment_assign_generic("staff", pid)
-    except NameError:
-        # fallback - show assignments page (or change to whichever is appropriate)
-        return redirect(url_for("assignments_list_staff", pid=pid))
+# @app.route("/staff/equipment/<int:pid>")
+# @login_required
+# def it_equipment_assign_staff(pid):
+#     # If you have a generic view named like it_equipment_assign_generic(role,pid):
+#     try:
+#         return it_equipment_assign_generic("staff", pid)
+#     except NameError:
+#         # fallback - show assignments page (or change to whichever is appropriate)
+#         return redirect(url_for("staff_assignments", sid=pid))
 
-@app.route("/faculty/equipment/<int:pid>")
-@login_required
-def it_equipment_assign_faculty(pid):
-    try:
-        return it_equipment_assign_generic("faculty", pid)
-    except NameError:
-        return redirect(url_for("assignments_list_faculty", pid=pid))
+# @app.route("/faculty/equipment/<int:pid>")
+# @login_required
+# def it_equipment_assign_faculty(pid):
+#     try:
+#         return it_equipment_assign_generic("faculty", pid)
+#     except NameError:
+#         return redirect(url_for("faculty_assignments", fid=pid))
+
 
 # ---- Faculty space allocation (office) ----
 @app.route("/space_allocation/faculty/<int:pid>", methods=["GET", "POST"])
 @login_required
 def space_allocation_faculty(pid):
     faculty = Faculty.query.get_or_404(pid)
-    rooms = RoomLab.query.all()
+    office_rooms = build_office_status()
+    current_room = faculty.room
 
     if request.method == "POST":
-        room_id = request.form.get("room_id")
-        if not room_id:
+        new_room = (request.form.get("room_code") or "").strip()
+
+        if not new_room:
             flash("Please select a room.", "danger")
             return redirect(url_for("space_allocation_faculty", pid=pid))
 
-        room = RoomLab.query.get(room_id)
-        if not room:
+        if new_room not in OFFICE_ROOMS:
             flash("Invalid room selected.", "danger")
             return redirect(url_for("space_allocation_faculty", pid=pid))
 
-        faculty.room = room.name
+        # ---------- strict one-to-one ----------
+        other_faculty = Faculty.query.filter(
+            Faculty.room == new_room,
+            Faculty.id != faculty.id
+        ).first()
+        any_staff = Staff.query.filter_by(room=new_room).first()
+
+        if other_faculty or any_staff:
+            flash(f"Room {new_room} is already assigned.", "danger")
+            return redirect(url_for("space_allocation_faculty", pid=pid))
+
+        # ---------- assign / reassign ----------
+        old_room = faculty.room
+        faculty.room = new_room
         db.session.commit()
 
-        if getattr(faculty, "email", None):
-            subject = f"Office Allocation — {room.name}"
-            body = f"Dear {faculty.name},\n\nYou have been assigned to {room.name}.\n\nRegards"
-            send_notification_email(faculty.email, subject, body)
-        flash(f"Assigned {faculty.name} to {room.name}", "success")
-        return redirect(url_for("allotment_options_faculty", fid=pid))
+        new_location = new_room
+
+        active_assignments = WorkstationAssignment.query.filter_by(
+            faculty_id=faculty.id, is_active=True
+        ).all()
+        for assign in active_assignments:
+            ws = WorkstationAsset.query.get(assign.workstation_id)
+            if ws and ws.location != new_location:
+                ws.location = new_location
+
+        assigned_items = Equipment.query.filter_by(assigned_to_faculty_id=faculty.id).all()
+        for item in assigned_items:
+            if item.location != new_location:
+                item.location = new_location
+
+        db.session.commit()
+
+        flash(f"Room {new_room} assigned to {faculty.name}.", "success")
+        return redirect(url_for("space_allocation_faculty", pid=pid))
 
     return render_template(
-        "space_allocation_person.html",
+        "space_allocation_office.html",
+        owner_type="faculty",
         person=faculty,
-        person_role="faculty",
-        rooms=rooms,
+        office_rooms=office_rooms,
+        current_room=current_room,
     )
+
 
 
 @app.route("/space/release/<int:cubicle_id>", methods=["POST"])

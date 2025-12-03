@@ -40,7 +40,7 @@
               <p class="mt-1 text-gray-700">
                 <span class="inline-flex items-center gap-2 mr-3">
                   <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">{{ person_label_1 }}</span>
-                  <span class="font-semibold text-gray-900">{{ person_id }}</span>
+                  <span class="font-semibold text-gray-900">{{ person.staff_id if role=='staff' else person.faculty_id }}</span>
                 </span>
                 <span class="inline-flex items-center gap-2">
                   <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">{{ person_label_2 }}</span>

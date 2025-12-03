@@ -1,0 +1,209 @@
+{% extends "login_home.html" %}
+{% block title %}Office Allocation{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+  <h2 class="text-2xl font-bold mb-6 text-gray-800">
+    {% if owner_type == 'faculty' %}
+      Allocate Office – Faculty
+    {% else %}
+      Allocate Office – Staff
+    {% endif %}
+  </h2>
+
+  <!-- Person info -->
+  <div class="mb-6 p-4 border rounded bg-gray-50">
+    <p class="text-gray-800">
+      <span class="font-semibold">Name:</span> {{ person.name }}
+    </p>
+    <p class="text-gray-800">
+      <span class="font-semibold">
+        {% if owner_type == 'faculty' %}Faculty ID{% else %}Staff ID{% endif %}:
+      </span>
+      {% if owner_type == 'faculty' %}{{ person.faculty_id }}{% else %}{{ person.staff_id }}{% endif %}
+    </p>
+    <p class="text-gray-800">
+      <span class="font-semibold">Current Room:</span>
+      {{ current_room or "None" }}
+    </p>
+  </div>
+
+  <form method="POST" id="officeForm" class="space-y-6">
+    <!-- Legend -->
+    <div class="flex items-center space-x-6 mt-4">
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-blue-200 border border-blue-500 rounded mr-2"></div>
+        <span class="text-sm text-gray-700">Available</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-gray-200 border border-gray-400 rounded mr-2"></div>
+        <span class="text-sm text-gray-700">Occupied</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-green-200 border border-green-500 rounded mr-2"></div>
+        <span class="text-sm text-gray-700">Selected</span>
+      </div>
+    </div>
+
+    <!-- Office Cards -->
+    <div class="mt-4">
+      <label class="block text-gray-700 font-medium mb-3">Select Room</label>
+      <div id="officeCards" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+        {% for r in office_rooms %}
+          {% set is_current = (current_room == r.room) %}
+          {% set is_cs103 = (r.room == 'CS-103') %}
+
+          {% if owner_type == 'faculty' %}
+            {# --- FACULTY: strict one-to-one --- #}
+            {% if r.occupied and not is_current %}
+              <!-- Occupied & not current -> disabled -->
+              <div class="p-4 border rounded-lg shadow-sm text-center bg-gray-200 text-gray-600 cursor-not-allowed">
+                <span class="text-lg font-semibold">{{ r.room }}</span>
+                {% if r.occupied %}
+                  <div class="text-xs mt-1 text-gray-700">
+                    <div class="font-semibold">Occupants:</div>
+                    {% for s in r.staff %}
+                      <div>Staff: {{ s.name }}</div>
+                    {% endfor %}
+                    {% for f in r.faculty %}
+                      <div>Faculty: {{ f.name }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% else %}
+              <!-- Free or current room -> selectable -->
+              <div class="office-card p-4 border rounded-lg shadow-sm text-center cursor-pointer hover:bg-blue-100 transition
+                          {% if r.occupied %}bg-gray-50{% endif %}"
+                   data-room="{{ r.room }}">
+                <span class="text-lg font-semibold">{{ r.room }}</span>
+                {% if r.occupied %}
+                  <div class="text-xs mt-1 text-gray-700">
+                    <div class="font-semibold">Occupants:</div>
+                    {% for s in r.staff %}
+                      <div>Staff: {{ s.name }}</div>
+                    {% endfor %}
+                    {% for f in r.faculty %}
+                      <div>Faculty: {{ f.name }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+
+          {% else %}
+            {# --- STAFF: CS-103 multi-occupancy allowed, others single --- #}
+            {% if is_cs103 %}
+              <!-- CS-103: always selectable, even if occupied by many staff -->
+              <div class="office-card p-4 border rounded-lg shadow-sm text-center cursor-pointer hover:bg-blue-100 transition
+                          {% if r.occupied %}bg-gray-50{% endif %}"
+                   data-room="{{ r.room }}">
+                <span class="text-lg font-semibold">{{ r.room }}</span>
+                {% if r.occupied %}
+                  <div class="text-xs mt-1 text-gray-700">
+                    <div class="font-semibold">Occupants:</div>
+                    {% for s in r.staff %}
+                      <div>Staff: {{ s.name }}</div>
+                    {% endfor %}
+                    {% for f in r.faculty %}
+                      <div>Faculty: {{ f.name }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% elif r.occupied and not is_current %}
+              <!-- Other rooms: occupied & not current -> disabled -->
+              <div class="p-4 border rounded-lg shadow-sm text-center bg-gray-200 text-gray-600 cursor-not-allowed">
+                <span class="text-lg font-semibold">{{ r.room }}</span>
+                {% if r.occupied %}
+                  <div class="text-xs mt-1 text-gray-700">
+                    <div class="font-semibold">Occupants:</div>
+                    {% for s in r.staff %}
+                      <div>Staff: {{ s.name }}</div>
+                    {% endfor %}
+                    {% for f in r.faculty %}
+                      <div>Faculty: {{ f.name }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% else %}
+              <!-- Free or current room -> selectable -->
+              <div class="office-card p-4 border rounded-lg shadow-sm text-center cursor-pointer hover:bg-blue-100 transition
+                          {% if r.occupied %}bg-gray-50{% endif %}"
+                   data-room="{{ r.room }}">
+                <span class="text-lg font-semibold">{{ r.room }}</span>
+                {% if r.occupied %}
+                  <div class="text-xs mt-1 text-gray-700">
+                    <div class="font-semibold">Occupants:</div>
+                    {% for s in r.staff %}
+                      <div>Staff: {{ s.name }}</div>
+                    {% endfor %}
+                    {% for f in r.faculty %}
+                      <div>Faculty: {{ f.name }}</div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Hidden selected room -->
+    <input type="hidden" name="room_code" id="room_code" required>
+
+    <!-- Submit + Back + Release -->
+    <div class="flex items-center mt-6 space-x-3">
+      <button type="submit"
+              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Allocate
+      </button>
+
+      {% if owner_type == 'faculty' %}
+        <a href="{{ url_for('allotment_options_faculty', fid=person.id) }}"
+           class="inline-block bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+          Back to Allotment Options
+        </a>
+        {% if current_room %}
+          <form method="POST" action="{{ url_for('space_release_faculty', pid=person.id) }}">
+            <button type="submit"
+                    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+              Release Room
+            </button>
+          </form>
+        {% endif %}
+      {% else %}
+        <a href="{{ url_for('allotment_options_staff', sid=person.id) }}"
+           class="inline-block bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+          Back to Allotment Options
+        </a>
+        {% if current_room %}
+          <form method="POST" action="{{ url_for('space_release_staff', pid=person.id) }}">
+            <button type="submit"
+                    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+              Release Room
+            </button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const cards = document.querySelectorAll(".office-card");
+  const roomInput = document.getElementById("room_code");
+
+  cards.forEach(card => {
+    card.addEventListener("click", function () {
+      cards.forEach(c => c.classList.remove("bg-green-200", "border-green-500"));
+      this.classList.add("bg-green-200", "border-green-500");
+      roomInput.value = this.dataset.room;
+    });
+  });
+});
+</script>
+{% endblock %}
