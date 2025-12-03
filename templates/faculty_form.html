@@ -59,7 +59,7 @@
       </div>
 
       <!-- Room dropdown -->
-      <div>
+      <!-- <div>
         <label for="room" class="block">Room Number</label>
         {% set office_rooms = [
           'CS-102','CS-203','CS-205',
@@ -74,13 +74,13 @@
             <option value="{{ r }}" {% if faculty and faculty.room == r %}selected{% endif %}>{{ r }}</option>
           {% endfor %}
         </select>
-      </div>
+      </div> -->
 
       <!-- Years of Experience -->
-      <div>
+      <!-- <div>
         <label for="years_exp" class="block">Years of Experience</label>
         <input name="years_exp" id="years_exp" value="{{ faculty.years_exp if faculty else '' }}" class="w-full border rounded px-3 py-2" readonly>
-      </div>
+      </div> -->
 
       <!-- Designation -->
       <div>

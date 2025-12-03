@@ -3223,10 +3223,9 @@ def it_equipment_assign_faculty(pid):
 
 from sqlalchemy import or_
 from datetime import datetime
-from flask import request, render_template, redirect, url_for, flash
+from flask import request, render_template, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 
-# STUDENT, STAFF, FACULTY generic equipment assignment
 def it_equipment_assign_generic(owner_type, key):
     """
     owner_type: 'student' | 'staff' | 'faculty'
@@ -3235,7 +3234,8 @@ def it_equipment_assign_generic(owner_type, key):
         - staff:   staff.id (int)
         - faculty: faculty.id (int)
     """
-    # ------- Resolve person & set fields -------
+
+    # ------- Resolve person & helpers -------
     if owner_type == "student":
         person = Student.query.filter_by(roll=key).first_or_404()
         id_value = person.roll
@@ -3263,6 +3263,7 @@ def it_equipment_assign_generic(owner_type, key):
                 assigned_to_roll=person.roll,
                 assigned_by=eq.assigned_by,
                 assigned_date=eq.assigned_date,
+                expected_return=eq.expected_return,
                 status_snapshot=eq.status,
             )
 
@@ -3295,6 +3296,7 @@ def it_equipment_assign_generic(owner_type, key):
                 assigned_to_staff_id=person.id,
                 assigned_by=eq.assigned_by,
                 assigned_date=eq.assigned_date,
+                expected_return=eq.expected_return,
                 status_snapshot=eq.status,
             )
 
@@ -3327,6 +3329,7 @@ def it_equipment_assign_generic(owner_type, key):
                 assigned_to_faculty_id=person.id,
                 assigned_by=eq.assigned_by,
                 assigned_date=eq.assigned_date,
+                expected_return=eq.expected_return,
                 status_snapshot=eq.status,
             )
 
@@ -3335,7 +3338,7 @@ def it_equipment_assign_generic(owner_type, key):
     else:
         abort(400)
 
-    # ---------- Return Equipment ----------
+    # ---------- RETURN equipment ----------
     if request.method == "POST" and "return_equipment_id" in request.form:
         equipment_id = request.form.get("return_equipment_id", type=int)
         eq = Equipment.query.get_or_404(equipment_id)
@@ -3344,12 +3347,14 @@ def it_equipment_assign_generic(owner_type, key):
             flash("This equipment is not currently assigned to this person.", "warning")
         else:
             assigned_date = eq.assigned_date
-            expected_return = getattr(eq, "expected_return", None)
+            expected_return = eq.expected_return
             return_date = datetime.utcnow()
 
+            # Clear owner + mark available
             clear_owner(eq)
             eq.status = "Available"
 
+            # Close last history row for this person + equipment
             last_hist = hist_filter_for(eq.id).order_by(EquipmentHistory.id.desc()).first()
             if last_hist and last_hist.unassigned_date is None:
                 last_hist.unassigned_date = return_date
@@ -3358,7 +3363,7 @@ def it_equipment_assign_generic(owner_type, key):
             db.session.commit()
             flash(f"Returned {eq.serial_number} successfully.", "success")
 
-            # Email: only for student, keep your original logic
+            # Email: only for student
             if owner_type == "student":
                 student = person
                 faculty_incharge = student.faculty or "Not Assigned"
@@ -3381,7 +3386,7 @@ def it_equipment_assign_generic(owner_type, key):
 <tr><td>Model</td><td>{eq.manufacturer} {eq.model}</td></tr>
 <tr><td>Location</td><td>{eq.location}</td></tr>
 <tr><td>Assigned Date</td><td>{assigned_date.strftime('%Y-%m-%d %H:%M') if assigned_date else '-'}</td></tr>
-<tr><td>Expected Return Date</td><td>{expected_return if expected_return else '-'}</td></tr>
+<tr><td>Expected Return Date</td><td>{expected_return or '-'}</td></tr>
 <tr><td>Actual Return Date</td><td>{return_date.strftime('%Y-%m-%d %H:%M')}</td></tr>
 <tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
 <tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
@@ -3393,32 +3398,35 @@ def it_equipment_assign_generic(owner_type, key):
                 msg = Message(subject=email_subject, recipients=[student.email], html=email_body)
                 threading.Thread(target=send_async_email, args=[app, msg]).start()
 
-    # ---------- Assign Equipment ----------
+    # ---------- ASSIGN equipment ----------
     if request.method == "POST" and "equipment_id" in request.form:
         equipment_id = request.form.get("equipment_id", type=int)
-        issue_date_str = request.form.get("issue_date")      # note: name="issue_date" in template
+        issue_date_str = request.form.get("issue_date")
         expected_return = request.form.get("expected_return")
         eq = Equipment.query.get_or_404(equipment_id)
 
-        # Check if already assigned to anyone
+        # Already assigned to someone?
         if eq.assigned_to_roll or eq.assigned_to_staff_id or eq.assigned_to_faculty_id:
             flash("Equipment already assigned.", "danger")
         else:
             set_owner(eq)
             eq.assigned_by = getattr(current_user, "email", None)
+
             if issue_date_str:
                 eq.assigned_date = datetime.strptime(issue_date_str, "%Y-%m-%d")
             else:
                 eq.assigned_date = datetime.utcnow()
+
             eq.expected_return = expected_return
             eq.status = "Issued"
 
+            # History row
             hist = make_history(eq)
             db.session.add(hist)
             db.session.commit()
             flash(f"Assigned {eq.serial_number} to {person.name}.", "success")
 
-            # Email only for students (reuse your block)
+            # Email only for students
             if owner_type == "student":
                 student = person
                 faculty_incharge = student.faculty or "Not Assigned"
@@ -3441,7 +3449,7 @@ def it_equipment_assign_generic(owner_type, key):
 <tr><td>Model</td><td>{eq.manufacturer} {eq.model}</td></tr>
 <tr><td>Location</td><td>{eq.location}</td></tr>
 <tr><td>Assigned Date</td><td>{eq.assigned_date.strftime('%Y-%m-%d %H:%M')}</td></tr>
-<tr><td>Expected Return Date</td><td>{expected_return if expected_return else '-'}</td></tr>
+<tr><td>Expected Return Date</td><td>{expected_return or '-'}</td></tr>
 <tr><td>Faculty In-charge</td><td>{faculty_incharge}</td></tr>
 <tr><td>Staff In-charge</td><td>{staff_incharge}</td></tr>
 </table>
@@ -5113,7 +5121,8 @@ def assignment_new_staff(pid):
             issue_date=issue_date,
             system_required_till=till,
             remarks=remarks,
-            is_active=True
+            is_active=True,
+            assigned_by=getattr(current_user, "email", None),
         )
         try:
             db.session.add(assign)
@@ -5196,7 +5205,8 @@ def assignment_new_faculty(pid):
             issue_date=issue_date,
             system_required_till=till,
             remarks=remarks,
-            is_active=True
+            is_active=True,
+            assigned_by=getattr(current_user, "email", None),
         )
         try:
             db.session.add(assign)

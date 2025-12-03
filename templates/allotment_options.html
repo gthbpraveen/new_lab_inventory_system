@@ -8,7 +8,9 @@
   {# Determine role and person shortcuts #}
   {% set role = 'student' if student else ('staff' if staff else ('faculty' if faculty else None)) %}
   {% if not role %}
-    <div class="bg-red-50 border border-red-200 text-red-700 p-6 rounded">No person supplied to template.</div>
+    <div class="bg-red-50 border border-red-200 text-red-700 p-6 rounded">
+      No person supplied to template.
+    </div>
   {% else %}
 
   {# person object for simpler references #}
@@ -23,27 +25,71 @@
   <!-- Header card -->
   <div class="bg-white/90 backdrop-blur shadow-xl rounded-2xl border border-gray-200 overflow-hidden mb-8">
     <div class="bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-700 h-2"></div>
+
     <div class="p-8">
       <div class="flex flex-col md:flex-row items-center justify-between gap-8">
 
-        <!-- Left: Person Details -->
+        <!-- Left: Person Details with Profile Photo -->
         <div class="md:w-1/2 w-full">
           <div class="flex items-center gap-4">
-            <div class="h-14 w-14 rounded-full bg-indigo-100 flex items-center justify-center shadow">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M20 21a8 8 0 10-16 0"/>
-                <circle cx="12" cy="8" r="4" stroke-width="1.6"/>
-              </svg>
+            <!-- Profile Photo Block -->
+            <div class="h-32 w-32 overflow-hidden rounded-xl shadow-lg border border-gray-300 bg-white group cursor-pointer">
+              {% if role == 'student' and student and student.profile_photo %}
+                <img src="{{ url_for('static', filename='uploads/' ~ student.profile_photo) }}"
+                     alt="Profile Photo"
+                     class="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-150">
+              {% elif role == 'staff' and staff and staff.profile_photo %}
+                <img src="{{ url_for('static', filename=staff.profile_photo) }}"
+                     alt="Profile Photo"
+                     class="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-150">
+              {% elif role == 'faculty' and faculty and faculty.profile_photo %}
+                <img src="{{ url_for('static', filename=faculty.profile_photo) }}"
+                     alt="Profile Photo"
+                     class="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-150">
+              {% else %}
+                <!-- Default User Icon -->
+                <div class="h-full w-full flex items-center justify-center bg-indigo-100 transition-transform duration-500 ease-in-out group-hover:scale-110">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M20 21a8 8 0 10-16 0"/>
+                    <circle cx="12" cy="8" r="4" stroke-width="1.6"/>
+                  </svg>
+                </div>
+              {% endif %}
             </div>
+            
+
             <div>
-              <h2 class="text-3xl font-extrabold text-indigo-800 tracking-wide">{{ person_name }}</h2>
+              <h2 class="text-3xl font-extrabold text-indigo-800 tracking-wide">
+                
+               {% if role == 'student' %}
+                      {{ person_name }}
+                    {% elif role == 'staff' %}
+                      Mr/Mrs/Ms. {{ person_name }}
+                    {% else %}
+                     Prof/Dr. {{ person_name }}
+                    {% endif %}
+              
+              </h2>
               <p class="mt-1 text-gray-700">
                 <span class="inline-flex items-center gap-2 mr-3">
-                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">{{ person_label_1 }}</span>
-                  <span class="font-semibold text-gray-900">{{ person.staff_id if role=='staff' else person.faculty_id }}</span>
+                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    {{ person_label_1 }}
+                  </span>
+                  <span class="font-semibold text-gray-900">
+                    {% if role == 'student' %}
+                      {{ person.roll }}
+                    {% elif role == 'staff' %}
+                      {{ person.staff_id }}
+                    {% else %}
+                      {{ person.faculty_id }}
+                    {% endif %}
+                  </span>
                 </span>
+
                 <span class="inline-flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">{{ person_label_2 }}</span>
+                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                    {{ person_label_2 }}
+                  </span>
                   <span class="text-indigo-700 font-medium">
                     {% if role == 'student' %}
                       {{ person.course }} <span class="text-gray-500">(Year {{ person.year }})</span>
@@ -57,13 +103,14 @@
           </div>
         </div>
 
-        <!-- Right: Current Space -->
+        <!-- Right: Current Space / Office -->
         <div class="md:w-1/2 w-full">
           {% if current_space %}
             {% if role == 'student' %}
               <div class="relative overflow-hidden rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white shadow-lg">
                 <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10"></div>
                 <div class="absolute -left-10 -bottom-10 h-28 w-28 rounded-full bg-white/10"></div>
+
                 <div class="p-6 flex items-center justify-between gap-4">
                   <div>
                     <p class="text-xs uppercase tracking-wider text-indigo-200">Current Allocation</p>
@@ -80,6 +127,8 @@
               </div>
             {% else %}
               <div class="relative overflow-hidden rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white shadow-lg p-6">
+                <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10"></div>
+                <div class="absolute -left-10 -bottom-10 h-28 w-28 rounded-full bg-white/10"></div>
                 <div>
                   <p class="text-xs uppercase tracking-wider text-indigo-200">Current Office</p>
                   <p class="mt-1 text-lg text-indigo-100">{{ space_label }}</p>
@@ -89,7 +138,9 @@
             {% endif %}
           {% else %}
             <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 text-center p-6">
-              <p class="text-gray-500 italic">No {{ space_label|lower }} assigned</p>
+              <p class="text-gray-500 italic">
+                No {{ space_label|lower }} assigned
+              </p>
             </div>
           {% endif %}
         </div>
@@ -102,21 +153,29 @@
   <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
     <h3 class="text-xl font-bold text-indigo-800 mb-4">⚡ Quick Allotment Options</h3>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {# Space link differs for student vs staff/faculty #}
-      <a href="{% if role=='student' %}{{ url_for('space_allocation', roll=person.roll) }}{% elif role=='staff' %}{{ url_for('space_allocation_staff', pid=person.id) }}{% else %}{{ url_for('space_allocation_faculty', pid=person.id) }}{% endif %}"
-         class="group block rounded-xl border border-blue-100 bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 shadow hover:shadow-lg transition-transform">
+      <!-- Space / Office -->
+      <a href="{% if role=='student' %}{{ url_for('space_allocation', roll=person.roll) }}
+               {% elif role=='staff' %}{{ url_for('space_allocation_staff', pid=person.id) }}
+               {% else %}{{ url_for('space_allocation_faculty', pid=person.id) }}{% endif %}"
+         class="group block rounded-xl border border-blue-100 bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 shadow hover:shadow-lg transition-transform transform hover:-translate-y-0.5">
         <div class="flex items-center justify-center mb-3">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-95" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18h12M8 12h8v6H8v-6zM8 4h8v6H8z"/>
           </svg>
         </div>
-        <h4 class="font-semibold text-lg">{% if role=='student' %}Allocate / Reassign Cubicle{% else %}Allocate / Reassign Office{% endif %}</h4>
-        <p class="mt-1 text-sm text-blue-100/90">{% if role=='student' %}Assign or move a student to a new cubicle{% else %}Assign or move to an office{% endif %}</p>
+        <h4 class="font-semibold text-lg">
+          {% if role=='student' %}Allocate / Reassign Cubicle{% else %}Allocate / Reassign Office{% endif %}
+        </h4>
+        <p class="mt-1 text-sm text-blue-100/90">
+          {% if role=='student' %}Assign or move a student to a new cubicle{% else %}Assign or move to an office{% endif %}
+        </p>
       </a>
 
-      {# Workstations link uses generic endpoints you already created/aliased #}
-      <a href="{% if role=='student' %}{{ url_for('assignments_list', roll=person.roll) }}{% elif role=='staff' %}{{ url_for('staff_assignments', sid=person.id) }}{% else %}{{ url_for('faculty_assignments', fid=person.id) }}{% endif %}"
-         class="group block rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white p-6 shadow hover:shadow-lg transition-transform">
+      <!-- Workstation -->
+      <a href="{% if role=='student' %}{{ url_for('assignments_list', roll=person.roll) }}
+               {% elif role=='staff' %}{{ url_for('staff_assignments', sid=person.id) }}
+               {% else %}{{ url_for('faculty_assignments', fid=person.id) }}{% endif %}"
+         class="group block rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white p-6 shadow hover:shadow-lg transition-transform transform hover:-translate-y-0.5">
         <div class="flex items-center justify-center mb-3">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-95" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8" stroke-linecap="round"/>
@@ -126,12 +185,14 @@
         <p class="mt-1 text-sm text-emerald-100/90">View or issue workstations</p>
       </a>
 
-      {# IT Equipment link #}
-      <a href="{% if role=='student' %}{{ url_for('it_equipment_assign', roll=person.roll) }}{% elif role=='staff' %}{{ url_for('it_equipment_assign_staff', pid=person.id) }}{% else %}{{ url_for('it_equipment_assign_faculty', pid=person.id) }}{% endif %}"
-         class="group block rounded-xl border border-purple-100 bg-gradient-to-br from-purple-600 to-purple-700 text-white p-6 shadow hover:shadow-lg transition-transform">
+      <!-- IT Equipment -->
+      <a href="{% if role=='student' %}{{ url_for('it_equipment_assign', roll=person.roll) }}
+               {% elif role=='staff' %}{{ url_for('it_equipment_assign_staff', pid=person.id) }}
+               {% else %}{{ url_for('it_equipment_assign_faculty', pid=person.id) }}{% endif %}"
+         class="group block rounded-xl border border-purple-100 bg-gradient-to-br from-purple-600 to-purple-700 text-white p-6 shadow hover:shadow-lg transition-transform transform hover:-translate-y-0.5">
         <div class="flex items-center justify-center mb-3">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-95" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M8 18v2h8v-2"/>
+            <rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M8 18v2h8v-2" stroke-linecap="round"/>
           </svg>
         </div>
         <h4 class="font-semibold text-lg">IT Equipment Assignments</h4>
@@ -160,9 +221,11 @@
           {% if role=='student' %}🎓 Student Information{% elif role=='staff' %}🧑‍🔧 Staff Information{% else %}👨‍🏫 Faculty Information{% endif %}
         </h3>
 
-        {# Edit link: choose correct edit endpoint names in your app.py #}
-        <a href="{% if role=='student' %}{{ url_for('edit_student', roll=person.roll) }}{% elif role=='staff' %}{{ url_for('staff_edit', sid=person.id) }}{% else %}{{ url_for('faculty_edit', fid=person.id) }}{% endif %}"
-           class="absolute top-6 right-6 inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-lg">
+        <!-- Edit Button -->
+        <a href="{% if role=='student' %}{{ url_for('edit_student', roll=person.roll) }}
+                 {% elif role=='staff' %}{{ url_for('staff_edit', sid=person.id) }}
+                 {% else %}{{ url_for('faculty_edit', fid=person.id) }}{% endif %}"
+           class="absolute top-6 right-6 inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded-lg shadow-sm transition">
           ✏️ Edit
         </a>
 
@@ -191,7 +254,9 @@
     <!-- Space -->
     <div id="space" class="tab-content hidden">
       <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
-        <h3 class="text-xl font-bold text-indigo-800 mb-4">{% if role=='student' %}🏢 Space Allocation{% else %}🏢 Office Allocation{% endif %}</h3>
+        <h3 class="text-xl font-bold text-indigo-800 mb-4">
+          {% if role=='student' %}🏢 Space Allocation{% else %}🏢 Office Allocation{% endif %}
+        </h3>
 
         {% if current_space %}
           {% if role=='student' %}
@@ -210,7 +275,9 @@
           <p class="text-gray-500 mb-3">❌ No current {{ space_label|lower }} allocated</p>
         {% endif %}
 
-        <a href="{% if role=='student' %}{{ url_for('space_allocation', roll=person.roll) }}{% elif role=='staff' %}{{ url_for('space_allocation_staff', pid=person.id) }}{% else %}{{ url_for('space_allocation_faculty', pid=person.id) }}{% endif %}"
+        <a href="{% if role=='student' %}{{ url_for('space_allocation', roll=person.roll) }}
+                 {% elif role=='staff' %}{{ url_for('space_allocation_staff', pid=person.id) }}
+                 {% else %}{{ url_for('space_allocation_faculty', pid=person.id) }}{% endif %}"
            class="mt-4 inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
           <span>Manage {{ space_label }}</span>
         </a>
@@ -233,7 +300,8 @@
                   <th class="px-4 py-2 border-b">Serial</th>
                   <th class="px-4 py-2 border-b">Status</th>
                   <th class="px-4 py-2 border-b">Assigned Date</th>
-                  <th class="px-4 py-2 border-b">Return Date</th>
+                  <th class="px-4 py-2 border-b">Expected Return Date</th>
+                  <th class="px-4 py-2 border-b">Actual Return Date</th>
                   <th class="px-4 py-2 border-b">Assigned By</th>
                 </tr>
               </thead>
@@ -246,12 +314,14 @@
                   <td class="px-4 py-2"><span class="text-green-600 font-semibold">Active</span></td>
                   <td class="px-4 py-2">{{ ws.issue_date[:10] if ws.issue_date else '—' }}</td>
                   <td class="px-4 py-2">{{ ws.system_required_till[:10] if ws.system_required_till else '—' }}</td>
+                   <td class="px-4 py-2">{{ ws.end_date[:10] if ws.end_date else '—' }}</td>
                   <td class="px-4 py-2">
-                    {% if role=='student' %}
+                    <!-- {% if role=='student' %}
                       {{ ws.student.cubicle.room_lab.staff_incharge if ws.student and ws.student.cubicle else '—' }}
                     {% else %}
                       {{ ws.assigned_by or '—' }}
-                    {% endif %}
+                    {% endif %} -->
+                    {{ ws.assigned_by or '—' }}
                   </td>
                 </tr>
                 {% endfor %}
@@ -273,7 +343,8 @@
                   <th class="px-4 py-2 border-b">Serial</th>
                   <th class="px-4 py-2 border-b">Status</th>
                   <th class="px-4 py-2 border-b">Assigned Date</th>
-                  <th class="px-4 py-2 border-b">Return Date</th>
+                  <th class="px-4 py-2 border-b">Expected Return Date</th>
+                  <th class="px-4 py-2 border-b">Actual Return Date</th>
                   <th class="px-4 py-2 border-b">Assigned By</th>
                 </tr>
               </thead>
@@ -284,16 +355,25 @@
                   <td class="px-4 py-2">{{ ws.asset.model }}</td>
                   <td class="px-4 py-2">{{ ws.asset.serial }}</td>
                   <td class="px-4 py-2">
-                    {% if ws.is_active %}<span class="text-green-600 font-semibold">Active</span>{% else %}<span class="text-red-600 font-semibold">Returned</span>{% endif %}
+                    {% if ws.is_active %}
+                      <span class="text-green-600 font-semibold">Active</span>
+                    {% else %}
+                      <span class="text-red-600 font-semibold">Returned</span>
+                    {% endif %}
                   </td>
                   <td class="px-4 py-2">{{ ws.issue_date[:10] if ws.issue_date else '—' }}</td>
+                  <td class="px-4 py-2">{{ ws.system_required_till[:10] if ws.system_required_till else '—' }}</td>
+
                   <td class="px-4 py-2">{{ ws.end_date[:10] if ws.end_date else '—' }}</td>
                   <td class="px-4 py-2">
-                    {% if role=='student' %}
+                    <!-- {% if role=='student' %}
                       {{ ws.student.cubicle.room_lab.staff_incharge if ws.student and ws.student.cubicle else '—' }}
                     {% else %}
                       {{ ws.assigned_by or '—' }}
-                    {% endif %}
+                    {% endif %} -->
+                    
+                    {{ ws.assigned_by or '—' }}
+
                   </td>
                 </tr>
                 {% endfor %}
@@ -304,24 +384,16 @@
           <p class="text-gray-500">No workstation history</p>
         {% endif %}
 
-   <a href="
- {% if role=='student' %}
-           {{ url_for('assignment_new',
-                      owner_type='student',
-                      student_roll=person.roll) }}
-         {% elif role=='staff' %}
-           {{ url_for('assignment_new',
-                      owner_type='staff',
-                      staff_id=person.id) }}
-         {% else %}
-           {{ url_for('assignment_new',
-                      owner_type='faculty',
-                      faculty_id=person.id) }}
-         {% endif %}"
-   class="mt-6 inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
-  Assign New Workstation
-</a>
-
+        <!-- <a href="{% if role=='student' %}
+                   {{ url_for('assignment_new', student_roll=person.roll) }}
+                 {% elif role=='staff' %}
+                   {{ url_for('assignment_new_staff', pid=person.id) }}
+                 {% else %}
+                   {{ url_for('assignment_new_faculty', pid=person.id) }}
+                 {% endif %}"
+           class="mt-6 inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+          Assign New Workstation
+        </a> -->
       </div>
     </div>
 
@@ -330,7 +402,6 @@
       <div class="bg-white rounded-2xl shadow p-6 border border-gray-200">
         <h3 class="text-xl font-bold text-indigo-800 mb-4">🖥️ IT Equipment</h3>
 
-        <!-- Current Equipment -->
         <h4 class="font-semibold text-gray-800 mb-2">Current</h4>
         {% if equipment_active %}
           <div class="overflow-x-auto rounded-lg border border-gray-200">
@@ -342,7 +413,8 @@
                   <th class="px-4 py-2 border-b">Serial</th>
                   <th class="px-4 py-2 border-b">Status</th>
                   <th class="px-4 py-2 border-b">Assigned Date</th>
-                  <th class="px-4 py-2 border-b">Return Date</th>
+                  <th class="px-4 py-2 border-b">Expected Return Date</th>
+                  <th class="px-4 py-2 border-b">Actual Return Date</th>
                   <th class="px-4 py-2 border-b">Assigned By</th>
                 </tr>
               </thead>
@@ -353,9 +425,19 @@
                   <td class="px-4 py-2">{{ eq.category }}</td>
                   <td class="px-4 py-2">{{ eq.serial_number }}</td>
                   <td class="px-4 py-2"><span class="text-green-600 font-semibold">Active</span></td>
-                  <td class="px-4 py-2">{{ eq.assigned_date or '—' }}</td>
-                  <td class="px-4 py-2">{{ eq.expected_return_date or '—' }}</td>
-                  <td class="px-4 py-2">{{ eq.assigned_by or '—' }}</td>
+                  <td class="px-4 py-2">
+  {{ eq.assigned_date.strftime('%Y-%m-%d') if eq.assigned_date else '—' }}
+</td>
+<td class="px-4 py-2">
+  {{ eq.expected_return.strftime('%Y-%m-%d') if eq.expected_return else '—' }}
+</td>
+<td class="px-4 py-2">
+  {{ eq.unassigned_date.strftime('%Y-%m-%d') if eq.unassigned_date else '—' }}
+</td>
+<td class="px-4 py-2">
+  {{ eq.assigned_by or '—' }}
+</td>
+
                 </tr>
                 {% endfor %}
               </tbody>
@@ -365,7 +447,6 @@
           <p class="text-gray-500 mb-4">No active equipment</p>
         {% endif %}
 
-        <!-- Equipment History -->
         <h4 class="font-semibold text-gray-800 mt-6 mb-2">History</h4>
         {% if equipment_history %}
           <div class="overflow-x-auto rounded-lg border border-gray-200">
@@ -377,7 +458,8 @@
                   <th class="px-4 py-2 border-b">Serial</th>
                   <th class="px-4 py-2 border-b">Status</th>
                   <th class="px-4 py-2 border-b">Assigned Date</th>
-                  <th class="px-4 py-2 border-b">Return Date</th>
+                  <th class="px-4 py-2 border-b">Expected Return Date</th>
+                  <th class="px-4 py-2 border-b">Actual Return Date</th>
                   <th class="px-4 py-2 border-b">Assigned By</th>
                 </tr>
               </thead>
@@ -388,11 +470,26 @@
                   <td class="px-4 py-2">{{ eq.equipment_obj.category if eq.equipment_obj else '—' }}</td>
                   <td class="px-4 py-2">{{ eq.equipment_obj.serial_number if eq.equipment_obj else '—' }}</td>
                   <td class="px-4 py-2">
-                    {% if not eq.unassigned_date %}<span class="text-green-600 font-semibold">Active</span>{% else %}<span class="text-red-600 font-semibold">Returned</span>{% endif %}
+                    {% if not eq.unassigned_date %}
+                      <span class="text-green-600 font-semibold">Active</span>
+                    {% else %}
+                      <span class="text-red-600 font-semibold">Returned</span>
+                    {% endif %}
                   </td>
-                  <td class="px-4 py-2">{{ eq.assigned_date or '—' }}</td>
-                  <td class="px-4 py-2">{{ eq.unassigned_date or '—' }}</td>
-                  <td class="px-4 py-2">{{ eq.staff_incharge or '—' }}</td>
+                 <td class="px-4 py-2">
+  {{ eq.assigned_date.strftime('%Y-%m-%d') if eq.assigned_date else '—' }}
+</td>
+<td class="px-4 py-2">
+  {{ eq.expected_return.strftime('%Y-%m-%d') if eq.expected_return else '—' }}
+</td>
+<td class="px-4 py-2">
+  {{ eq.unassigned_date.strftime('%Y-%m-%d') if eq.unassigned_date else '—' }}
+</td>
+<td class="px-4 py-2">
+  {{ eq.assigned_by or '—' }}
+</td>
+
+
                 </tr>
                 {% endfor %}
               </tbody>
@@ -408,10 +505,14 @@
 
   <!-- Bottom actions -->
   <div class="mt-10 flex justify-center gap-4">
-    <a href="{% if role=='student' %}/allotted_roll_check{% elif role=='staff' %}{{ url_for('staff_directory') }}{% else %}{{ url_for('faculty_directory') }}{% endif %}" class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-5 py-2.5 rounded-lg shadow-sm transition">
+    <a href="{% if role=='student' %}/allotted_roll_check
+             {% elif role=='staff' %}{{ url_for('staff_directory') }}
+             {% else %}{{ url_for('faculty_directory') }}{% endif %}"
+       class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-5 py-2.5 rounded-lg shadow-sm transition">
       <span class="text-lg">←</span><span>Back</span>
     </a>
-    <a href="{{ url_for('login_home') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow transition">
+    <a href="{{ url_for('login_home') }}"
+       class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow transition">
       <span>🏠</span><span>Dashboard</span>
     </a>
   </div>
@@ -419,10 +520,11 @@
   {% endif %}
 </div>
 
-<!-- Tabs Script (same as before) -->
+<!-- Tabs Script -->
 <script>
   const tabLinks = document.querySelectorAll(".tab-link");
   const tabContents = document.querySelectorAll(".tab-content");
+
   function setActiveTab(tab) {
     tabLinks.forEach(l => {
       l.classList.remove("bg-indigo-50","border-indigo-200","text-indigo-700","font-medium");
@@ -434,6 +536,7 @@
     });
     tabContents.forEach(c => c.classList.toggle("hidden", c.id !== tab));
   }
+
   tabLinks.forEach(link => link.addEventListener("click", () => setActiveTab(link.dataset.tab)));
   setActiveTab("profile");
 </script>

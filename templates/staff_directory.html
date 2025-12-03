@@ -26,7 +26,7 @@
       </select>
     </div>
 
-    <div>
+    <!-- <div>
       <label class="block text-sm font-medium text-gray-700">Room</label>
       <select name="room_lab_name" class="w-full mt-1 px-3 py-2 border rounded">
         <option value="" {% if not selected_room %}selected{% endif %}>All</option>
@@ -34,7 +34,23 @@
           <option value="{{ r }}" {% if selected_room == r %}selected{% endif %}>{{ r }}</option>
         {% endfor %}
       </select>
-    </div>
+    </div> -->
+    <div>
+        <label for="room_lab_name" class="block">Room Number</label>
+        {% set office_rooms = [
+          'CS-102', 'CS-103', 'CS-203','CS-205',
+          'CS-302','CS-303','CS-304','CS-305','CS-306','CS-307','CS-308','CS-309','CS-310','CS-311','CS-312','CS-313','CS-314','CS-315','CS-316',
+          'CS-402','CS-403','CS-404','CS-405','CS-406','CS-407','CS-408',
+          'CS-502','CS-503','CS-504','CS-505','CS-506','CS-507','CS-508','CS-509','CS-510','CS-511','CS-512','CS-513','CS-514','CS-515','CS-516','CS-517',
+          'CS-602','CS-603','CS-604','CS-606','CS-607','CS-608','CS-610'
+        ] %}
+        <select name="room_lab_name" id="room_lab_name" class="w-full border rounded px-3 py-2">
+          <option value="">All</option>
+          {% for r in office_rooms %}
+            <option value="{{ r }}" {% if faculty and faculty.room == r %}selected{% endif %}>{{ r }}</option>
+          {% endfor %}
+        </select>
+      </div> 
 
     <div>
       <label class="block text-sm font-medium text-gray-700">Designation</label>
