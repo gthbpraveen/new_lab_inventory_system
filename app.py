@@ -3869,129 +3869,175 @@ def asset_new():
         model = (f.get("model") or "").strip()
         location = (f.get("location") or "").strip()
         indenter_full = (f.get("indenter") or "").strip()
-        provided_serial = (f.get("serial") or "").strip() or None
+        serial = (f.get("serial") or "").strip()
         status = (f.get("status") or "Available").strip()
-        # parse RAM fields
-        ram_type = (f.get("ram") or "").strip() or None
-        otherRam = (f.get("otherRam") or "").strip() or None
-        ram_size_gb = safe_int(f.get("ram_size_gb"))
-        source_of_fund    = f.get("source_of_fund") or None
-        # required checks
+
+        # Required checks
         if not manufacturer:
             flash("Manufacturer is required", "danger")
-            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+            return render_template("asset_form.html", asset=None,
+                                   faculty_list=get_faculty_list(),
+                                   staff_list=get_staff_list())
         if manufacturer == "Others" and not otherManufacturer:
             flash("Please specify other manufacturer", "danger")
-            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+            return render_template("asset_form.html", asset=None,
+                                   faculty_list=get_faculty_list(),
+                                   staff_list=get_staff_list())
         if not model:
             flash("Model is required", "danger")
-            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+            return render_template("asset_form.html", asset=None,
+                                   faculty_list=get_faculty_list(),
+                                   staff_list=get_staff_list())
         if not location:
             flash("Location is required", "danger")
-            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+            return render_template("asset_form.html", asset=None,
+                                   faculty_list=get_faculty_list(),
+                                   staff_list=get_staff_list())
         if not indenter_full:
             flash("Indenter is required", "danger")
-            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+            return render_template("asset_form.html", asset=None,
+                                   faculty_list=get_faculty_list(),
+                                   staff_list=get_staff_list())
+        if not serial:
+            flash("Serial number is required.", "danger")
+            return render_template("asset_form.html", asset=None,
+                                   faculty_list=get_faculty_list(),
+                                   staff_list=get_staff_list())
 
-        # Serial is mandatory now (no auto generation)
-        if not provided_serial:
-            flash("Serial number is required. Please provide a unique serial.", "danger")
-            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
-        # uniqueness
-        if WorkstationAsset.query.filter_by(serial=provided_serial).first():
-            flash("Serial already exists. Provide a unique serial.", "danger")
-            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
-        serial_to_use = provided_serial
+        # Serial uniqueness
+        if WorkstationAsset.query.filter_by(serial=serial).first():
+            flash("Serial already exists. Enter a unique serial number.", "danger")
+            return render_template("asset_form.html", asset=None,
+                                   faculty_list=get_faculty_list(),
+                                   staff_list=get_staff_list())
 
-        # Parse dates
+        # Safe integer parser
+        def safe_int(val):
+            try:
+                return int(val)
+            except Exception:
+                return None
+
+        # Dates
         po_date_raw = f.get("po_date") or ""
         po_date = parse_date_safe(po_date_raw)
         if po_date_raw and not po_date:
             flash("PO date invalid. Use YYYY-MM-DD.", "danger")
-            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+            return render_template("asset_form.html", asset=None,
+                                   faculty_list=get_faculty_list(),
+                                   staff_list=get_staff_list())
 
         warranty_start = parse_date_safe(f.get("warranty_start"))
         warranty_expiry = parse_date_safe(f.get("warranty_expiry"))
         if warranty_start and warranty_expiry and warranty_expiry < warranty_start:
             flash("Warranty expiry must be same or after warranty start.", "danger")
-            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+            return render_template("asset_form.html", asset=None,
+                                   faculty_list=get_faculty_list(),
+                                   staff_list=get_staff_list())
 
-        # parse processors
+        # RAM & storage
+        ram = (f.get("ram") or "").strip() or None
+        otherRam = (f.get("otherRam") or "").strip() or None
+        ram_size_gb = safe_int(f.get("ram_size_gb"))
+
+        storage_type1 = f.get("storage_type1") or None
+        storage_capacity1 = safe_int(f.get("storage_capacity1"))
+        storage_type2 = f.get("storage_type2") or None
+        storage_capacity2 = safe_int(f.get("storage_capacity2"))
+
+        # Processor JSON
         processor_count = int(f.get("processor_count") or 0)
         processors = []
-        for i in range(1, processor_count+1):
+        for i in range(1, processor_count + 1):
             name = (f.get(f"processor_{i}_name") or "").strip()
             cores = safe_int(f.get(f"processor_{i}_cores"))
             if name or cores is not None:
                 processors.append({"name": name or None, "cores": cores})
 
-        # parse GPUs
+        # GPU JSON
         has_gpu = (f.get("has_gpu") or "no") == "yes"
         gpus = []
         if has_gpu:
             gpu_count = int(f.get("gpu_count") or 1)
-            for i in range(1, gpu_count+1):
+            for i in range(1, gpu_count + 1):
                 gname = (f.get(f"gpu_{i}_name") or "").strip()
                 vram = safe_int(f.get(f"gpu_{i}_vram"))
                 if gname or vram is not None:
                     gpus.append({"name": gname or None, "vram": vram})
 
-        # department code (unchanged logic)
+        # Department code
         po_token = po_date_raw.replace("-", "") if po_date_raw else "NA"
         indenter_clean = indenter_full.replace("Dr. ", "").replace("Prof. ", "")
         indenter_first = indenter_clean.split()[0] if indenter_clean else "Unknown"
-        dep_base = f"CSE/{po_token}/{model}/{manufacturer}/{indenter_first}/{serial_to_use}"
+        dep_base = f"CSE/{po_token}/{model}/{manufacturer}/{indenter_first}/{serial}"
         department_code = dep_base
         suffix = 1
         while WorkstationAsset.query.filter_by(department_code=department_code).first():
             suffix += 1
             department_code = f"{dep_base}-{suffix}"
 
-        # handle uploaded PO/Invoice file
-        po_file = request.files.get('po_invoice')
+        # PO Invoice file upload
+        po_file = request.files.get("po_invoice")
         po_filename = None
         if po_file and po_file.filename:
             if not allowed_file(po_file.filename):
                 flash("Uploaded file type not allowed. Allowed: pdf, jpg, jpeg, png", "danger")
-                return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+                return render_template("asset_form.html", asset=None,
+                                       faculty_list=get_faculty_list(),
+                                       staff_list=get_staff_list())
             filename = secure_filename(po_file.filename)
             timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-            filename = f"{serial_to_use}_{timestamp}_{filename}"
+            filename = f"{serial}_{timestamp}_{filename}"
             save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             try:
                 po_file.save(save_path)
                 po_filename = filename
             except Exception as e:
                 flash(f"Error saving file: {e}", "danger")
-                return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+                return render_template("asset_form.html", asset=None,
+                                       faculty_list=get_faculty_list(),
+                                       staff_list=get_staff_list())
 
-        # build and save asset (including vendor_contact_person)
+        # Build asset
         asset = WorkstationAsset(
             manufacturer=manufacturer,
             otherManufacturer=otherManufacturer or None,
             model=model,
-            serial=serial_to_use,
+            serial=serial,
+            os=(f.get("os") or None),
+            otherOs=(f.get("otherOs") or None),
+            mac_address=(f.get("mac_address") or None),
+
+            # RAM & storage
+            ram=ram,
+            otherRam=otherRam,
+            ram_size_gb=ram_size_gb,
+            storage_type1=storage_type1,
+            storage_capacity1=storage_capacity1,
+            storage_type2=storage_type2,
+            storage_capacity2=storage_capacity2,
+
+            # Procurement / fund
             po_number=(f.get("po_number") or None),
             po_date=po_date,
-            warranty_start=warranty_start,
-            warranty_expiry=warranty_expiry,
+            source_of_fund=(f.get("source_of_fund") or None),
+
+            # Vendor
+            vendor_company=(f.get("vendor_company") or None),
+            vendor_contact_person=(f.get("vendor_contact_person") or None),
+            vendor_mobile=(f.get("vendor_mobile") or None),
+
+            # Lifecycle
             status=status,
             location=location,
             indenter=indenter_full,
             department_code=department_code,
+
+            # Attachments
             po_invoice_filename=po_filename,
-            vendor_company=(f.get("vendor_company") or None),
-            vendor_contact_person=(f.get("vendor_contact_person") or None),
-            vendor_mobile=(f.get("vendor_mobile") or None),
-            mac_address=(f.get("mac_address") or None),
-            # RAM fields (new)
-            ram=ram_type,
-            otherRam=otherRam if otherRam else None,
-            ram_size_gb=ram_size_gb,
-            source_of_fund=source_of_fund or None
         )
 
-        # store processors/gpus
+        # Save processors / GPUs JSON
         try:
             asset.set_processors(processors if processors else None)
             asset.set_gpus(gpus if gpus else None)
@@ -3999,11 +4045,12 @@ def asset_new():
             asset.processors = json.dumps(processors) if processors else None
             asset.gpus = json.dumps(gpus) if gpus else None
 
+        # Commit
         try:
             db.session.add(asset)
             db.session.commit()
             flash(f"Asset added successfully — Department Code: {department_code}", "success")
-            return redirect(url_for('asset_new'))
+            return redirect(url_for("asset_new"))
         except Exception as e:
             db.session.rollback()
             if po_filename:
@@ -4012,10 +4059,16 @@ def asset_new():
                 except Exception:
                     pass
             flash(f"Error saving asset: {e}", "danger")
-            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+            return render_template("asset_form.html", asset=None,
+                                   faculty_list=get_faculty_list(),
+                                   staff_list=get_staff_list())
 
     # GET
-    return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+    return render_template("asset_form.html",
+                           asset=None,
+                           faculty_list=get_faculty_list(),
+                           staff_list=get_staff_list())
+
 
 
 # Download uploaded PO/Invoice file
@@ -4214,6 +4267,7 @@ def asset_edit(asset_id):
             asset.po_invoice_filename = filename  # update file
 
         # Update asset fields
+        # Update asset fields
         asset.manufacturer = manufacturer
         asset.otherManufacturer = otherManufacturer or None
         asset.model = model
@@ -4224,9 +4278,14 @@ def asset_edit(asset_id):
         asset.po_number = f.get("po_number") or None
         asset.po_date = po_date
         asset.warranty_start = warranty_start
-        asset.sourece_of_fund    = f.get("source_of_fund") or None
         asset.warranty_expiry = warranty_expiry
         asset.department_code = department_code
+
+        # NEW / ensure these are present:
+        asset.os = f.get("os") or None
+        asset.otherOs = f.get("otherOs") or None
+        asset.source_of_fund = f.get("source_of_fund") or None
+
         asset.vendor_company = f.get("vendor_company") or None
         asset.vendor_contact_person = f.get("vendor_contact_person") or None
         asset.vendor_mobile = f.get("vendor_mobile") or None
