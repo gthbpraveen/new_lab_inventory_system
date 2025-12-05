@@ -20,7 +20,8 @@ from models import (
     ProvisioningRequest,
     # If you need these elsewhere, import now or inside the route files:
     RoomLab, Cubicle, Student, EquipmentHistory, WorkstationAsset, WorkstationAssignment,
-    Faculty, Staff
+    Faculty, Staff,
+    AssetStatusLog
 )
 
 # ------------------- Load env -------------------
@@ -3732,82 +3733,272 @@ def assets_list():
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from random import randint
-
-
 @app.route("/clone_workstation/<int:asset_id>", methods=["GET", "POST"])
 def clone_workstation(asset_id):
-    asset = WorkstationAsset.query.get_or_404(asset_id)
+    src = WorkstationAsset.query.get_or_404(asset_id)
+
+    # local helper, independent of other routes
+    def safe_int(val):
+        try:
+            return int(val)
+        except Exception:
+            return None
 
     if request.method == "POST":
         f = request.form
 
-        new_mac = f.get("mac_address").strip() or None
-        new_serial = f.get("serial").strip() or None
+        # Basic fields (take from form, not from src, so user can change them)
+        manufacturer = (f.get("manufacturer") or "").strip()
+        otherManufacturer = (f.get("otherManufacturer") or "").strip()
+        model = (f.get("model") or "").strip()
+        location = (f.get("location") or "").strip()
+        indenter_full = (f.get("indenter") or "").strip()
+        serial = (f.get("serial") or "").strip()
+        status = (f.get("status") or "Available").strip()
 
-        # Count existing assets of same type
-        count = WorkstationAsset.query.filter_by(
-            model=asset.model,
-            manufacturer=asset.manufacturer,
-            indenter=asset.indenter,
-            po_date=asset.po_date
-        ).count() + 1
-        serial = f"{count:03}"
+        os_val = (f.get("os") or None)
+        otherOs_val = (f.get("otherOs") or None)
+        mac_address = (f.get("mac_address") or "").strip() or None
+        source_of_funds = (f.get("source_of_funds") or "").strip() or None
 
-        po_date_clean = asset.po_date.replace("-", "")
-        indenter_first = asset.indenter.split()[0]
-        new_department_code = f"CSE/{po_date_clean}/{asset.model}/{asset.manufacturer}/{indenter_first}/{serial}"
+        # Required checks
+        if not manufacturer:
+            flash("Manufacturer is required", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
 
+        if manufacturer == "Others" and not otherManufacturer:
+            flash("Please specify other manufacturer", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
+
+        if not model:
+            flash("Model is required", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
+
+        if not location:
+            flash("Location is required", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
+
+        if not indenter_full:
+            flash("Indenter is required", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
+
+        if not serial:
+            flash("Serial number is required.", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
+
+        # Serial must be unique
+        if WorkstationAsset.query.filter_by(serial=serial).first():
+            flash("Serial already exists. Enter a unique serial number.", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
+
+        # MAC must also be unique if provided
+        if mac_address and WorkstationAsset.query.filter_by(mac_address=mac_address).first():
+            flash("MAC address already exists. Please provide a unique MAC.", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
+
+        # Dates
+        po_date_raw = f.get("po_date") or ""
+        po_date = parse_date_safe(po_date_raw)
+        if po_date_raw and not po_date:
+            flash("PO date invalid. Use YYYY-MM-DD.", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
+
+        warranty_start = parse_date_safe(f.get("warranty_start"))
+        warranty_expiry = parse_date_safe(f.get("warranty_expiry"))
+        if warranty_start and warranty_expiry and warranty_expiry < warranty_start:
+            flash("Warranty expiry must be same or after warranty start.", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
+
+        # RAM & storage
+        ram = (f.get("ram") or "").strip() or None
+        otherRam = (f.get("otherRam") or "").strip() or None
+        ram_size_gb = safe_int(f.get("ram_size_gb"))
+
+        storage_type1 = f.get("storage_type1") or None
+        storage_capacity1 = safe_int(f.get("storage_capacity1"))
+        storage_type2 = f.get("storage_type2") or None
+        storage_capacity2 = safe_int(f.get("storage_capacity2"))
+
+        # Processor JSON from form
+        processor_count = int(f.get("processor_count") or 0)
+        processors = []
+        for i in range(1, processor_count + 1):
+            name = (f.get(f"processor_{i}_name") or "").strip()
+            cores = safe_int(f.get(f"processor_{i}_cores"))
+            if name or cores is not None:
+                processors.append({"name": name or None, "cores": cores})
+
+        # GPU JSON from form
+        has_gpu = (f.get("has_gpu") or "no") == "yes"
+        gpus = []
+        if has_gpu:
+            gpu_count = int(f.get("gpu_count") or 1)
+            for i in range(1, gpu_count + 1):
+                gname = (f.get(f"gpu_{i}_name") or "").strip()
+                vram = safe_int(f.get(f"gpu_{i}_vram"))
+                if gname or vram is not None:
+                    gpus.append({"name": gname or None, "vram": vram})
+
+        # Department code (based on NEW values, like asset_new)
+        po_token = po_date_raw.replace("-", "") if po_date_raw else "NA"
+        indenter_clean = indenter_full.replace("Dr. ", "").replace("Prof. ", "")
+        indenter_first = indenter_clean.split()[0] if indenter_clean else "Unknown"
+        dep_base = f"CSE/{po_token}/{model}/{manufacturer}/{indenter_first}/{serial}"
+        department_code = dep_base
+        suffix = 1
+        while WorkstationAsset.query.filter_by(department_code=department_code).first():
+            suffix += 1
+            department_code = f"{dep_base}-{suffix}"
+
+        # Build cloned asset
         new_asset = WorkstationAsset(
-            manufacturer      = asset.manufacturer,
-            otherManufacturer = asset.otherManufacturer,
-            model             = asset.model,
-            serial            = new_serial,   # NEW serial
-            os                = asset.os,
-            otherOs           = asset.otherOs,
-            processor         = asset.processor,
-            cores             = asset.cores,
-            ram               = asset.ram,
-            otherRam          = asset.otherRam,
-            storage_type1     = asset.storage_type1,
-            storage_capacity1 = asset.storage_capacity1,
-            storage_type2     = asset.storage_type2,
-            storage_capacity2 = asset.storage_capacity2,
-            gpu               = asset.gpu,
-            vram              = asset.vram,
-            keyboard_provided = asset.keyboard_provided,
-            keyboard_details  = asset.keyboard_details,
-            mouse_provided    = asset.mouse_provided,
-            mouse_details     = asset.mouse_details,
-            monitor_provided  = asset.monitor_provided,
-            monitor_details   = asset.monitor_details,
-            monitor_size      = asset.monitor_size,
-            monitor_serial    = asset.monitor_serial,
-            mac_address       = new_mac,
-            po_date           = asset.po_date,
-            po_number         = asset.po_number,
-            source_of_fund    = asset.source_of_fund,
-            vendor_company    = asset.vendor_company,
-            vendor_contact_person = asset.vendor_contact_person,
-            vendor_mobile     = asset.vendor_mobile,
-            warranty_start    = asset.warranty_start,
-            warranty_expiry   = asset.warranty_expiry,
-            status            = asset.status,
-            location          = asset.location,
-            indenter          = asset.indenter,
-            department_code   = new_department_code
+            manufacturer=manufacturer,
+            otherManufacturer=otherManufacturer or None,
+            model=model,
+            serial=serial,
+
+            os=os_val,
+            otherOs=otherOs_val,
+            mac_address=mac_address,
+
+            # Keep legacy single CPU/GPU for compatibility (copy from src)
+            processor=src.processor,
+            cores=src.cores,
+            gpu=src.gpu,
+            vram=src.vram,
+
+            # RAM / storage
+            ram=ram,
+            otherRam=otherRam,
+            ram_size_gb=ram_size_gb,
+            storage_type1=storage_type1,
+            storage_capacity1=storage_capacity1,
+            storage_type2=storage_type2,
+            storage_capacity2=storage_capacity2,
+
+            # Procurement / fund
+            po_number=f.get("po_number") or None,
+            po_date=po_date,
+            source_of_fund=f.get("source_of_fund") or None,
+            warranty_start=warranty_start,
+            warranty_expiry=warranty_expiry,
+            # Vendor
+            vendor_company=f.get("vendor_company") or None,
+            vendor_contact_person=f.get("vendor_contact_person") or None,
+            vendor_mobile=f.get("vendor_mobile") or None,
+
+            # Lifecycle
+            status=status,
+            location=location,
+            indenter=indenter_full,
+            department_code=department_code,
+
+            # Reuse same PO / invoice file (no need to re-upload)
+            po_invoice_filename=src.po_invoice_filename,
         )
 
+        # Processors / GPUs JSON
+        try:
+            # if form gave nothing, fall back to src JSON
+            if not processors:
+                processors = src.get_processors()
+            if not gpus:
+                gpus = src.get_gpus()
+
+            new_asset.set_processors(processors if processors else None)
+            new_asset.set_gpus(gpus if gpus else None)
+        except Exception:
+            new_asset.processors = json.dumps(processors) if processors else None
+            new_asset.gpus = json.dumps(gpus) if gpus else None
+
+        # Commit
         try:
             db.session.add(new_asset)
             db.session.commit()
-            flash("✅ Asset cloned successfully.", "success")
+            flash(f"✅ Asset cloned successfully — Department Code: {department_code}", "success")
             return redirect(url_for("assets_list"))
         except Exception as e:
             db.session.rollback()
             flash(f"❌ Error cloning asset: {e}", "danger")
+            return render_template(
+                "asset_form.html",
+                asset=src,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list(),
+                clone_mode=True,
+            )
 
-    return render_template("clone_workstation.html", asset=asset)
-# imports (ensure these are at top of the file)
+    # GET: reuse asset_form, but in clone mode
+    return render_template(
+        "asset_form.html",
+        asset=src,
+        faculty_list=get_faculty_list(),
+        staff_list=get_staff_list(),
+        clone_mode=True,
+    )
+
+
+
 import os
 import json
 from datetime import datetime
@@ -4026,7 +4217,9 @@ def asset_new():
             vendor_company=(f.get("vendor_company") or None),
             vendor_contact_person=(f.get("vendor_contact_person") or None),
             vendor_mobile=(f.get("vendor_mobile") or None),
-
+            warranty_start=warranty_start,
+            warranty_expiry=warranty_expiry,
+            po_date_raw=po_date,
             # Lifecycle
             status=status,
             location=location,
@@ -4077,84 +4270,6 @@ def download_po_invoice(filename):
     # safe direct send from configured folder
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
-
-
-
-# @app.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
-# def asset_edit(asset_id):
-#     asset = WorkstationAsset.query.get_or_404(asset_id)
-
-#     if request.method == "POST":
-#         f = request.form
-
-#         # Update all basic fields
-#         asset.manufacturer      = f.get("manufacturer") or None
-#         asset.otherManufacturer = f.get("otherManufacturer") or None
-#         asset.model             = f.get("model") or None
-#         asset.os                = f.get("os") or None
-#         asset.serial            = f.get("serial") or asset.serial  # keep existing if blank
-#         asset.otherOs           = f.get("otherOs") or None
-#         asset.processor         = f.get("processor") or None
-#         asset.cores             = f.get("cores") or None
-#         asset.ram               = f.get("ram") or None
-#         asset.otherRam          = f.get("otherRam") or None
-#         asset.storage_type1     = f.get("storage_type1") or None
-#         asset.storage_capacity1 = f.get("storage_capacity1") or None
-#         asset.storage_type2     = f.get("storage_type2") or None
-#         asset.storage_capacity2 = f.get("storage_capacity2") or None
-#         asset.gpu               = f.get("gpu") or None
-#         asset.vram              = f.get("vram") or None
-#         asset.keyboard_provided = f.get("keyboard_provided") or None
-#         asset.keyboard_details  = f.get("keyboard_details") or None
-#         asset.mouse_provided    = f.get("mouse_provided") or None
-#         asset.mouse_details     = f.get("mouse_details") or None
-#         asset.monitor_provided  = f.get("monitor_provided") or None
-#         asset.monitor_details   = f.get("monitor_details") or None
-#         asset.monitor_size      = f.get("monitor_size") or None
-#         asset.monitor_serial    = f.get("monitor_serial") or None
-#         asset.mac_address       = f.get("mac_address") or None
-#         asset.po_date           = f.get("po_date") or None
-#         asset.po_number         = f.get("po_number") or None
-#         asset.source_of_fund    = f.get("source_of_fund") or None
-#         asset.vendor_company    = f.get("vendor_company") or None
-#         asset.vendor_contact_person = f.get("vendor_contact_person") or None
-#         asset.vendor_mobile     = f.get("vendor_mobile") or None
-#         asset.warranty_start    = f.get("warranty_start") or None
-#         asset.warranty_expiry   = f.get("warranty_expiry") or None
-#         asset.location          = f.get("location") or None
-#         asset.indenter          = f.get("indenter") or None
-
-#         # Generate department code automatically
-#         if asset.model and asset.manufacturer and asset.indenter and asset.po_date:
-#             po_date_clean = asset.po_date.replace("-", "")
-#             indenter_first = asset.indenter.split()[0]
-
-#             # Use existing serial if available
-#             if not asset.serial:
-#                 # Count existing assets of same type for this user/date
-#                 count = WorkstationAsset.query.filter_by(
-#                     model=asset.model,
-#                     manufacturer=asset.manufacturer,
-#                     indenter=asset.indenter,
-#                     po_date=asset.po_date
-#                 ).count() + 1  # +1 for this asset
-#                 serial_part = f"{count:03}"
-#                 asset.serial = serial_part
-#             else:
-#                 serial_part = asset.serial  # keep existing
-
-#             # Dept code format: CSE/YYYYMMDD/Model/Manufacturer/Indenter/001, 002...
-#             asset.department_code = f"CSE/{po_date_clean}/{asset.model}/{asset.manufacturer}/{indenter_first}/{serial_part}"
-
-#         try:
-#             db.session.commit()
-#             flash("✅ Asset updated successfully.", "success")
-#             return redirect(url_for("assets_list"))
-#         except Exception as e:
-#             db.session.rollback()
-#             flash(f"❌ Error updating asset: {e}", "danger")
-
-#     return render_template("asset_form.html", asset=asset)
 
 
 @app.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
@@ -4326,46 +4441,202 @@ def asset_edit(asset_id):
                            staff_list=get_staff_list())
 
 
+# @app.route("/assets/<int:asset_id>/retire", methods=["POST"])
+# def asset_retire(asset_id):
+#     a = WorkstationAsset.query.get_or_404(asset_id)
+#     if a.status == "Issued":
+#         flash("Cannot retire an assigned asset. Return it first.", "warning")
+#     elif a.status == "Retired":
+#         flash("Asset is already retired.", "info")
+#     else:
+#         a.status = "Retired"
+#         db.session.commit()
+#         flash("Asset retired.", "success")
+#     return redirect(url_for("assets_list"))
+
+
+# @app.route("/assets/<int:asset_id>/unretire", methods=["POST"])
+# def asset_unretire(asset_id):
+#     a = WorkstationAsset.query.get_or_404(asset_id)
+#     if a.status == "Retired":
+#         a.status = "Available"
+#         db.session.commit()
+#         flash("Asset un-retired and now Available.", "success")
+#     else:
+#         flash("Asset is not retired.", "info")
+#     return redirect(url_for("assets_list"))
+
+
+# @app.route("/assets/<int:asset_id>/delete", methods=["POST"])
+# def asset_delete(asset_id):
+#     a = WorkstationAsset.query.get_or_404(asset_id)
+#     if a.assignments and len(a.assignments) > 0:
+#         flash("Cannot delete: this asset has assignment history. Consider retire.", "warning")
+#         return redirect(url_for("assets_list"))
+#     try:
+#         db.session.delete(a)
+#         db.session.commit()
+#         flash("Asset deleted.", "success")
+#     except Exception as e:
+#         db.session.rollback()
+#         flash(f"Error deleting asset: {e}", "danger")
+#     return redirect(url_for("assets_list"))
+
+from flask import redirect, url_for, flash, abort
+from flask_login import login_required, current_user
+import os
+
+# Make sure app and WorkstationAsset, db are already imported above.
+
+
+def _ensure_can_manage_assets():
+    """Block students or unauthorized users from mutating assets."""
+    # Adjust this condition if you have different role logic
+    if not current_user.is_authenticated:
+        abort(401)
+    if getattr(current_user, "role", None) == "student":
+        flash("You do not have permission to modify assets.", "danger")
+        abort(403)
+
+def log_status_change(asset, new_status, reason=None):
+    from models import AssetStatusLog  # or adjust import based on your structure
+
+    log = AssetStatusLog(
+        asset_id=asset.id,
+        old_status=asset.status,
+        new_status=new_status,
+        reason=reason,
+        changed_by=getattr(current_user, "email", None) if hasattr(current_user, "is_authenticated") and current_user.is_authenticated else None,
+    )
+    asset.status = new_status
+    db.session.add(log)
+
 @app.route("/assets/<int:asset_id>/retire", methods=["POST"])
+@login_required
 def asset_retire(asset_id):
-    a = WorkstationAsset.query.get_or_404(asset_id)
-    if a.status == "Issued":
+    asset = WorkstationAsset.query.get_or_404(asset_id)
+    reason = (request.form.get("reason") or "").strip()
+
+    if not reason:
+        flash("Reason for retiring the asset is required.", "danger")
+        return redirect(url_for("assets_list"))
+
+    if asset.status == "Issued":
         flash("Cannot retire an assigned asset. Return it first.", "warning")
-    elif a.status == "Retired":
+        return redirect(url_for("assets_list"))
+    if asset.status == "Retired":
         flash("Asset is already retired.", "info")
-    else:
-        a.status = "Retired"
+        return redirect(url_for("assets_list"))
+    if asset.status == "Scrapped":
+        flash("Scrapped asset cannot be retired.", "warning")
+        return redirect(url_for("assets_list"))
+
+    try:
+        log_status_change(asset, "Retired", reason)
         db.session.commit()
-        flash("Asset retired.", "success")
+        flash("Asset retired successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error retiring asset: {e}", "danger")
+
     return redirect(url_for("assets_list"))
 
 
 @app.route("/assets/<int:asset_id>/unretire", methods=["POST"])
+@login_required
 def asset_unretire(asset_id):
-    a = WorkstationAsset.query.get_or_404(asset_id)
-    if a.status == "Retired":
-        a.status = "Available"
+    asset = WorkstationAsset.query.get_or_404(asset_id)
+
+    if asset.status != "Retired":
+        flash("Only retired assets can be un-retired.", "info")
+        return redirect(url_for("assets_list"))
+
+    try:
+        log_status_change(asset, "Available", "Un-retired (made Available again)")
         db.session.commit()
         flash("Asset un-retired and now Available.", "success")
-    else:
-        flash("Asset is not retired.", "info")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error un-retiring asset: {e}", "danger")
+
+    return redirect(url_for("assets_list"))
+
+
+@app.route("/assets/<int:asset_id>/scrap", methods=["POST"])
+@login_required
+def asset_scrap(asset_id):
+    asset = WorkstationAsset.query.get_or_404(asset_id)
+    reason = (request.form.get("reason") or "").strip()
+
+    if not reason:
+        flash("Reason for scrapping the asset is required.", "danger")
+        return redirect(url_for("assets_list"))
+
+    if asset.status == "Issued":
+        flash("Cannot scrap an assigned asset. Return it first.", "warning")
+        return redirect(url_for("assets_list"))
+    if asset.status == "Scrapped":
+        flash("Asset is already scrapped.", "info")
+        return redirect(url_for("assets_list"))
+
+    try:
+        log_status_change(asset, "Scrapped", reason)
+        db.session.commit()
+        flash("Asset marked as Scrapped.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error scrapping asset: {e}", "danger")
+
     return redirect(url_for("assets_list"))
 
 
 @app.route("/assets/<int:asset_id>/delete", methods=["POST"])
+@login_required
 def asset_delete(asset_id):
-    a = WorkstationAsset.query.get_or_404(asset_id)
-    if a.assignments and len(a.assignments) > 0:
-        flash("Cannot delete: this asset has assignment history. Consider retire.", "warning")
+    asset = WorkstationAsset.query.get_or_404(asset_id)
+
+    # Safety checks
+    if asset.assignments and len(asset.assignments) > 0:
+        flash("Cannot delete: this asset has assignment history. Consider retire/scrap instead.", "warning")
         return redirect(url_for("assets_list"))
+
+    if asset.status in ("Issued", "Scrapped"):
+        flash("Cannot delete assets that are Issued or Scrapped.", "warning")
+        return redirect(url_for("assets_list"))
+
     try:
-        db.session.delete(a)
+        db.session.delete(asset)
         db.session.commit()
         flash("Asset deleted.", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"Error deleting asset: {e}", "danger")
+
     return redirect(url_for("assets_list"))
+
+@app.route("/assets/<int:asset_id>/history")
+@login_required
+def machines_history(asset_id):
+    asset = WorkstationAsset.query.get_or_404(asset_id)
+
+    # Optional: restrict students
+    # if current_user.role == "student":
+    #     flash("Access denied.", "danger")
+    #     return redirect(url_for("assets_list"))
+
+    # latest first
+    logs = (
+        AssetStatusLog.query
+        .filter_by(asset_id=asset.id)
+        .order_by(AssetStatusLog.changed_at.desc())
+        .all()
+    )
+
+    return render_template(
+        "machines_history.html",
+        asset=asset,
+        logs=logs
+    )
 
 # =========================
 # Assign / Return

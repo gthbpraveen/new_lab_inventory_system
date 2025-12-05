@@ -4,12 +4,31 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-  <h2 class="text-2xl font-bold text-gray-800 mb-6">
-    {{ 'Edit Workstation Asset' if asset else 'Add New Workstation/Server/Desktop Asset' }}
+  {# detect clone mode #}
+  {% set is_clone = clone_mode|default(False) %}
+
+  <h2 class="text-2xl font-bold text-gray-800 mb-4">
+    {% if is_clone %}
+      Clone Workstation Asset
+    {% elif asset %}
+      Edit Workstation Asset
+    {% else %}
+      Add New Workstation/Server/Desktop Asset
+    {% endif %}
   </h2>
 
+  {% if is_clone and asset %}
+    <div class="mb-6 p-3 rounded border border-yellow-300 bg-yellow-50 text-sm text-yellow-900">
+      <p><strong>Cloning from:</strong> {{ asset.department_code }} (Serial: {{ asset.serial }})</p>
+      <p class="mt-1">
+        Serial number and MAC address are not copied. Please enter new unique values for the clone.
+      </p>
+    </div>
+  {% endif %}
+
   <form method="POST" action="" enctype="multipart/form-data" id="assetForm">
-    <!-- Basic Details -->
+    {% set is_clone = clone_mode|default(False) %}
+<!-- Basic Details -->
     <div class="form-section bg-blue-50 rounded-lg p-6 mb-6">
       <h3 class="text-lg font-semibold text-indigo-800 mb-3">Basic Details</h3>
 
@@ -48,11 +67,22 @@
           </select>
         </div>
 
-        <div>
-          <label for="serial" class="block text-gray-700 font-medium mb-2 required-field">Serial Number <span class="text-sm text-gray-500">(required)</span></label>
-          <input type="text" id="serial" name="serial" value="{{ asset.serial if asset else '' }}" required
-                 class="block w-full px-4 py-2 border rounded-md" autocomplete="off">
-        </div>
+<div>
+  <label for="serial" class="block text-gray-700 font-medium mb-2">
+    Serial Number <span class="text-red-500">*</span>
+  </label>
+  <input type="text" id="serial" name="serial"
+         value="{% if asset and not is_clone %}{{ asset.serial }}{% endif %}"
+         class="block w-full px-4 py-2 border rounded-md"
+         required>
+  {% if is_clone %}
+    <p class="text-xs text-gray-500 mt-1">
+      This is a cloned asset. Please provide a new unique serial number.
+    </p>
+  {% endif %}
+</div>
+
+
 
         <div>
           <label for="os" class="block text-gray-700 font-medium mb-2">Operating System</label>
@@ -71,13 +101,22 @@
                  class="block w-full px-4 py-2 border rounded-md">
         </div>
 
-        <div>
-          <label for="mac_address" class="block text-gray-700 font-medium mb-2">Primary MAC Address (optional)</label>
-          <input type="text" id="mac_address" name="mac_address"
-                 value="{{ asset.mac_address if asset else '' }}"
-                 placeholder="optional"
-                 class="block w-full px-4 py-2 border rounded-md">
-        </div>
+       <div>
+  <label for="mac_address" class="block text-gray-700 font-medium mb-2">
+    Primary MAC Address (optional)
+  </label>
+  <input type="text" id="mac_address" name="mac_address"
+         value="{% if asset and not is_clone %}{{ asset.mac_address }}{% endif %}"
+         placeholder="optional"
+         class="block w-full px-4 py-2 border rounded-md">
+  {% if is_clone %}
+    <p class="text-xs text-gray-500 mt-1">
+      Leave blank or enter a new unique MAC address.
+    </p>
+  {% endif %}
+</div>
+
+
 
       </div>
     </div>
@@ -172,7 +211,7 @@
         <div>
           <label for="storage_type1" class="block mb-2">Primary Storage Type</label>
           <select id="storage_type1" name="storage_type1" class="block w-full px-4 py-2 border rounded-md">
-            <option value="">None</option>
+            <option value=""> Select </option>
             {% for st in ['HDD','SSD','NVMe','Other'] %}
               <option value="{{st}}" {% if asset and asset.storage_type1==st %}selected{% endif %}>{{st}}</option>
             {% endfor %}
@@ -186,7 +225,7 @@
         <div>
           <label for="storage_type2" class="block mb-2">Secondary Storage Type</label>
           <select id="storage_type2" name="storage_type2" class="block w-full px-4 py-2 border rounded-md">
-            <option value="">None</option>
+            <option value=""> Select </option>
             {% for st in ['HDD','SSD','NVMe','Other'] %}
               <option value="{{st}}" {% if asset and asset.storage_type2==st %}selected{% endif %}>{{st}}</option>
             {% endfor %}
@@ -367,9 +406,16 @@
 
     <!-- Submit -->
     <div class="flex justify-end">
-      <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700">
-        {{ 'Update Asset' if asset else 'Add Asset' }}
-      </button>
+     <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700">
+  {% if is_clone %}
+    Create Clone
+  {% elif asset %}
+    Update Asset
+  {% else %}
+    Add Asset
+  {% endif %}
+</button>
+
     </div>
   </form>
 </div>
@@ -582,7 +628,7 @@
         }
       });
     }
-  });
+  
 </script>
 
 {% endblock %}

@@ -99,33 +99,102 @@
             <td class="p-3">{{ a.manufacturer }}</td>
             <td class="p-3">{{ a.model }}</td>
             <td class="p-3">{{ a.source_of_fund or '—' }}</td>
-            <td class="p-3">{{ a.status }}</td>
+            <td class="p-3">
+  {% if a.status == "Available" %}
+    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-300">
+      Available
+    </span>
+  {% elif a.status == "Issued" %}
+    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-300">
+      Issued
+    </span>
+  {% elif a.status == "Retired" %}
+    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
+      Retired
+    </span>
+  {% elif a.status == "Scrapped" %}
+    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 border border-red-300">
+      Scrapped
+    </span>
+  {% else %}
+    {{ a.status or "—" }}
+  {% endif %}
+</td>
+      {% if current_user.role != "student" %}
+<td class="p-3 space-x-2">
 
-            {% if current_user.role != "student" %}
-            <td class="p-3 space-x-2">
-              <a href="{{ url_for('asset_edit', asset_id=a.id) }}" class="text-indigo-600 hover:underline">Edit</a>
+  {# simple flags to control buttons #}
+  {% set can_edit   = a.status in ["Available", "Issued", "Retired"] %}
+  {% set can_retire = a.status == "Available" %}
+  {% set can_unretire = a.status == "Retired" %}
+  {% set can_scrap  = a.status in ["Available", "Retired"] %}
+  {% set can_clone  = a.status in ["Available", "Retired"] %}
+  {% set can_delete = (not a.assignments or a.assignments|length == 0) 
+                      and a.status in ["Available", "Retired"] %}
 
-              {% if a.status == "Retired" %}
-                <form action="{{ url_for('asset_unretire', asset_id=a.id) }}" method="post" class="inline">
-                  <button type="submit" class="text-yellow-600 hover:underline"
-                          onclick="return confirm('Un-retire this asset?')">Unretire</button>
-                </form>
-              {% elif a.status != "Issued" %}
-                <form action="{{ url_for('asset_retire', asset_id=a.id) }}" method="post" class="inline">
-                  <button type="submit" class="text-yellow-600 hover:underline"
-                          onclick="return confirm('Retire this asset?')">Retire</button>
-                </form>
-              {% endif %}
+  {# Edit always allowed except maybe scrapped #}
+  {% if can_edit %}
+    <a href="{{ url_for('asset_edit', asset_id=a.id) }}" class="text-indigo-600 hover:underline">Edit</a>
+  {% endif %}
 
-              <a href="{{ url_for('clone_workstation', asset_id=a.id) }}" 
-                 class="text-yellow-600 hover:underline">Clone</a>
+  {# Retire #}
+  {% if can_retire %}
+    <form id="retire-form-{{ a.id }}" 
+          action="{{ url_for('asset_retire', asset_id=a.id) }}" 
+          method="post" class="inline"
+          onsubmit="return confirmRetire({{ a.id }});">
+      <input type="hidden" name="reason" id="retire-reason-{{ a.id }}">
+      <button type="submit" class="text-yellow-700 hover:underline">
+        Retire
+      </button>
+    </form>
+  {% endif %}
 
-              <form action="{{ url_for('asset_delete', asset_id=a.id) }}" method="post" class="inline">
-                <button type="submit" class="text-red-600 hover:underline"
-                        onclick="return confirm('Are you sure you want to delete this asset?')">Delete</button>
-              </form>
-            </td>
-            {% endif %}
+  {# Unretire #}
+  {% if can_unretire %}
+    <form action="{{ url_for('asset_unretire', asset_id=a.id) }}" 
+          method="post" class="inline"
+          onsubmit="return confirm('Un-retire this asset and make it Available?');">
+      <button type="submit" class="text-green-700 hover:underline">
+        Unretire
+      </button>
+    </form>
+  {% endif %}
+
+  {# Scrap #}
+  {% if can_scrap %}
+    <form id="scrap-form-{{ a.id }}" 
+          action="{{ url_for('asset_scrap', asset_id=a.id) }}" 
+          method="post" class="inline"
+          onsubmit="return confirmScrap({{ a.id }});">
+      <input type="hidden" name="reason" id="scrap-reason-{{ a.id }}">
+      <button type="submit" class="text-red-700 hover:underline">
+        Scrap
+      </button>
+    </form>
+  {% endif %}
+
+  {# Clone #}
+  {% if can_clone %}
+    <a href="{{ url_for('clone_workstation', asset_id=a.id) }}" 
+       class="text-purple-700 hover:underline">Clone</a>
+  {% endif %}
+
+  {# Delete #}
+  {% if can_delete %}
+    <form action="{{ url_for('asset_delete', asset_id=a.id) }}" 
+          method="post" class="inline"
+          onsubmit="return confirm('Are you sure you want to permanently delete this asset?');">
+      <button type="submit" class="text-red-600 hover:underline">
+        Delete
+      </button>
+    </form>
+  {% endif %}
+
+</td>
+{% endif %}
+
+            
           </tr>
 
           <!-- Expanded details row: show ALL workstation details -->
@@ -249,9 +318,55 @@
                 <tr><th class="p-2 border bg-gray-100">Vendor Contact Person</th><td class="p-2 border">{{ a.vendor_contact_person or '—' }}</td></tr>
                 <tr><th class="p-2 border bg-gray-100">Vendor Mobile</th><td class="p-2 border">{{ a.vendor_mobile or '—' }}</td></tr>
 
-                <tr><th class="p-2 border bg-gray-100">Status</th><td class="p-2 border">{{ a.status }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Status</th><td class="p-3">
+  {% if a.status == "Available" %}
+    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-300">
+      Available
+    </span>
+  {% elif a.status == "Issued" %}
+    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-300">
+      Issued
+    </span>
+  {% elif a.status == "Retired" %}
+    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
+      Retired
+    </span>
+  {% elif a.status == "Scrapped" %}
+    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 border border-red-300">
+      Scrapped
+    </span>
+  {% else %}
+    {{ a.status or "—" }}
+  {% endif %}
+</td>
+</tr>
                 <tr><th class="p-2 border bg-gray-100">Location</th><td class="p-2 border">{{ a.location }}</td></tr>
                 <tr><th class="p-2 border bg-gray-100">Indenter</th><td class="p-2 border">{{ a.indenter }}</td></tr>
+               <tr>
+  <th class="p-2 border bg-gray-100 align-top">Status History</th>
+  <td class="p-2 border">
+    {% if a.status_logs %}
+      <ul class="list-disc list-inside space-y-1">
+        {% for log in a.status_logs|sort(attribute="changed_at", reverse=True) %}
+          <li>
+            <strong>{{ log.old_status }} → {{ log.new_status }}</strong>
+            {% if log.reason %} — {{ log.reason }}{% endif %}
+            {% if log.changed_by %} (by {{ log.changed_by }}){% endif %}
+            {% if log.changed_at %} on {{ log.changed_at.strftime("%Y-%m-%d %H:%M") }}{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+      <a href="{{ url_for('machines_history', asset_id=a.id) }}"
+         class="text-xs text-indigo-700 hover:underline mt-1 inline-block">
+        View full history →
+      </a>
+    {% else %}
+      —
+    {% endif %}
+  </td>
+</tr>
+
+
                 <tr><th class="p-2 border bg-gray-100">Created At</th><td class="p-2 border">{{ a.created_at or '—' }}</td></tr>
               </table>
             </td>
@@ -277,4 +392,39 @@
     {% endif %}
   </div>
 </section>
+<script>
+  function confirmRetire(id) {
+    const reason = prompt("Enter reason for retiring this asset:");
+    if (reason === null) {
+      // user pressed Cancel
+      return false;
+    }
+    if (!reason.trim()) {
+      alert("Reason is required to retire the asset.");
+      return false;
+    }
+    const input = document.getElementById("retire-reason-" + id);
+    if (input) {
+      input.value = reason.trim();
+    }
+    return confirm("Retire this asset?");
+  }
+
+  function confirmScrap(id) {
+    const reason = prompt("Enter reason for scrapping this asset:");
+    if (reason === null) {
+      return false;
+    }
+    if (!reason.trim()) {
+      alert("Reason is required to scrap the asset.");
+      return false;
+    }
+    const input = document.getElementById("scrap-reason-" + id);
+    if (input) {
+      input.value = reason.trim();
+    }
+    return confirm("Mark this asset as Scrapped?");
+  }
+</script>
+
 {% endblock %}

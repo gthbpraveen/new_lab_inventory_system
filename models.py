@@ -924,6 +924,12 @@ class WorkstationAsset(db.Model):
         cascade="all, delete-orphan",
         lazy=True,
     )
+    status_logs = db.relationship(
+        "AssetStatusLog",
+        backref="asset",
+        cascade="all, delete-orphan",
+        lazy=True,
+    )
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -1019,6 +1025,23 @@ class SlurmAccount(db.Model):
     )
     status = db.Column(db.String(20), nullable=False, default="active")
 
+from datetime import datetime
+
+class AssetStatusLog(db.Model):
+    __tablename__ = "asset_status_log"
+
+    id = db.Column(db.Integer, primary_key=True)
+    asset_id = db.Column(db.Integer, db.ForeignKey("workstation_asset.id"), nullable=False, index=True)
+
+    old_status = db.Column(db.String(20), nullable=False)
+    new_status = db.Column(db.String(20), nullable=False)
+    reason = db.Column(db.String(255), nullable=True)
+
+    changed_by = db.Column(db.String(120), nullable=True)  # store current_user.email or name
+    changed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f"<AssetStatusLog asset_id={self.asset_id} {self.old_status}->{self.new_status}>"
 
 # -------------------------
 # Defaults & Seed helper
