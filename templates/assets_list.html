@@ -72,13 +72,14 @@
 
     <!-- Assets Table -->
     <div class="overflow-x-auto bg-white shadow rounded-lg">
-      <table class="w-full text-sm text-left border border-gray-300 min-w-[800px]">
+      <table class="w-full text-sm text-left border border-gray-300 min-w-[900px]">
         <thead class="bg-gray-100 text-gray-700">
           <tr>
             <th class="p-3 border">S.No</th>
             <th class="p-3 border">Dept_code</th>
             <th class="p-3 border">Manufacturer</th>
             <th class="p-3 border">Model</th>
+            <th class="p-3 border">Source of Fund</th>
             <th class="p-3 border">Status</th>
             {% if current_user.role != "student" %}
             <th class="p-3 border">Actions</th>
@@ -97,79 +98,168 @@
             </td>
             <td class="p-3">{{ a.manufacturer }}</td>
             <td class="p-3">{{ a.model }}</td>
+            <td class="p-3">{{ a.source_of_fund or '—' }}</td>
             <td class="p-3">{{ a.status }}</td>
 
             {% if current_user.role != "student" %}
- <td class="p-3 space-x-2">
-  <a href="{{ url_for('asset_edit', asset_id=a.id) }}" class="text-indigo-600 hover:underline">Edit</a>
+            <td class="p-3 space-x-2">
+              <a href="{{ url_for('asset_edit', asset_id=a.id) }}" class="text-indigo-600 hover:underline">Edit</a>
 
-  {% if a.status == "Retired" %}
-    <form action="{{ url_for('asset_unretire', asset_id=a.id) }}" method="post" class="inline">
-      <button type="submit" class="text-yellow-600 hover:underline"
-              onclick="return confirm('Un-retire this asset?')">Unretire</button>
-    </form>
-  {% elif a.status != "Issued" %}
-    <form action="{{ url_for('asset_retire', asset_id=a.id) }}" method="post" class="inline">
-      <button type="submit" class="text-yellow-600 hover:underline"
-              onclick="return confirm('Retire this asset?')">Retire</button>
-    </form>
-  {% endif %}
+              {% if a.status == "Retired" %}
+                <form action="{{ url_for('asset_unretire', asset_id=a.id) }}" method="post" class="inline">
+                  <button type="submit" class="text-yellow-600 hover:underline"
+                          onclick="return confirm('Un-retire this asset?')">Unretire</button>
+                </form>
+              {% elif a.status != "Issued" %}
+                <form action="{{ url_for('asset_retire', asset_id=a.id) }}" method="post" class="inline">
+                  <button type="submit" class="text-yellow-600 hover:underline"
+                          onclick="return confirm('Retire this asset?')">Retire</button>
+                </form>
+              {% endif %}
 
-  <a href="{{ url_for('clone_workstation', asset_id=a.id) }}" 
-     class="text-yellow-600 hover:underline">Clone</a>
+              <a href="{{ url_for('clone_workstation', asset_id=a.id) }}" 
+                 class="text-yellow-600 hover:underline">Clone</a>
 
-  <form action="{{ url_for('asset_delete', asset_id=a.id) }}" method="post" class="inline">
-    <button type="submit" class="text-red-600 hover:underline"
-            onclick="return confirm('Are you sure you want to delete this asset?')">Delete</button>
-  </form>
-</td>
-  {% endif %}
-
+              <form action="{{ url_for('asset_delete', asset_id=a.id) }}" method="post" class="inline">
+                <button type="submit" class="text-red-600 hover:underline"
+                        onclick="return confirm('Are you sure you want to delete this asset?')">Delete</button>
+              </form>
+            </td>
+            {% endif %}
           </tr>
 
           <!-- Expanded details row: show ALL workstation details -->
           <tr id="details-{{ a.id }}" class="hidden bg-gray-50">
-  <td colspan="{% if current_user.role != 'student' %}6{% else %}5{% endif %}" class="p-4">
-    <table class="w-full text-sm border border-gray-300">
-      <tr><th class="p-2 border bg-gray-100">Department Code</th><td class="p-2 border">{{ a.department_code }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Manufacturer</th><td class="p-2 border">{{ a.manufacturer }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Other Manufacturer</th><td class="p-2 border">{{ a.otherManufacturer }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Model</th><td class="p-2 border">{{ a.model }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Serial</th><td class="p-2 border">{{ a.serial }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">OS</th><td class="p-2 border">{{ a.os }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Other OS</th><td class="p-2 border">{{ a.otherOs }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Processor</th><td class="p-2 border">{{ a.processor }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Cores</th><td class="p-2 border">{{ a.cores }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">RAM</th><td class="p-2 border">{{ a.ram }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Other RAM</th><td class="p-2 border">{{ a.otherRam }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Storage 1</th><td class="p-2 border">{{ a.storage_type1 }} - {{ a.storage_capacity1 }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Storage 2</th><td class="p-2 border">{{ a.storage_type2 }} - {{ a.storage_capacity2 }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">GPU</th><td class="p-2 border">{{ a.gpu }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">VRAM</th><td class="p-2 border">{{ a.vram }}</td></tr>
+            <td colspan="{% if current_user.role != 'student' %}7{% else %}6{% endif %}" class="p-4">
+              <table class="w-full text-sm border border-gray-300">
+                <!-- Identity -->
+                <tr><th class="p-2 border bg-gray-100">Department Code</th><td class="p-2 border">{{ a.department_code }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Manufacturer</th><td class="p-2 border">{{ a.manufacturer }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Other Manufacturer</th><td class="p-2 border">{{ a.otherManufacturer or '—' }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Model</th><td class="p-2 border">{{ a.model }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Serial</th><td class="p-2 border">{{ a.serial }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">OS</th><td class="p-2 border">{{ a.os or '—' }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Other OS</th><td class="p-2 border">{{ a.otherOs or '—' }}</td></tr>
 
-      <tr><th class="p-2 border bg-gray-100">Keyboard</th><td class="p-2 border">{{ a.keyboard_provided }} - {{ a.keyboard_details }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Mouse</th><td class="p-2 border">{{ a.mouse_provided }} - {{ a.mouse_details }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Monitor</th><td class="p-2 border">{{ a.monitor_provided }} - {{ a.monitor_details }} ({{ a.monitor_size }}) SN: {{ a.monitor_serial }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">MAC Address</th><td class="p-2 border">{{ a.mac_address }}</td></tr>
+                <!-- CPU / GPU -->
+                <tr>
+                  <th class="p-2 border bg-gray-100">Processor(s)</th>
+                  <td class="p-2 border">
+                    {% set procs = a.get_processors() %}
+                    {% if procs %}
+                      {% for p in procs %}
+                        {{ p.name or 'Unknown CPU' }}{% if p.cores %} ({{ p.cores }} cores){% endif %}{% if not loop.last %}, {% endif %}
+                      {% endfor %}
+                    {% else %}
+                      {{ a.processor or '—' }}
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <th class="p-2 border bg-gray-100">GPU(s)</th>
+                  <td class="p-2 border">
+                    {% set gpus = a.get_gpus() %}
+                    {% if gpus %}
+                      {% for g in gpus %}
+                        {{ g.name or 'Unknown GPU' }}{% if g.vram %} ({{ g.vram }} GB VRAM){% endif %}{% if not loop.last %}, {% endif %}
+                      {% endfor %}
+                    {% else %}
+                      {% if a.gpu %}
+                        {{ a.gpu }}{% if a.vram %} ({{ a.vram }} GB VRAM){% endif %}
+                      {% else %}
+                        —
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                </tr>
 
-      <tr><th class="p-2 border bg-gray-100">PO Date</th><td class="p-2 border">{{ a.po_date }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">PO Number</th><td class="p-2 border">{{ a.po_number }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Source of Fund</th><td class="p-2 border">{{ a.source_of_fund }}</td></tr>
+                <!-- Memory & Storage -->
+                <tr>
+                  <th class="p-2 border bg-gray-100">RAM</th>
+                  <td class="p-2 border">
+                    {% if a.ram or a.ram_size_gb %}
+                      {{ a.ram or '' }}{% if a.ram_size_gb %} ({{ a.ram_size_gb }} GB){% endif %}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr><th class="p-2 border bg-gray-100">Other RAM</th><td class="p-2 border">{{ a.otherRam or '—' }}</td></tr>
+                <tr>
+                  <th class="p-2 border bg-gray-100">Storage 1</th>
+                  <td class="p-2 border">
+                    {% if a.storage_type1 or a.storage_capacity1 %}
+                      {{ a.storage_type1 or '—' }}
+                      {% if a.storage_capacity1 %} — {{ a.storage_capacity1 }} GB{% endif %}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <th class="p-2 border bg-gray-100">Storage 2</th>
+                  <td class="p-2 border">
+                    {% if a.storage_type2 or a.storage_capacity2 %}
+                      {{ a.storage_type2 or '—' }}
+                      {% if a.storage_capacity2 %} — {{ a.storage_capacity2 }} GB{% endif %}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                </tr>
 
-      <tr><th class="p-2 border bg-gray-100">Warranty Start</th><td class="p-2 border">{{ a.warranty_start }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Warranty Expiry</th><td class="p-2 border">{{ a.warranty_expiry }}</td></tr>
+                <!-- Peripherals & Network -->
+                <tr><th class="p-2 border bg-gray-100">Keyboard</th><td class="p-2 border">{{ a.keyboard_provided or '—' }}{% if a.keyboard_details %} - {{ a.keyboard_details }}{% endif %}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Mouse</th><td class="p-2 border">{{ a.mouse_provided or '—' }}{% if a.mouse_details %} - {{ a.mouse_details }}{% endif %}</td></tr>
+                <tr>
+                  <th class="p-2 border bg-gray-100">Monitor</th>
+                  <td class="p-2 border">
+                    {% if a.monitor_provided or a.monitor_details or a.monitor_size or a.monitor_serial %}
+                      {{ a.monitor_provided or '—' }}{% if a.monitor_details %} - {{ a.monitor_details }}{% endif %}
+                      {% if a.monitor_size %} ({{ a.monitor_size }}){% endif %}
+                      {% if a.monitor_serial %} SN: {{ a.monitor_serial }}{% endif %}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr><th class="p-2 border bg-gray-100">MAC Address</th><td class="p-2 border">{{ a.mac_address or '—' }}</td></tr>
 
-      <tr><th class="p-2 border bg-gray-100">Vendor</th><td class="p-2 border">{{ a.vendor_company }} ({{ a.vendor_contact_person }}) {{ a.vendor_mobile }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Status</th><td class="p-2 border">{{ a.status }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Location</th><td class="p-2 border">{{ a.location }}</td></tr>
-      <tr><th class="p-2 border bg-gray-100">Indenter</th><td class="p-2 border">{{ a.indenter }}</td></tr>
-    </table>
-  </td>
-</tr>
+                <!-- PO & Warranty -->
+                <tr><th class="p-2 border bg-gray-100">PO Date</th><td class="p-2 border">{{ a.po_date or '—' }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">PO Number</th><td class="p-2 border">{{ a.po_number or '—' }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Source of Fund</th><td class="p-2 border">{{ a.source_of_fund or '—' }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Warranty Start</th><td class="p-2 border">{{ a.warranty_start or '—' }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Warranty Expiry</th><td class="p-2 border">{{ a.warranty_expiry or '—' }}</td></tr>
+
+                {% if a.po_invoice_filename %}
+                <tr>
+                  <th class="p-2 border bg-gray-100">PO / Invoice File</th>
+                  <td class="p-2 border">
+                    <a href="{{ url_for('download_po_invoice', filename=a.po_invoice_filename) }}"
+                       class="text-indigo-600 hover:underline">
+                      {{ a.po_invoice_filename }}
+                    </a>
+                  </td>
+                </tr>
+                {% endif %}
+
+                <!-- Vendor & Ownership -->
+                <tr><th class="p-2 border bg-gray-100">Vendor</th><td class="p-2 border">{{ a.vendor_company or '—' }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Vendor Contact Person</th><td class="p-2 border">{{ a.vendor_contact_person or '—' }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Vendor Mobile</th><td class="p-2 border">{{ a.vendor_mobile or '—' }}</td></tr>
+
+                <tr><th class="p-2 border bg-gray-100">Status</th><td class="p-2 border">{{ a.status }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Location</th><td class="p-2 border">{{ a.location }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Indenter</th><td class="p-2 border">{{ a.indenter }}</td></tr>
+                <tr><th class="p-2 border bg-gray-100">Created At</th><td class="p-2 border">{{ a.created_at or '—' }}</td></tr>
+              </table>
+            </td>
+          </tr>
 
           {% else %}
           <tr>
-            <td colspan="{% if current_user.role != 'student' %}6{% else %}5{% endif %}" 
+            <td colspan="{% if current_user.role != 'student' %}7{% else %}6{% endif %}" 
                 class="text-center py-4 text-gray-500">No assets found.</td>
           </tr>
           {% endfor %}

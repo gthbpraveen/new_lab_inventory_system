@@ -506,6 +506,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime, date
+import json
 
 # IMPORTANT: app.py must import this db and call db.init_app(app)
 db = SQLAlchemy()
@@ -844,29 +845,41 @@ class ProvisioningRequest(db.Model):
 # Workstation Inventory
 # -------------------------
 class WorkstationAsset(db.Model):
-    """
-    Physical machine in inventory (reusable).
-    """
     __tablename__ = "workstation_asset"
     id = db.Column(db.Integer, primary_key=True)
 
     # Identity & specs
     manufacturer = db.Column(db.String(100))
     otherManufacturer = db.Column(db.String(100))
-    model = db.Column(db.String(100))
+    model = db.Column(db.String(100))           # Workstation, Desktop, Laptop, Server, Mac
     serial = db.Column(db.String(100), unique=True, index=True)
     os = db.Column(db.String(50))
     otherOs = db.Column(db.String(50))
+
+    # Legacy single-CPU/generic fields (kept for compatibility)
     processor = db.Column(db.String(100))
-    cores = db.Column(db.String(10))
+    cores = db.Column(db.Integer)              # recommended integer
     ram = db.Column(db.String(20))
     otherRam = db.Column(db.String(20))
+    ram_size_gb = db.Column(db.Integer, nullable=True)
+    # Storage
     storage_type1 = db.Column(db.String(50))
-    storage_capacity1 = db.Column(db.String(20))
+    storage_capacity1 = db.Column(db.Integer)  # GB
     storage_type2 = db.Column(db.String(50))
-    storage_capacity2 = db.Column(db.String(20))
+    storage_capacity2 = db.Column(db.Integer)  # GB
+
+    # Legacy single-GPU fields (kept)
     gpu = db.Column(db.String(100))
-    vram = db.Column(db.String(10))
+    vram = db.Column(db.Integer)
+
+    # Structured JSON fields for multiple processors / gpus
+    # Use db.JSON where supported; fallback to Text storage of JSON string
+    try:
+        processors = db.Column(db.JSON, nullable=True)  # list of {"name":..., "cores":...}
+        gpus = db.Column(db.JSON, nullable=True)        # list of {"name":..., "vram":...}
+    except Exception:
+        processors = db.Column(db.Text, nullable=True)
+        gpus = db.Column(db.Text, nullable=True)
 
     # Peripherals
     keyboard_provided = db.Column(db.String(10))
@@ -877,29 +890,34 @@ class WorkstationAsset(db.Model):
     monitor_details = db.Column(db.String(100))
     monitor_size = db.Column(db.String(10))
     monitor_serial = db.Column(db.String(100))
+
+    # Optional MAC (not required)
     mac_address = db.Column(db.String(50), nullable=True)
 
-    # 🧾 Procurement Info
-    po_date = db.Column(db.String(20), nullable=True)
+    # Procurement Info
+    po_date = db.Column(db.Date, nullable=True)
     po_number = db.Column(db.String(100), nullable=True)
     source_of_fund = db.Column(db.String(100), nullable=True)
 
-    # 🛡️ Warranty Info
-    warranty_start = db.Column(db.String(20), nullable=True)
-    warranty_expiry = db.Column(db.String(20), nullable=True)
+    # Uploaded PO/Invoice filename (optional)
+    po_invoice_filename = db.Column(db.String(250), nullable=True)
 
-    # 🏢 Vendor Contact Info
+    # Warranty Info
+    warranty_start = db.Column(db.Date, nullable=True)
+    warranty_expiry = db.Column(db.Date, nullable=True)
+
+    # Vendor Contact Info
     vendor_company = db.Column(db.String(150), nullable=True)
     vendor_contact_person = db.Column(db.String(100), nullable=True)
     vendor_mobile = db.Column(db.String(20), nullable=True)
 
     # Lifecycle and ownership
-    status = db.Column(db.String(20), default="in_stock", index=True)
+    status = db.Column(db.String(20), default="Available", index=True)  # Available / Issued / Scrapped / Retired
     location = db.Column(db.String(100))
     indenter = db.Column(db.String(100))
     department_code = db.Column(db.String(200), unique=True, index=True)
 
-    # Relationships
+    # Relationship to assignments (history). Many assignments allowed (works for servers and other assets).
     assignments = db.relationship(
         "WorkstationAssignment",
         backref="asset",
@@ -907,39 +925,80 @@ class WorkstationAsset(db.Model):
         lazy=True,
     )
 
-    def __repr__(self) -> str:
-        return (
-            f"<WorkstationAsset id={self.id} serial={self.serial} "
-            f"PO={self.po_number} Warranty={self.warranty_expiry}>"
-        )
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<WorkstationAsset id={self.id} serial={self.serial} model={self.model} status={self.status}>"
+
+    # helpers to read/write JSON fallback if DB uses TEXT
+    def get_processors(self):
+        if not self.processors:
+            return []
+        if isinstance(self.processors, str):
+            try:
+                return json.loads(self.processors)
+            except Exception:
+                return []
+        return self.processors
+
+    def set_processors(self, processors_list):
+        if processors_list is None:
+            self.processors = None
+        else:
+            try:
+                self.processors = processors_list
+            except Exception:
+                self.processors = json.dumps(processors_list)
+
+    def get_gpus(self):
+        if not self.gpus:
+            return []
+        if isinstance(self.gpus, str):
+            try:
+                return json.loads(self.gpus)
+            except Exception:
+                return []
+        return self.gpus
+
+    def set_gpus(self, gpus_list):
+        if gpus_list is None:
+            self.gpus = None
+        else:
+            try:
+                self.gpus = gpus_list
+            except Exception:
+                self.gpus = json.dumps(gpus_list)
 
 
 class WorkstationAssignment(db.Model):
     """
-    One row per assignment (history).
-    When returned, mark is_active = False and set end_date.
-    Assignment may be to a student OR to a faculty OR to staff (one of the three should be non-null).
+    One assignment row per assignee (student/faculty/staff). Allows multiple active assignments for servers.
+    Application logic should allow multiple active rows for assets of model == 'Server'.
+    For non-server assets, app should ensure only one is_active assignment exists.
     """
     __tablename__ = "workstation_assignment"
     id = db.Column(db.Integer, primary_key=True)
-    workstation_id = db.Column(db.Integer, db.ForeignKey("workstation_asset.id"), nullable=False, index=True)
+    workstation_id = db.Column(db.Integer, db.ForeignKey("workstation_asset.id", ondelete='CASCADE'), nullable=False, index=True)
 
-    # Either student_roll OR faculty_id OR staff_id will be set (mutually exclusive by app logic)
+    # Polymorphic assignee fields (exactly one should be set at insert)
     student_roll = db.Column(db.String(20), db.ForeignKey("student.roll"), nullable=True, index=True)
     faculty_id = db.Column(db.Integer, db.ForeignKey("faculty.id"), nullable=True, index=True)
     staff_id = db.Column(db.Integer, db.ForeignKey("staff.id"), nullable=True, index=True)
 
-    issue_date = db.Column(db.String(20), nullable=False)
-    system_required_till = db.Column(db.String(20), nullable=False)
-    end_date = db.Column(db.String(20), nullable=True)  # when returned
-    
-    assigned_by = db.Column(db.String(120), nullable=True) # who assigned the workstation
-    remarks = db.Column(db.String(200))
+    # Use Date for issue and end dates
+    issue_date = db.Column(db.Date, nullable=False)
+    system_required_till = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
 
-    # Fast flag
+    assigned_by = db.Column(db.String(120), nullable=True)
+    remarks = db.Column(db.String(200), nullable=True)
+
+    # Active flag: servers may have many active assignments; non-servers typically only one active
     is_active = db.Column(db.Boolean, default=True, index=True)
 
-    def __repr__(self) -> str:
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
         owner = 'unassigned'
         if self.student_roll:
             owner = f"student={self.student_roll}"
@@ -948,7 +1007,6 @@ class WorkstationAssignment(db.Model):
         elif self.staff_id:
             owner = f"staff={self.staff_id}"
         return f"<WSAssign asset={self.workstation_id} {owner} active={self.is_active}>"
-
 
 class SlurmAccount(db.Model):
     __tablename__ = "slurm_account"

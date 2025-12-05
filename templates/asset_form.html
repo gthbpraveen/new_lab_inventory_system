@@ -1,3 +1,4 @@
+{# templates/asset_form.html #}
 {% extends "login_home.html" %}
 {% block title %}{{ 'Edit Asset' if asset else 'New Asset' }}{% endblock %}
 
@@ -7,147 +8,183 @@
     {{ 'Edit Workstation Asset' if asset else 'Add New Workstation/Server/Desktop Asset' }}
   </h2>
 
-  <form method="POST" action="">
-    <!-- CPU Details -->
-    <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
-      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">CPU Details</h2>
+  <form method="POST" action="" enctype="multipart/form-data" id="assetForm">
+    <!-- Basic Details -->
+    <div class="form-section bg-blue-50 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-indigo-800 mb-3">Basic Details</h3>
 
-      <div>
-        <label for="manufacturer" class="block text-gray-700 font-medium mb-2 required-field">CPU Manufacturer</label>
-        <select id="manufacturer" name="manufacturer" required
-          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-          onchange="toggleOtherManufacturer()">
-          <option value="">Select Manufacturer</option>
-          {% set manufacturers = [
-            'Dell','HP','Lenovo','Apple','Acer','ASUS','MSI','Samsung','Sony','Toshiba',
-            'Fujitsu','Panasonic','HCL','Wipro','Supermicro','Gigabyte','Intel','AMD',
-            'Asrock','Apogee','Tyron','Zebronics','Others'
-          ] %}
-          {% for m in manufacturers %}
-            <option value="{{m}}" {% if asset and asset.manufacturer==m %}selected{% endif %}>{{m}}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <!-- Other Manufacturer -->
-      <div id="otherManufacturerContainer"
-           class="mt-4 {% if not (asset and asset.manufacturer=='Others') %}hidden{% endif %}">
-        <label for="otherManufacturer" class="block text-gray-700 font-medium mb-2">Specify Other Manufacturer</label>
-        <input type="text" id="otherManufacturer" name="otherManufacturer"
-               value="{{ asset.otherManufacturer if asset else '' }}"
-               class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-      </div>
-
-      <div class="mt-4">
-        <label for="model" class="block text-gray-700 font-medium mb-2 required-field">Model Type</label>
-        <select id="model" name="model" required
-          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-          <option value="">Select Model</option>
-          {% set model_types = ['Workstation','Desktop','Laptop','Server','Mac'] %}
-          {% for m in model_types %}
-            <option value="{{m}}" {% if asset and asset.model==m %}selected{% endif %}>{{m}}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="mt-4">
-        <label for="serial" class="block text-gray-700 font-medium mb-2 required-field">Serial Number</label>
-        <input type="text" id="serial" name="serial" required value="{{ asset.serial if asset else '' }}"
-          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-      </div>
-
-      <div class="mt-4">
-        <label for="os" class="block text-gray-700 font-medium mb-2 required-field">Operating System</label>
-        <select id="os" name="os" required
-                class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500"
-                onchange="toggleOtherOs()">
-          <option value="">Select OS</option>
-          {% for o in ['Windows','macOS','Ubuntu','Dual Boot','Other'] %}
-            <option value="{{o}}" {% if asset and asset.os==o %}selected{% endif %}>{{o}}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <!-- Other OS -->
-      <div id="otherOsContainer"
-           class="mt-4 {% if not (asset and asset.os=='Other') %}hidden{% endif %}">
-        <label for="otherOs" class="block text-gray-700 font-medium mb-2">Specify Other OS</label>
-        <input type="text" id="otherOs" name="otherOs"
-               value="{{ asset.otherOs if asset else '' }}"
-               class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-      </div>
-
-      <div class="mt-4">
-        <label for="mac_address" class="block text-gray-700 font-medium mb-2 required-field">Primary MAC Address</label>
-        <input type="text" id="mac_address" name="mac_address"
-               value="{{ asset.mac_address if asset else '' }}"
-               placeholder="e.g., 00:1A:2B:3C:4D:5E" required
-               class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-      </div>
-
-      <div class="mt-4">
-        <label for="mac_address2" class="block text-gray-700 font-medium mb-2">Secondary MAC Address (Optional)</label>
-        <input type="text" id="mac_address2" name="mac_address2"
-               value="{{ asset.mac_address2 if asset else '' }}"
-               placeholder="e.g., 02:1B:44:11:3A:B7"
-               class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-      </div>
-    </div>
-
-    <!-- Processor & Memory -->
-    <div class="form-section bg-blue-50 rounded-lg p-6 mb-8">
-      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Processor & Memory</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label for="processor" class="block text-gray-700 mb-2">Processor</label>
-          <input type="text" id="processor" name="processor" value="{{ asset.processor if asset else '' }}"
-            class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <div>
-          <label for="cores" class="block text-gray-700 mb-2">Cores</label>
-          <input type="number" id="cores" name="cores" value="{{ asset.cores if asset else '' }}"
-            class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <div>
-          <label for="ram" class="block text-gray-700 mb-2">RAM</label>
-          <select id="ram" name="ram" onchange="toggleOtherRam()"
-                  class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
-            <option value="">Select</option>
-            {% for r in ['2','4','8','16','32','64','128','other'] %}
-              <option value="{{r}}" {% if asset and asset.ram==r %}selected{% endif %}>{{r}} GB</option>
+          <label for="manufacturer" class="block text-gray-700 font-medium mb-2">Manufacturer</label>
+          <select id="manufacturer" name="manufacturer" required
+            class="block w-full px-4 py-2 border rounded-md"
+            onchange="toggleOtherManufacturer()">
+            <option value="">Select Manufacturer</option>
+            {% set manufacturers = [
+              'Dell','HP','Lenovo','Apple','Acer','ASUS','MSI','Samsung','Sony','Toshiba',
+              'Fujitsu','Panasonic','HCL','Wipro','Supermicro','Gigabyte','Intel','AMD',
+              'Asrock','Apogee','Tyron','Zebronics','HLBS', 'Others'
+            ] %}
+            {% for m in manufacturers %}
+              <option value="{{m}}" {% if asset and asset.manufacturer==m %}selected{% endif %}>{{m}}</option>
             {% endfor %}
           </select>
         </div>
-      </div>
 
-      <!-- Other RAM full width -->
-      <div id="otherRamContainer"
-           class="mt-4 {% if not (asset and asset.ram=='other') %}hidden{% endif %}">
-        <label for="otherRam" class="block text-gray-700 mb-2">Other RAM (GB)</label>
-        <input type="number" id="otherRam" name="otherRam" value="{{ asset.otherRam if asset else '' }}"
-          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500">
+        <div id="otherManufacturerContainer" class="{% if not (asset and asset.manufacturer=='Others') %}hidden{% endif %}">
+          <label for="otherManufacturer" class="block text-gray-700 font-medium mb-2">Specify Other Manufacturer</label>
+          <input type="text" id="otherManufacturer" name="otherManufacturer"
+                 value="{{ asset.otherManufacturer if asset else '' }}"
+                 class="block w-full px-4 py-2 border rounded-md">
+        </div>
+
+        <div>
+          <label for="model" class="block text-gray-700 font-medium mb-2">Category</label>
+          <select id="model" name="model" required class="block w-full px-4 py-2 border rounded-md">
+            <option value="">Select Model</option>
+            {% for m in ['Workstation','Desktop','Laptop','Server','Mac'] %}
+              <option value="{{m}}" {% if asset and asset.model==m %}selected{% endif %}>{{m}}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="serial" class="block text-gray-700 font-medium mb-2 required-field">Serial Number <span class="text-sm text-gray-500">(required)</span></label>
+          <input type="text" id="serial" name="serial" value="{{ asset.serial if asset else '' }}" required
+                 class="block w-full px-4 py-2 border rounded-md" autocomplete="off">
+        </div>
+
+        <div>
+          <label for="os" class="block text-gray-700 font-medium mb-2">Operating System</label>
+          <select id="os" name="os" class="block w-full px-4 py-2 border rounded-md" onchange="toggleOtherOs()">
+            <option value="">Select OS</option>
+            {% for o in ['Windows','macOS','Ubuntu','Dual Boot','Other'] %}
+              <option value="{{o}}" {% if asset and asset.os==o %}selected{% endif %}>{{o}}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div id="otherOsContainer" class="mt-4 {% if not (asset and asset.os=='Other') %}hidden{% endif %}">
+          <label for="otherOs" class="block text-gray-700 font-medium mb-2">Specify Other OS</label>
+          <input type="text" id="otherOs" name="otherOs"
+                 value="{{ asset.otherOs if asset else '' }}"
+                 class="block w-full px-4 py-2 border rounded-md">
+        </div>
+
+        <div>
+          <label for="mac_address" class="block text-gray-700 font-medium mb-2">Primary MAC Address (optional)</label>
+          <input type="text" id="mac_address" name="mac_address"
+                 value="{{ asset.mac_address if asset else '' }}"
+                 placeholder="optional"
+                 class="block w-full px-4 py-2 border rounded-md">
+        </div>
+
       </div>
     </div>
 
-    <!-- Storage & Graphics -->
-    <div class="form-section bg-indigo-50 rounded-lg p-6 mb-8">
-      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Storage & Graphics</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+   
+
+    <!-- Processor(s) dynamic -->
+    <div class="form-section bg-blue-50 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-indigo-800 mb-3">Processor(s)</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label for="storage_type1" class="block mb-2">Primary Storage</label>
+          <label for="processor_count" class="block text-gray-700 mb-2">Number of Processors (sockets)</label>
+          <select id="processor_count" name="processor_count" class="block w-full px-4 py-2 border rounded-md" onchange="renderProcessorFields()">
+            {% set cur_cnt = asset.get_processors()|length if asset else 0 %}
+            <option value="0" {% if cur_cnt==0 %}selected{% endif %}>0</option>
+            <option value="1" {% if cur_cnt==1 %}selected{% endif %}>1</option>
+            <option value="2" {% if cur_cnt==2 %}selected{% endif %}>2</option>
+            <option value="3" {% if cur_cnt==3 %}selected{% endif %}>3</option>
+            <option value="4" {% if cur_cnt==4 %}selected{% endif %}>4</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-gray-700 mb-2">Processor Quick Select</label>
+          <select id="processor_quick" class="block w-full px-4 py-2 border rounded-md" onchange="applyProcessorTemplate()">
+            <option value="">— choose template —</option>
+            <option value='{"name":"Intel Xeon E5-2690","cores":12}'>Xeon E5-2690 — 12 cores</option>
+            <option value='{"name":"Intel Xeon Gold 6130","cores":16}'>Xeon Gold 6130 — 16 cores</option>
+            <option value='{"name":"AMD EPYC 7501","cores":32}'>EPYC 7501 — 32 cores</option>
+            <option value='{"name":"Intel Core i7-9700K","cores":8}'>Core i7-9700K — 8 cores</option>
+          </select>
+        </div>
+      </div>
+<div id="processorFieldsContainer" class="mt-4 space-y-3">
+  {% if asset %}
+    {% set procs = asset.get_processors() %}
+    {% for p in procs %}
+      <div class="grid grid-cols-2 gap-2">
+        <input type="text"
+               name="processor_{{ loop.index }}_name"
+               value="{{ p.name }}"
+               placeholder="Processor {{ loop.index }} model"
+               class="block w-full px-3 py-2 border rounded" />
+        <input type="number"
+               name="processor_{{ loop.index }}_cores"
+               value="{{ p.cores }}"
+               placeholder="Cores"
+               min="1"
+               class="block w-full px-3 py-2 border rounded" />
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+
+    </div>
+
+     <!-- Memory (RAM) -->
+    <div class="form-section bg-green-50 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-indigo-800 mb-3">Memory (RAM)</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label for="ram" class="block text-gray-700 mb-2">RAM Type (e.g. DDR4)</label>
+          <select id="ram" name="ram" class="block w-full px-4 py-2 border rounded-md">
+            <option value="">Select RAM Type</option>
+            {% for r in ['DDR3','DDR4','DDR5','LPDDR4','LPDDR5','Other'] %}
+              <option value="{{r}}" {% if asset and asset.ram==r %}selected{% endif %}>{{r}}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div id="otherRamContainer" class="{% if not (asset and asset.otherRam) %}hidden{% endif %}">
+          <label for="otherRam" class="block text-gray-700 mb-2">Specify Other RAM</label>
+          <input type="text" id="otherRam" name="otherRam" value="{{ asset.otherRam if asset else '' }}" class="block w-full px-4 py-2 border rounded-md">
+        </div>
+
+        <div>
+          <label for="ram_size_gb" class="block text-gray-700 mb-2">Total RAM (GB)</label>
+          <input type="number" id="ram_size_gb" name="ram_size_gb" min="0" value="{{ asset.ram_size_gb if asset and asset.ram_size_gb is not none else '' }}"
+                 class="block w-full px-4 py-2 border rounded-md" placeholder="e.g. 32">
+        </div>
+      </div>
+    </div>
+
+    <!-- Storage -->
+    <div class="form-section bg-yellow-50 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-indigo-800 mb-3">Storage</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="storage_type1" class="block mb-2">Primary Storage Type</label>
           <select id="storage_type1" name="storage_type1" class="block w-full px-4 py-2 border rounded-md">
+            <option value="">None</option>
             {% for st in ['HDD','SSD','NVMe','Other'] %}
               <option value="{{st}}" {% if asset and asset.storage_type1==st %}selected{% endif %}>{{st}}</option>
             {% endfor %}
           </select>
         </div>
         <div>
-          <label for="storage_capacity1" class="block mb-2">Capacity (GB)</label>
-          <input type="number" id="storage_capacity1" name="storage_capacity1" value="{{ asset.storage_capacity1 if asset else '' }}"
-            class="block w-full px-4 py-2 border rounded-md">
+          <label for="storage_capacity1" class="block mb-2">Primary Capacity (GB)</label>
+          <input type="number" id="storage_capacity1" name="storage_capacity1" value="{{ asset.storage_capacity1 if asset else '' }}" class="block w-full px-4 py-2 border rounded-md" min="0">
         </div>
+
         <div>
-          <label for="storage_type2" class="block mb-2">Secondary Storage</label>
+          <label for="storage_type2" class="block mb-2">Secondary Storage Type</label>
           <select id="storage_type2" name="storage_type2" class="block w-full px-4 py-2 border rounded-md">
             <option value="">None</option>
             {% for st in ['HDD','SSD','NVMe','Other'] %}
@@ -156,98 +193,142 @@
           </select>
         </div>
         <div>
-          <label for="storage_capacity2" class="block mb-2">Capacity (GB)</label>
-          <input type="number" id="storage_capacity2" name="storage_capacity2" value="{{ asset.storage_capacity2 if asset else '' }}"
-            class="block w-full px-4 py-2 border rounded-md">
-        </div>
-        <div>
-          <label for="gpu" class="block mb-2">GPU</label>
-          <input type="text" id="gpu" name="gpu" value="{{ asset.gpu if asset else '' }}"
-            class="block w-full px-4 py-2 border rounded-md">
-        </div>
-        <div>
-          <label for="vram" class="block mb-2">VRAM (GB)</label>
-          <input type="number" id="vram" name="vram" value="{{ asset.vram if asset else '' }}"
-            class="block w-full px-4 py-2 border rounded-md">
+          <label for="storage_capacity2" class="block mb-2">Secondary Capacity (GB)</label>
+          <input type="number" id="storage_capacity2" name="storage_capacity2" value="{{ asset.storage_capacity2 if asset else '' }}" class="block w-full px-4 py-2 border rounded-md" min="0">
         </div>
       </div>
     </div>
 
-    <!-- PO, Vendor & Warranty Section -->
-    <div class="form-section bg-yellow-50 rounded-lg p-6 mb-8">
-      <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">
-        PO, Vendor & Warranty Details
-      </h2>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- GPU block -->
+    <div class="form-section bg-indigo-50 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-indigo-800 mb-3">GPU</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-700 mb-2">Does this machine have GPU(s)?</label>
+          <select id="has_gpu" name="has_gpu" class="block w-full px-4 py-2 border rounded-md" onchange="renderGpuFields()">
+            {% set has_gpu_value = (asset.get_gpus()|length > 0) if asset else False %}
+            <option value="no" {% if not has_gpu_value %}selected{% endif %}>No</option>
+            <option value="yes" {% if has_gpu_value %}selected{% endif %}>Yes</option>
+          </select>
+        </div>
+
+        <div id="gpuCountWrapper" class="hidden">
+          <label for="gpu_count" class="block text-gray-700 mb-2">Number of GPU cards</label>
+          <select id="gpu_count" name="gpu_count" class="block w-full px-4 py-2 border rounded-md" onchange="renderGpuFields()">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+      </div>
+
+<div id="gpuFieldsContainer" class="mt-4 space-y-3">
+  {% if asset %}
+    {% set gpus = asset.get_gpus() %}
+    {% for g in gpus %}
+      <div class="grid grid-cols-2 gap-2">
+        <input type="text"
+               name="gpu_{{ loop.index }}_name"
+               value="{{ g.name }}"
+               placeholder="GPU {{ loop.index }} model"
+               class="block w-full px-3 py-2 border rounded" />
+        <input type="number"
+               name="gpu_{{ loop.index }}_vram"
+               value="{{ g.vram }}"
+               placeholder="VRAM (GB)"
+               min="0"
+               class="block w-full px-3 py-2 border rounded" />
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+    </div>
+
+    
+    <!-- PO & Warranty -->
+    <div class="form-section bg-yellow-50 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-indigo-800 mb-3">PO & Warranty</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label for="po_number" class="block mb-2">PO Number</label>
-          <input type="text" id="po_number" name="po_number" value="{{ asset.po_number if asset else '' }}"
-                 class="block w-full px-4 py-2 border rounded-md">
+          <input type="text" id="po_number" name="po_number" value="{{ asset.po_number if asset else '' }}" class="block w-full px-4 py-2 border rounded-md">
         </div>
         <div>
           <label for="po_date" class="block mb-2">PO Date</label>
-          <input type="date" id="po_date" name="po_date" value="{{ asset.po_date if asset else '' }}"
-                 class="block w-full px-4 py-2 border rounded-md">
+          <input type="date" id="po_date" name="po_date" value="{{ asset.po_date.isoformat() if asset and asset.po_date else '' }}" class="block w-full px-4 py-2 border rounded-md">
+        </div>
+
+        <div>
+          <label for="warranty_start" class="block mb-2">Warranty Start</label>
+          <input type="date" id="warranty_start" name="warranty_start" value="{{ asset.warranty_start.isoformat() if asset and asset.warranty_start else '' }}" class="block w-full px-4 py-2 border rounded-md">
         </div>
         <div>
-          <label for="source_of_fund" class="block mb-2">Source of Fund</label>
-          <input type="text" id="source_of_fund" name="source_of_fund" value="{{ asset.source_of_fund if asset else '' }}"
-                 class="block w-full px-4 py-2 border rounded-md">
+          <label for="warranty_expiry" class="block mb-2">Warranty Expiry</label>
+          <input type="date" id="warranty_expiry" name="warranty_expiry" value="{{ asset.warranty_expiry.isoformat() if asset and asset.warranty_expiry else '' }}" class="block w-full px-4 py-2 border rounded-md">
         </div>
+
+        <div class="col-span-1 md:col-span-2">
+          <label for="po_invoice" class="block mb-2">Upload PO / Invoice (optional, PDF/JPG/PNG)</label>
+          <input type="file" id="po_invoice" name="po_invoice" accept=".pdf,.jpg,.jpeg,.png" class="block w-full">
+          {% if asset and asset.po_invoice_filename %}
+            <p class="text-sm text-gray-600 mt-2">Existing file:
+              <a href="{{ url_for('download_po_invoice', filename=asset.po_invoice_filename) }}" class="text-indigo-700 hover:underline">{{ asset.po_invoice_filename }}</a>
+            </p>
+          {% endif %}
+        </div>
+         <div>
+          <label for="source_of_fund" class="block mb-2">Source of fund</label>
+          <input type="text" id="source_of_fund" name="source_of_fund" value="{{ asset.source_of_fund if asset else '' }}" class="block w-full px-4 py-2 border rounded-md">
+        </div>
+        </div>
+        <div>
+      </div>
+    </div>
+
+    <!-- Vendor Details -->
+    <div class="form-section bg-gray-50 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-semibold text-indigo-800 mb-3">Vendor Details</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label for="vendor_company" class="block mb-2">Vendor Company</label>
-          <input type="text" id="vendor_company" name="vendor_company" value="{{ asset.vendor_company if asset else '' }}"
-                 class="block w-full px-4 py-2 border rounded-md">
+          <input type="text" id="vendor_company" name="vendor_company" value="{{ asset.vendor_company if asset else '' }}" class="block w-full px-4 py-2 border rounded-md">
         </div>
         <div>
           <label for="vendor_contact_person" class="block mb-2">Vendor Contact Person</label>
-          <input type="text" id="vendor_contact_person" name="vendor_contact_person" value="{{ asset.vendor_contact_person if asset else '' }}"
-                 class="block w-full px-4 py-2 border rounded-md">
+          <input type="text" id="vendor_contact_person" name="vendor_contact_person" value="{{ asset.vendor_contact_person if asset else '' }}" class="block w-full px-4 py-2 border rounded-md">
         </div>
         <div>
           <label for="vendor_mobile" class="block mb-2">Vendor Mobile</label>
-          <input type="text" id="vendor_mobile" name="vendor_mobile" value="{{ asset.vendor_mobile if asset else '' }}"
-                 placeholder="e.g., +91-XXXXXXXXXX"
-                 class="block w-full px-4 py-2 border rounded-md">
-        </div>
-        <div>
-          <label for="warranty_start" class="block mb-2">Warranty Start Date</label>
-          <input type="date" id="warranty_start" name="warranty_start" value="{{ asset.warranty_start if asset else '' }}"
-                 class="block w-full px-4 py-2 border rounded-md">
-        </div>
-        <div>
-          <label for="warranty_expiry" class="block mb-2">Warranty Expiry Date</label>
-          <input type="date" id="warranty_expiry" name="warranty_expiry" value="{{ asset.warranty_expiry if asset else '' }}"
-                 class="block w-full px-4 py-2 border rounded-md">
+          <input type="text" id="vendor_mobile" name="vendor_mobile" value="{{ asset.vendor_mobile if asset else '' }}" class="block w-full px-4 py-2 border rounded-md">
         </div>
       </div>
     </div>
 
-
-
     <!-- Location & Indenter -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div>
         <label class="block mb-2">Location</label>
-        <select id="location" name="location" required
-          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-yellow-500">
+        <select id="location" name="location" required class="block w-full px-4 py-2 border rounded-md">
           <option value="">-- Select Location --</option>
           <optgroup label="Labs">
             {% set lab_list = [
-              'CS-107','CS-108','CS-109',
-              'CS-207','CS-208','CS-209',
+              'CS-102','CS-103','CS-104','CS-105','CS-107','CS-108','CS-109','CS-202','CS-203','CS-204','CS-205',
+              'CS-207','CS-208','CS-209','CS-302','CS-303','CS-304','CS-305','CS-306','CS-307','CS-308','CS-309','CS-310','CS-311','CS-312','CS-313','CS-314','CS-315','CS-316',
               'CS-317','CS-318','CS-319','CS-320',
-              'CS-411','CS-412'
+              'CS-402','CS-403','CS-404','CS-405','CS-406','CS-407','CS-408',
+              'CS-502','CS-503','CS-504','CS-505','CS-506','CS-507','CS-508','CS-509','CS-510','CS-511','CS-512','CS-513','CS-514','CS-515','CS-516','CS-517',
+              'CS-602','CS-603','CS-604','CS-606','CS-607','CS-608','CS-610'
             ] %}
             {% for l in lab_list %}
               <option value="{{l}}" {% if asset and asset.location==l %}selected{% endif %}>{{l}}</option>
             {% endfor %}
           </optgroup>
           <optgroup label="Other Locations">
-            {% set other_locations = [
-              'CSE Office','CSE Store','Institute Datacenter','SmartRack'
-            ] %}
+            {% set other_locations = ['CSE Office','CSE Store','Institute Datacenter','SmartRack'] %}
             {% for o in other_locations %}
               <option value="{{o}}" {% if asset and asset.location==o %}selected{% endif %}>{{o}}</option>
             {% endfor %}
@@ -256,38 +337,32 @@
       </div>
 
       <div>
-        <label class="block mb-2">Select Faculty / Staff</label>
-        <select id="indenter" name="indenter" required
-          class="block w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-green-500">
+        <label class="block mb-2">Select Faculty / Staff (Indenter)</label>
+        <select id="indenter" name="indenter" required class="block w-full px-4 py-2 border rounded-md">
           <option value="">-- Select Faculty / Staff --</option>
           <optgroup label="Faculty">
-           {% set faculty_list = [
-    'Antony Franklin', 'Ashish Mishra', 'Bheemarjuna Reddy Tamma',
-    'KrishnaMohan C', 'Saketha Nath J', 'Jyothi Vedurada',
-    'Kotaro Kataoka', 'PandurangaRao M.V', 'Manish Singh',
-    'Maria Francis', 'Maunendra Sankar Desarkar', 'Aravind N.R',
-    'Nitin Saurabh', 'Praveen Tammana', 'Rajesh Kedia',
-    'Rakesh Venkat', 'Ramakrishna Upadrasta', 'Rameshwar Pratap',
-    'Rogers Mathew', 'Sathya Peri', 'Saurabh Kumar',
-    'Shirshendu Das', 'Sobhan Babu', 'Srijith P. K.',
-    'Subrahmanyam Kalyanasundaram', 'Vineeth N. Balasubramanian',
-    'Abhijit Das', 'Sandipan D', 'Anupam Sanghi'
-] %}
             {% for f in faculty_list %}
               <option value="{{f}}" {% if asset and asset.indenter==f %}selected{% endif %}>{{f}}</option>
             {% endfor %}
           </optgroup>
           <optgroup label="Staff">
-            {% set staff_list = [
-              'Praveen Kumar G','Shiva Kumar Reddy','Sunitha M',
-              'Nikith Reddy','Vijay Chakravarthy','Syam N', 'Jathin S'
-            ] %}
             {% for s in staff_list %}
               <option value="{{s}}" {% if asset and asset.indenter==s %}selected{% endif %}>{{s}}</option>
             {% endfor %}
           </optgroup>
         </select>
       </div>
+    </div>
+
+    <!-- Status (moved last) -->
+    <div class="mb-6">
+      <label for="status" class="block text-gray-700 font-medium mb-2">Status</label>
+      {% set statuses = ['Available','Issued','Scrapped','Retired'] %}
+      <select id="status" name="status" required class="block w-full px-4 py-2 border rounded-md">
+        {% for s in statuses %}
+          <option value="{{s}}" {% if asset and asset.status==s %}selected{% endif %}>{{s}}</option>
+        {% endfor %}
+      </select>
     </div>
 
     <!-- Submit -->
@@ -300,28 +375,214 @@
 </div>
 
 <script>
+  /* === Small helper toggles and dynamic rendering === */
+
   function toggleOtherManufacturer() {
-    const m = document.getElementById('manufacturer').value;
-    document.getElementById('otherManufacturerContainer').classList.toggle('hidden', m !== 'Others');
+    const m = document.getElementById('manufacturer')?.value;
+    const el = document.getElementById('otherManufacturerContainer');
+    if (el) el.classList.toggle('hidden', m !== 'Others');
   }
 
   function toggleOtherOs() {
-    const os = document.getElementById('os').value;
-    document.getElementById('otherOsContainer').classList.toggle('hidden', os !== 'Other');
+    const os = document.getElementById('os')?.value;
+    const el = document.getElementById('otherOsContainer');
+    if (el) el.classList.toggle('hidden', os !== 'Other');
   }
 
-  function toggleOtherRam() {
-    const ram = document.getElementById('ram').value;
-    document.getElementById('otherRamContainer').classList.toggle('hidden', ram !== 'other');
-  }
+  function renderProcessorFields() {
+    const countEl = document.getElementById('processor_count');
+    const container = document.getElementById('processorFieldsContainer');
+    if (!countEl || !container) return;
 
-  function togglePeripheral(type) {
-    const provided = document.getElementById(type + '_provided').value;
-    document.getElementById(type + '-details-container').classList.toggle('hidden', provided !== 'yes');
-    if(type==='monitor'){
-      document.getElementById('monitor-size-container').classList.toggle('hidden', provided !== 'yes');
-      document.getElementById('monitor-serial-container').classList.toggle('hidden', provided !== 'yes');
+    const cnt = parseInt(countEl.value || '0', 10);
+    container.innerHTML = '';
+
+    for (let i = 1; i <= cnt; i++) {
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-2 gap-2';
+      row.innerHTML = `
+        <input type="text"
+               name="processor_${i}_name"
+               placeholder="Processor ${i} model"
+               class="block w-full px-3 py-2 border rounded" />
+        <input type="number"
+               name="processor_${i}_cores"
+               placeholder="Cores"
+               min="1"
+               class="block w-full px-3 py-2 border rounded" />
+      `;
+      container.appendChild(row);
     }
   }
+
+  function applyProcessorTemplate() {
+    const select = document.getElementById('processor_quick');
+    if (!select) return;
+    const v = select.value;
+    if (!v) return;
+
+    try {
+      const obj = JSON.parse(v);
+      const pc = document.getElementById('processor_count');
+      if (pc && pc.value === '0') {
+        pc.value = '1';
+        renderProcessorFields();
+      }
+      const nameEl  = document.querySelector('[name="processor_1_name"]');
+      const coresEl = document.querySelector('[name="processor_1_cores"]');
+      if (nameEl)  nameEl.value  = obj.name  || '';
+      if (coresEl) coresEl.value = obj.cores || '';
+    } catch (e) {
+      console.warn('Processor quick-select JSON parse error', e);
+    }
+  }
+
+  function renderGpuFields() {
+    const hasGpu = (document.getElementById('has_gpu')?.value === 'yes');
+    const wrapper   = document.getElementById('gpuCountWrapper');
+    const container = document.getElementById('gpuFieldsContainer');
+    if (!wrapper || !container) return;
+
+    if (!hasGpu) {
+      wrapper.classList.add('hidden');
+      container.innerHTML = '';
+      return;
+    }
+
+    wrapper.classList.remove('hidden');
+
+    const countEl = document.getElementById('gpu_count');
+    const cnt = parseInt(countEl?.value || '1', 10);
+    container.innerHTML = '';
+
+    for (let i = 1; i <= cnt; i++) {
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-2 gap-2';
+      row.innerHTML = `
+        <input type="text"
+               name="gpu_${i}_name"
+               placeholder="GPU ${i} model"
+               class="block w-full px-3 py-2 border rounded" />
+        <input type="number"
+               name="gpu_${i}_vram"
+               placeholder="VRAM (GB)"
+               min="0"
+               class="block w-full px-3 py-2 border rounded" />
+      `;
+      container.appendChild(row);
+    }
+  }
+
+  // RAM "Other" behaviour
+  function handleRamChange() {
+    const ramEl = document.getElementById('ram');
+    const otherRamDiv = document.getElementById('otherRamContainer');
+    if (!ramEl || !otherRamDiv) return;
+    otherRamDiv.classList.toggle('hidden', ramEl.value !== 'Other');
+  }
+
+  // Basic client-side validation: required fields & date/RAM/CPU/GPU sanity
+  function parseDate(s) {
+    if (!s) return null;
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function clientValidate() {
+    const serial = document.getElementById('serial')?.value.trim();
+    if (!serial) { alert('Serial number is required'); return false; }
+
+    const model = document.getElementById('model')?.value;
+    if (!model) { alert('Select model'); return false; }
+
+    const location = document.getElementById('location')?.value;
+    if (!location) { alert('Select location'); return false; }
+
+    const indenter = document.getElementById('indenter')?.value;
+    if (!indenter) { alert('Select indenter'); return false; }
+
+    const ws = parseDate(document.getElementById('warranty_start')?.value);
+    const we = parseDate(document.getElementById('warranty_expiry')?.value);
+    if (ws && we && we < ws) {
+      alert('Warranty expiry should be same or after warranty start');
+      return false;
+    }
+
+    // RAM sanity
+    const ramSizeEl = document.getElementById('ram_size_gb');
+    if (ramSizeEl && ramSizeEl.value && Number(ramSizeEl.value) < 0) {
+      alert('RAM size must be >= 0');
+      return false;
+    }
+
+    // Processor sanity
+    const pc = parseInt(document.getElementById('processor_count')?.value || 0);
+    for (let i = 1; i <= pc; i++) {
+      const coresEl = document.querySelector(`[name="processor_${i}_cores"]`);
+      if (coresEl && coresEl.value && Number(coresEl.value) <= 0) {
+        alert('Processor cores must be > 0');
+        return false;
+      }
+    }
+
+    // GPU sanity
+    const hasGpu = (document.getElementById('has_gpu')?.value === 'yes');
+    if (hasGpu) {
+      const gc = parseInt(document.getElementById('gpu_count')?.value || 0);
+      for (let i = 1; i <= gc; i++) {
+        const vramEl = document.querySelector(`[name="gpu_${i}_vram"]`);
+        if (vramEl && vramEl.value && Number(vramEl.value) < 0) {
+          alert('GPU VRAM must be >= 0');
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Ensure initial visibility for manufacturer & OS "Other"
+    toggleOtherManufacturer();
+    toggleOtherOs();
+
+    // Only auto-generate processor/GPU fields for NEW asset
+    const hasAsset = {{ 'true' if asset else 'false' }};
+    if (!hasAsset) {
+      renderProcessorFields();
+      renderGpuFields();
+    }
+
+    // RAM "Other" visibility on load + change
+    const ramEl = document.getElementById('ram');
+    if (ramEl) {
+      if (ramEl.value === 'Other') {
+        const otherRamDiv = document.getElementById('otherRamContainer');
+        if (otherRamDiv) otherRamDiv.classList.remove('hidden');
+      }
+      ramEl.addEventListener('change', handleRamChange);
+    }
+
+    // GPU: react to has_gpu / gpu_count changes
+    const hasGpuSelect = document.getElementById('has_gpu');
+    const gpuCountSelect = document.getElementById('gpu_count');
+    if (hasGpuSelect) hasGpuSelect.addEventListener('change', renderGpuFields);
+    if (gpuCountSelect) gpuCountSelect.addEventListener('change', renderGpuFields);
+
+    // Processor quick select
+    const procQuick = document.getElementById('processor_quick');
+    if (procQuick) procQuick.addEventListener('change', applyProcessorTemplate);
+
+    // Form submit validation
+    const form = document.getElementById('assetForm');
+    if (form) {
+      form.addEventListener('submit', function(evt) {
+        if (!clientValidate()) {
+          evt.preventDefault();
+        }
+      });
+    }
+  });
 </script>
+
 {% endblock %}

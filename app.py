@@ -3,7 +3,7 @@ import os
 import secrets
 from datetime import datetime, timedelta, date
 
-from flask import Flask, render_template, request, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for, send_from_directory
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
@@ -41,7 +41,12 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or secrets.token_hex(32)
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
 
 
+# Upload config (set these after app is created)
+app.config.setdefault('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'uploads'))
+app.config.setdefault('ALLOWED_EXTENSIONS', {'pdf', 'png', 'jpg', 'jpeg'})
 
+# create uploads dir right away
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 db.init_app(app)
 migrate = Migrate(app, db)
 
@@ -3802,87 +3807,301 @@ def clone_workstation(asset_id):
             flash(f"❌ Error cloning asset: {e}", "danger")
 
     return render_template("clone_workstation.html", asset=asset)
+# imports (ensure these are at top of the file)
+import os
+import json
+from datetime import datetime
+from werkzeug.utils import secure_filename
+from flask import  request, render_template, redirect, url_for, flash, send_from_directory
+from models import db, WorkstationAsset
 
+# Ensure UPLOAD_FOLDER and ALLOWED_EXTENSIONS are set in app config earlier
+# app.config.setdefault('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'uploads'))
+# app.config.setdefault('ALLOWED_EXTENSIONS', {'pdf','png','jpg','jpeg'})
+# os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.',1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def parse_date_safe(s):
+    if not s:
+        return None
+    try:
+        return datetime.strptime(s, "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+def safe_int(val):
+    try:
+        return int(val)
+    except Exception:
+        return None
+
+# explicit static lists (as requested)
+def get_faculty_list():
+    return [
+      'Antony Franklin','Ashish Mishra','Bheemarjuna Reddy Tamma',
+      'KrishnaMohan C','Saketha Nath J','Jyothi Vedurada',
+      'Kotaro Kataoka','PandurangaRao M.V','Manish Singh',
+      'Maria Francis','Maunendra Sankar Desarkar','Aravind N.R',
+      'Nitin Saurabh','Praveen Tammana','Rajesh Kedia',
+      'Rakesh Venkat','Ramakrishna Upadrasta','Rameshwar Pratap',
+      'Rogers Mathew','Sathya Peri','Saurabh Kumar',
+      'Shirshendu Das','Sobhan Babu','Srijith P. K.',
+      'Subrahmanyam Kalyanasundaram','Vineeth N. Balasubramanian',
+      'Abhijit Das','Sandipan D','Anupam Sanghi'
+    ]
+
+def get_staff_list():
+    return [
+      'Praveen Kumar G','Shiva Kumar Reddy','Sunitha M',
+      'Nikith Reddy','Vijay Chakravarthy','Syam N','Jathin S'
+    ]
 
 @app.route("/assets/new", methods=["GET", "POST"])
 def asset_new():
     if request.method == "POST":
         f = request.form
 
-        manufacturer = f.get("manufacturer") or None
-        model = f.get("model") or None
-        indenter_full = f.get("indenter") or "Unknown"
-        po_date_raw = f.get("po_date") or "Unknown"
-        old_serial = (f.get("serial") or "").strip() or None
+        # Basic required fields
+        manufacturer = (f.get("manufacturer") or "").strip()
+        otherManufacturer = (f.get("otherManufacturer") or "").strip()
+        model = (f.get("model") or "").strip()
+        location = (f.get("location") or "").strip()
+        indenter_full = (f.get("indenter") or "").strip()
+        provided_serial = (f.get("serial") or "").strip() or None
+        status = (f.get("status") or "Available").strip()
+        # parse RAM fields
+        ram_type = (f.get("ram") or "").strip() or None
+        otherRam = (f.get("otherRam") or "").strip() or None
+        ram_size_gb = safe_int(f.get("ram_size_gb"))
+        source_of_fund    = f.get("source_of_fund") or None
+        # required checks
+        if not manufacturer:
+            flash("Manufacturer is required", "danger")
+            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+        if manufacturer == "Others" and not otherManufacturer:
+            flash("Please specify other manufacturer", "danger")
+            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+        if not model:
+            flash("Model is required", "danger")
+            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+        if not location:
+            flash("Location is required", "danger")
+            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+        if not indenter_full:
+            flash("Indenter is required", "danger")
+            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
 
-        # Format PO date and indenter for department code
-        po_date = po_date_raw.replace("-", "")
+        # Serial is mandatory now (no auto generation)
+        if not provided_serial:
+            flash("Serial number is required. Please provide a unique serial.", "danger")
+            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+        # uniqueness
+        if WorkstationAsset.query.filter_by(serial=provided_serial).first():
+            flash("Serial already exists. Provide a unique serial.", "danger")
+            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+        serial_to_use = provided_serial
+
+        # Parse dates
+        po_date_raw = f.get("po_date") or ""
+        po_date = parse_date_safe(po_date_raw)
+        if po_date_raw and not po_date:
+            flash("PO date invalid. Use YYYY-MM-DD.", "danger")
+            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+
+        warranty_start = parse_date_safe(f.get("warranty_start"))
+        warranty_expiry = parse_date_safe(f.get("warranty_expiry"))
+        if warranty_start and warranty_expiry and warranty_expiry < warranty_start:
+            flash("Warranty expiry must be same or after warranty start.", "danger")
+            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+
+        # parse processors
+        processor_count = int(f.get("processor_count") or 0)
+        processors = []
+        for i in range(1, processor_count+1):
+            name = (f.get(f"processor_{i}_name") or "").strip()
+            cores = safe_int(f.get(f"processor_{i}_cores"))
+            if name or cores is not None:
+                processors.append({"name": name or None, "cores": cores})
+
+        # parse GPUs
+        has_gpu = (f.get("has_gpu") or "no") == "yes"
+        gpus = []
+        if has_gpu:
+            gpu_count = int(f.get("gpu_count") or 1)
+            for i in range(1, gpu_count+1):
+                gname = (f.get(f"gpu_{i}_name") or "").strip()
+                vram = safe_int(f.get(f"gpu_{i}_vram"))
+                if gname or vram is not None:
+                    gpus.append({"name": gname or None, "vram": vram})
+
+        # department code (unchanged logic)
+        po_token = po_date_raw.replace("-", "") if po_date_raw else "NA"
         indenter_clean = indenter_full.replace("Dr. ", "").replace("Prof. ", "")
-        indenter_first = indenter_clean.split()[0]
+        indenter_first = indenter_clean.split()[0] if indenter_clean else "Unknown"
+        dep_base = f"CSE/{po_token}/{model}/{manufacturer}/{indenter_first}/{serial_to_use}"
+        department_code = dep_base
+        suffix = 1
+        while WorkstationAsset.query.filter_by(department_code=department_code).first():
+            suffix += 1
+            department_code = f"{dep_base}-{suffix}"
 
-        # Determine serial automatically
-        count = WorkstationAsset.query.filter_by(
-            model=model,
-            manufacturer=manufacturer,
-            indenter=indenter_full,
-            po_date=po_date_raw
-        ).count() + 1
-        serial = f"{count:03}"
+        # handle uploaded PO/Invoice file
+        po_file = request.files.get('po_invoice')
+        po_filename = None
+        if po_file and po_file.filename:
+            if not allowed_file(po_file.filename):
+                flash("Uploaded file type not allowed. Allowed: pdf, jpg, jpeg, png", "danger")
+                return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+            filename = secure_filename(po_file.filename)
+            timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+            filename = f"{serial_to_use}_{timestamp}_{filename}"
+            save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            try:
+                po_file.save(save_path)
+                po_filename = filename
+            except Exception as e:
+                flash(f"Error saving file: {e}", "danger")
+                return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
 
-        # Generate department code
-        department_code = f"CSE/{po_date}/{model}/{manufacturer}/{indenter_first}/{serial}"
-
+        # build and save asset (including vendor_contact_person)
         asset = WorkstationAsset(
             manufacturer=manufacturer,
-            otherManufacturer=f.get("otherManufacturer") or None,
+            otherManufacturer=otherManufacturer or None,
             model=model,
-            serial=old_serial,
-            os=f.get("os") or None,
-            otherOs=f.get("otherOs") or None,
-            processor=f.get("processor") or None,
-            cores=f.get("cores") or None,
-            ram=f.get("ram") or None,
-            otherRam=f.get("otherRam") or None,
-            storage_type1=f.get("storage_type1") or None,
-            storage_capacity1=f.get("storage_capacity1") or None,
-            storage_type2=f.get("storage_type2") or None,
-            storage_capacity2=f.get("storage_capacity2") or None,
-            gpu=f.get("gpu") or None,
-            vram=f.get("vram") or None,
-            keyboard_provided=f.get("keyboard_provided") or None,
-            keyboard_details=f.get("keyboard_details") or None,
-            mouse_provided=f.get("mouse_provided") or None,
-            mouse_details=f.get("mouse_details") or None,
-            monitor_provided=f.get("monitor_provided") or None,
-            monitor_details=f.get("monitor_details") or None,
-            monitor_size=f.get("monitor_size") or None,
-            monitor_serial=f.get("monitor_serial") or None,
-            mac_address=f.get("mac_address") or None,
-            po_number=f.get("po_number") or None,
-            po_date=po_date_raw or None,
-            source_of_fund=f.get("source_of_fund") or None,
-            vendor_company=f.get("vendor_company") or None,
-            vendor_contact_person=f.get("vendor_contact_person") or None,
-            vendor_mobile=f.get("vendor_mobile") or None,
-            warranty_start=f.get("warranty_start") or None,
-            warranty_expiry=f.get("warranty_expiry") or None,
-            status=f.get("status") or "Available",
-            location=f.get("location") or None,
+            serial=serial_to_use,
+            po_number=(f.get("po_number") or None),
+            po_date=po_date,
+            warranty_start=warranty_start,
+            warranty_expiry=warranty_expiry,
+            status=status,
+            location=location,
             indenter=indenter_full,
-            department_code=department_code
+            department_code=department_code,
+            po_invoice_filename=po_filename,
+            vendor_company=(f.get("vendor_company") or None),
+            vendor_contact_person=(f.get("vendor_contact_person") or None),
+            vendor_mobile=(f.get("vendor_mobile") or None),
+            mac_address=(f.get("mac_address") or None),
+            # RAM fields (new)
+            ram=ram_type,
+            otherRam=otherRam if otherRam else None,
+            ram_size_gb=ram_size_gb,
+            source_of_fund=source_of_fund or None
         )
+
+        # store processors/gpus
+        try:
+            asset.set_processors(processors if processors else None)
+            asset.set_gpus(gpus if gpus else None)
+        except Exception:
+            asset.processors = json.dumps(processors) if processors else None
+            asset.gpus = json.dumps(gpus) if gpus else None
 
         try:
             db.session.add(asset)
             db.session.commit()
-            flash(f"✅ Asset added successfully. Dept Code: {department_code}", "success")
-            return redirect(url_for("asset_new"))
+            flash(f"Asset added successfully — Department Code: {department_code}", "success")
+            return redirect(url_for('asset_new'))
         except Exception as e:
             db.session.rollback()
-            flash(f"❌ Error adding asset: {e}", "danger")
+            if po_filename:
+                try:
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], po_filename))
+                except Exception:
+                    pass
+            flash(f"Error saving asset: {e}", "danger")
+            return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
 
-    return render_template("asset_form.html", asset=None)
+    # GET
+    return render_template("asset_form.html", asset=None, faculty_list=get_faculty_list(), staff_list=get_staff_list())
 
+
+# Download uploaded PO/Invoice file
+@app.route('/assets/po/<path:filename>')
+def download_po_invoice(filename):
+    # safe direct send from configured folder
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+
+
+
+
+# @app.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
+# def asset_edit(asset_id):
+#     asset = WorkstationAsset.query.get_or_404(asset_id)
+
+#     if request.method == "POST":
+#         f = request.form
+
+#         # Update all basic fields
+#         asset.manufacturer      = f.get("manufacturer") or None
+#         asset.otherManufacturer = f.get("otherManufacturer") or None
+#         asset.model             = f.get("model") or None
+#         asset.os                = f.get("os") or None
+#         asset.serial            = f.get("serial") or asset.serial  # keep existing if blank
+#         asset.otherOs           = f.get("otherOs") or None
+#         asset.processor         = f.get("processor") or None
+#         asset.cores             = f.get("cores") or None
+#         asset.ram               = f.get("ram") or None
+#         asset.otherRam          = f.get("otherRam") or None
+#         asset.storage_type1     = f.get("storage_type1") or None
+#         asset.storage_capacity1 = f.get("storage_capacity1") or None
+#         asset.storage_type2     = f.get("storage_type2") or None
+#         asset.storage_capacity2 = f.get("storage_capacity2") or None
+#         asset.gpu               = f.get("gpu") or None
+#         asset.vram              = f.get("vram") or None
+#         asset.keyboard_provided = f.get("keyboard_provided") or None
+#         asset.keyboard_details  = f.get("keyboard_details") or None
+#         asset.mouse_provided    = f.get("mouse_provided") or None
+#         asset.mouse_details     = f.get("mouse_details") or None
+#         asset.monitor_provided  = f.get("monitor_provided") or None
+#         asset.monitor_details   = f.get("monitor_details") or None
+#         asset.monitor_size      = f.get("monitor_size") or None
+#         asset.monitor_serial    = f.get("monitor_serial") or None
+#         asset.mac_address       = f.get("mac_address") or None
+#         asset.po_date           = f.get("po_date") or None
+#         asset.po_number         = f.get("po_number") or None
+#         asset.source_of_fund    = f.get("source_of_fund") or None
+#         asset.vendor_company    = f.get("vendor_company") or None
+#         asset.vendor_contact_person = f.get("vendor_contact_person") or None
+#         asset.vendor_mobile     = f.get("vendor_mobile") or None
+#         asset.warranty_start    = f.get("warranty_start") or None
+#         asset.warranty_expiry   = f.get("warranty_expiry") or None
+#         asset.location          = f.get("location") or None
+#         asset.indenter          = f.get("indenter") or None
+
+#         # Generate department code automatically
+#         if asset.model and asset.manufacturer and asset.indenter and asset.po_date:
+#             po_date_clean = asset.po_date.replace("-", "")
+#             indenter_first = asset.indenter.split()[0]
+
+#             # Use existing serial if available
+#             if not asset.serial:
+#                 # Count existing assets of same type for this user/date
+#                 count = WorkstationAsset.query.filter_by(
+#                     model=asset.model,
+#                     manufacturer=asset.manufacturer,
+#                     indenter=asset.indenter,
+#                     po_date=asset.po_date
+#                 ).count() + 1  # +1 for this asset
+#                 serial_part = f"{count:03}"
+#                 asset.serial = serial_part
+#             else:
+#                 serial_part = asset.serial  # keep existing
+
+#             # Dept code format: CSE/YYYYMMDD/Model/Manufacturer/Indenter/001, 002...
+#             asset.department_code = f"CSE/{po_date_clean}/{asset.model}/{asset.manufacturer}/{indenter_first}/{serial_part}"
+
+#         try:
+#             db.session.commit()
+#             flash("✅ Asset updated successfully.", "success")
+#             return redirect(url_for("assets_list"))
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f"❌ Error updating asset: {e}", "danger")
+
+#     return render_template("asset_form.html", asset=asset)
 
 
 @app.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
@@ -3892,76 +4111,160 @@ def asset_edit(asset_id):
     if request.method == "POST":
         f = request.form
 
-        # Update all basic fields
-        asset.manufacturer      = f.get("manufacturer") or None
-        asset.otherManufacturer = f.get("otherManufacturer") or None
-        asset.model             = f.get("model") or None
-        asset.os                = f.get("os") or None
-        asset.serial            = f.get("serial") or asset.serial  # keep existing if blank
-        asset.otherOs           = f.get("otherOs") or None
-        asset.processor         = f.get("processor") or None
-        asset.cores             = f.get("cores") or None
-        asset.ram               = f.get("ram") or None
-        asset.otherRam          = f.get("otherRam") or None
-        asset.storage_type1     = f.get("storage_type1") or None
-        asset.storage_capacity1 = f.get("storage_capacity1") or None
-        asset.storage_type2     = f.get("storage_type2") or None
-        asset.storage_capacity2 = f.get("storage_capacity2") or None
-        asset.gpu               = f.get("gpu") or None
-        asset.vram              = f.get("vram") or None
-        asset.keyboard_provided = f.get("keyboard_provided") or None
-        asset.keyboard_details  = f.get("keyboard_details") or None
-        asset.mouse_provided    = f.get("mouse_provided") or None
-        asset.mouse_details     = f.get("mouse_details") or None
-        asset.monitor_provided  = f.get("monitor_provided") or None
-        asset.monitor_details   = f.get("monitor_details") or None
-        asset.monitor_size      = f.get("monitor_size") or None
-        asset.monitor_serial    = f.get("monitor_serial") or None
-        asset.mac_address       = f.get("mac_address") or None
-        asset.po_date           = f.get("po_date") or None
-        asset.po_number         = f.get("po_number") or None
-        asset.source_of_fund    = f.get("source_of_fund") or None
-        asset.vendor_company    = f.get("vendor_company") or None
+        # Required fields
+        manufacturer = (f.get("manufacturer") or "").strip()
+        otherManufacturer = (f.get("otherManufacturer") or "").strip()
+        model = (f.get("model") or "").strip()
+        location = (f.get("location") or "").strip()
+        indenter_full = (f.get("indenter") or "").strip()
+        serial_new = (f.get("serial") or "").strip()
+        status = (f.get("status") or "Available").strip()
+
+        if not serial_new:
+            flash("Serial number is required.", "danger")
+            return render_template("asset_form.html",
+                asset=asset,
+                faculty_list=get_faculty_list(),
+                staff_list=get_staff_list()
+            )
+
+        # Serial uniqueness check (only if changed)
+        if serial_new != asset.serial:
+            if WorkstationAsset.query.filter_by(serial=serial_new).first():
+                flash("Serial already exists. Enter a unique serial number.", "danger")
+                return render_template("asset_form.html",
+                    asset=asset,
+                    faculty_list=get_faculty_list(),
+                    staff_list=get_staff_list()
+                )
+
+        # Date parsing
+        po_date_raw = f.get("po_date") or ""
+        po_date = parse_date_safe(po_date_raw)
+        if po_date_raw and not po_date:
+            flash("PO date invalid.", "danger")
+            return render_template("asset_form.html",
+                asset=asset, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+
+        warranty_start = parse_date_safe(f.get("warranty_start"))
+        warranty_expiry = parse_date_safe(f.get("warranty_expiry"))
+        if warranty_start and warranty_expiry and warranty_expiry < warranty_start:
+            flash("Warranty expiry must be on or after warranty start.", "danger")
+            return render_template("asset_form.html",
+                asset=asset, faculty_list=get_faculty_list(), staff_list=get_staff_list())
+
+        # Processor parsing
+        processor_count = int(f.get("processor_count") or 0)
+        processors = []
+        for i in range(1, processor_count + 1):
+            name = (f.get(f"processor_{i}_name") or "").strip()
+            cores = safe_int(f.get(f"processor_{i}_cores"))
+            if name or cores is not None:
+                processors.append({"name": name or None, "cores": cores})
+
+        # GPU parsing
+        has_gpu = (f.get("has_gpu") or "no") == "yes"
+        gpus = []
+        if has_gpu:
+            gpu_count = int(f.get("gpu_count") or 1)
+            for i in range(1, gpu_count + 1):
+                gname = (f.get(f"gpu_{i}_name") or "").strip()
+                vram = safe_int(f.get(f"gpu_{i}_vram"))
+                if gname or vram is not None:
+                    gpus.append({"name": gname or None, "vram": vram})
+
+        # Detect department_code change conditions
+        department_changed = (
+            serial_new != asset.serial or
+            manufacturer != asset.manufacturer or
+            model != asset.model or
+            indenter_full != asset.indenter or
+            po_date != asset.po_date
+        )
+
+        if department_changed:
+            po_token = po_date_raw.replace("-", "") if po_date_raw else "NA"
+            indenter_clean = indenter_full.replace("Dr. ", "").replace("Prof. ", "")
+            indenter_first = indenter_clean.split()[0] if indenter_clean else "Unknown"
+            dep_base = f"CSE/{po_token}/{model}/{manufacturer}/{indenter_first}/{serial_new}"
+
+            department_code = dep_base
+            suffix = 1
+            while WorkstationAsset.query.filter_by(department_code=department_code).first():
+                suffix += 1
+                department_code = f"{dep_base}-{suffix}"
+        else:
+            department_code = asset.department_code
+
+        # PO Invoice file upload
+        po_file = request.files.get("po_invoice")
+        if po_file and po_file.filename:
+            if not allowed_file(po_file.filename):
+                flash("Invalid file type.", "danger")
+                return render_template("asset_form.html", asset=asset,
+                                       faculty_list=get_faculty_list(),
+                                       staff_list=get_staff_list())
+
+            filename = secure_filename(po_file.filename)
+            timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+            filename = f"{serial_new}_{timestamp}_{filename}"
+            save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+            po_file.save(save_path)
+            asset.po_invoice_filename = filename  # update file
+
+        # Update asset fields
+        asset.manufacturer = manufacturer
+        asset.otherManufacturer = otherManufacturer or None
+        asset.model = model
+        asset.serial = serial_new
+        asset.status = status
+        asset.location = location
+        asset.indenter = indenter_full
+        asset.po_number = f.get("po_number") or None
+        asset.po_date = po_date
+        asset.warranty_start = warranty_start
+        asset.sourece_of_fund    = f.get("source_of_fund") or None
+        asset.warranty_expiry = warranty_expiry
+        asset.department_code = department_code
+        asset.vendor_company = f.get("vendor_company") or None
         asset.vendor_contact_person = f.get("vendor_contact_person") or None
-        asset.vendor_mobile     = f.get("vendor_mobile") or None
-        asset.warranty_start    = f.get("warranty_start") or None
-        asset.warranty_expiry   = f.get("warranty_expiry") or None
-        asset.location          = f.get("location") or None
-        asset.indenter          = f.get("indenter") or None
+        asset.vendor_mobile = f.get("vendor_mobile") or None
+        asset.mac_address = f.get("mac_address") or None
 
-        # Generate department code automatically
-        if asset.model and asset.manufacturer and asset.indenter and asset.po_date:
-            po_date_clean = asset.po_date.replace("-", "")
-            indenter_first = asset.indenter.split()[0]
+        # RAM fields
+        asset.ram = f.get("ram") or None
+        asset.otherRam = f.get("otherRam") or None
+        asset.ram_size_gb = safe_int(f.get("ram_size_gb"))
 
-            # Use existing serial if available
-            if not asset.serial:
-                # Count existing assets of same type for this user/date
-                count = WorkstationAsset.query.filter_by(
-                    model=asset.model,
-                    manufacturer=asset.manufacturer,
-                    indenter=asset.indenter,
-                    po_date=asset.po_date
-                ).count() + 1  # +1 for this asset
-                serial_part = f"{count:03}"
-                asset.serial = serial_part
-            else:
-                serial_part = asset.serial  # keep existing
+        # Storage
+        asset.storage_type1 = f.get("storage_type1") or None
+        asset.storage_capacity1 = safe_int(f.get("storage_capacity1"))
+        asset.storage_type2 = f.get("storage_type2") or None
+        asset.storage_capacity2 = safe_int(f.get("storage_capacity2"))
 
-            # Dept code format: CSE/YYYYMMDD/Model/Manufacturer/Indenter/001, 002...
-            asset.department_code = f"CSE/{po_date_clean}/{asset.model}/{asset.manufacturer}/{indenter_first}/{serial_part}"
+        # Save processors & GPUs
+        try:
+            asset.set_processors(processors if processors else None)
+            asset.set_gpus(gpus if gpus else None)
+        except:
+            asset.processors = json.dumps(processors) if processors else None
+            asset.gpus = json.dumps(gpus) if gpus else None
 
+        # Commit update
         try:
             db.session.commit()
-            flash("✅ Asset updated successfully.", "success")
-            return redirect(url_for("assets_list"))
+            flash("Asset updated successfully.", "success")
+            return redirect(url_for("asset_edit", asset_id=asset.id))
         except Exception as e:
             db.session.rollback()
-            flash(f"❌ Error updating asset: {e}", "danger")
+            flash(f"Error updating asset: {e}", "danger")
 
-    return render_template("asset_form.html", asset=asset)
-
-
+    # GET request
+    return render_template("asset_form.html",
+                           asset=asset,
+                           faculty_list=get_faculty_list(),
+                           staff_list=get_staff_list())
 
 
 @app.route("/assets/<int:asset_id>/retire", methods=["POST"])
